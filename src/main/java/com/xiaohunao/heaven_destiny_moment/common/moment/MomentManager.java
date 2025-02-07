@@ -74,14 +74,8 @@ public class MomentManager extends SavedData {
         ListTag listTag = tag.getList("moment", Tag.TAG_COMPOUND);
         listTag.forEach(compoundTag -> {
             MomentInstance<?> instance = MomentInstance.loadStatic(serverLevel, (CompoundTag) compoundTag);
-            if (instance != null) {
-                UUID uuid = instance.getID();
-                manager.runMoments.put(uuid, instance);
-                manager.runMomentKeyes.add(instance.momentKey);
-                PacketDistributor.sendToPlayersInDimension(serverLevel, new MomentManagerSyncPayload(instance.serializeNBT()));
-                if (instance.getBar() != null) {
-                    PacketDistributor.sendToPlayersInDimension(serverLevel, MomentBarSyncPayload.addPlayer(instance.getBar()));
-                }
+            if (instance != null){
+                manager.addMomentInstance(instance, true);
             }
         });
         return manager;
@@ -92,24 +86,15 @@ public class MomentManager extends SavedData {
         momentInstances.forEach(instance -> {
             if (instance.state == MomentState.END) {
                 instance.end();
-
-                if (!level.isClientSide) {
-                    ServerLevel serverLevel = (ServerLevel) instance.getLevel();
-                    removeMoment(instance);
-                    PacketDistributor.sendToPlayersInDimension(serverLevel, new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
-                    if (instance.getBar() != null) {
-                        PacketDistributor.sendToPlayersInDimension(serverLevel, MomentBarSyncPayload.removePlayer(instance.bar));
-                    }
-                }
-                runMoments.remove(instance.getID());
-                runMomentKeyes.remove(instance.momentKey);
+                removeMomentInstance(instance, true);
             }
             instance.baseTick();
         });
         setDirty();
     }
 
-    public void removeMoment(MomentInstance<?> instance) {
+    public void removeMomentInstance(MomentInstance<?> instance, boolean isSync) {
+        Level level = instance.getLevel();
         runMoments.remove(instance.getID());
         runMomentKeyes.remove(instance.momentKey);
         instance.players.forEach(player -> {
@@ -117,8 +102,35 @@ public class MomentManager extends SavedData {
                 playerMoments.remove(player.getUUID(), instance);
             }
         });
-        PacketDistributor.sendToPlayersInDimension((ServerLevel) level, new MomentManagerSyncPayload(instance.serializeNBT()));
+
+        if (isSync && !level.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) level;
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),true));
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
+            if (instance.getBar() != null) {
+                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removePlayer(instance.bar));
+            }
+            serverLevel.getDataStorage().save();
+        }
     }
+
+    public void addMomentInstance(MomentInstance<?> instance,boolean isSync) {
+        Level level = instance.getLevel();
+        UUID uuid = instance.getID();
+        runMoments.put(uuid, instance);
+        runMomentKeyes.add(instance.momentKey);
+        setDirty();
+
+        if (isSync && !level.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) level;
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            if (instance.getBar() != null) {
+                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.getBar()));
+            }
+            serverLevel.getDataStorage().save();
+        }
+    };
+
 
     public MomentInstance<?> addMoment(MomentInstance<?> instance, ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         UUID uuid = instance.getID();
@@ -138,10 +150,7 @@ public class MomentManager extends SavedData {
         boolean canCreate = instance.canCreate(runMoments, serverLevel, pos, serverPlayer);
         if (canCreate && conditionMatch) {
             instance.init();
-            PacketDistributor.sendToPlayersInDimension(serverLevel, new MomentManagerSyncPayload(instance.serializeNBT()));
-            runMoments.put(uuid, instance);
-            runMomentKeyes.add(instance.momentKey);
-            setDirty();
+            addMomentInstance(instance,true);
             return instance;
         }
         return null;
@@ -199,10 +208,9 @@ public class MomentManager extends SavedData {
         return false;
     }
 
-    public MomentManager setClientOnlyMoment(MomentInstance<?> clientOnlyMoment) {
+    public void setClientOnlyMoment(MomentInstance<?> clientOnlyMoment) {
         this.clientOnlyMoment = clientOnlyMoment;
         setDirty();
-        return this;
     }
 
     public Optional<MomentInstance<?>> getClientOnlyMoment() {
@@ -217,15 +225,21 @@ public class MomentManager extends SavedData {
         return ImmutableMap.copyOf(runMoments);
     }
 
-    public Map<UUID, MomentInstance<?>> getRunMoments() {
-        return runMoments;
-    }
-
     public boolean hasMoment(ResourceKey<Moment<?>> key) {
         return runMomentKeyes.contains(key);
     }
 
     public MomentInstance<?> getMomentInstance(UUID uuid){
         return runMoments.get(uuid);
+    }
+
+    public void sync(MomentInstance<?> instance, ServerLevel serverLevel) {
+        if (isDirty()) {
+            serverLevel.getDataStorage().save();
+        }
+        PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+        if (instance.getBar() != null) {
+            PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.getBar()));
+        }
     }
 }

@@ -16,9 +16,12 @@ public class WorldUniqueMomentCondition implements ICondition {
     @Override
     public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         MomentManager momentManager = MomentManager.of(instance.getLevel());
-       return momentManager.getImmutableRunMoments().values().stream().noneMatch(momentInstance ->
-               momentInstance.getClass().isInstance(instance)
-       );
+        for (MomentInstance<?> momentInstance : momentManager.getImmutableRunMoments().values()) {
+            if (momentInstance.getClass() == instance.getClass()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

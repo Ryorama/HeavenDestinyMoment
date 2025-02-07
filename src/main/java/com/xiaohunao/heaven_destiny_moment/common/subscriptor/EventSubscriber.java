@@ -42,7 +42,7 @@ public record EventSubscriber(String eventName, Map<ResourceKey<Moment<?>>, Map<
                 for (Map.Entry<MomentState, ICondition> entry1 : entry.getValue().entrySet()) {
                     MomentState momentState = entry1.getKey();
                     ICondition condition = entry1.getValue();
-                    for (MomentInstance<?> momentInstance : momentManager.getRunMoments().values()) {
+                    for (MomentInstance<?> momentInstance : momentManager.getImmutableRunMoments().values()) {
                         if (momentInstance.is(momentKey) && condition.matches(momentInstance, blockPos, serverPlayer)) {
                             momentInstance.setState(momentState);
                         }

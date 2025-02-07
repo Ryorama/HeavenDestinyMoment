@@ -41,6 +41,7 @@ import java.util.function.Predicate;
 public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHolder {
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    protected final MomentManager momentManager;
     protected final Level level;
     protected final MomentType<?> type;
     protected final ResourceKey<Moment<?>> momentKey;
@@ -61,6 +62,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         this.type = type;
         this.level = level;
         this.momentKey = momentKey;
+        this.momentManager = null;
     }
 
     protected MomentInstance(MomentType<?> type, UUID uuid, Level level, ResourceKey<Moment<?>> momentKey) {
@@ -68,10 +70,18 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         this.type = type;
         this.level = level;
         this.momentKey = momentKey;
+        this.momentManager = null;
+    }
+
+    protected MomentManager getMomentManager() {
+        if (this.momentManager == null) {
+            return MomentManager.of(level);
+        }
+        return this.momentManager;
     }
 
     public static MomentInstance<?> create(ResourceKey<Moment<?>> momentKey, ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance<?>> modifier) {
-        return Optional.ofNullable(serverLevel.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT))
+        return Optional.of(serverLevel.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT))
                 .map(registry -> registry.get(momentKey))
                 .map(moment -> moment.newMomentInstance(serverLevel, momentKey))
                 .map(instance -> {
@@ -402,7 +412,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     public MomentEvent setState(MomentState state) {
         this.state = state;
         if (level instanceof ServerLevel serverLevel) {
-            PacketDistributor.sendToPlayersInDimension(serverLevel, new MomentManagerSyncPayload(this.serializeNBT()));
+            getMomentManager().sync(this,serverLevel);
         }
         moment().flatMap(Moment::tipSettings).ifPresent(tip -> tip.playTooltip(this));
         return NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, state));
@@ -431,31 +441,32 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
         final Set<Player> oldPlayers = Sets.newHashSet(players);
         final Set<Player> newPlayers = Sets.newHashSet((getPlayers(validPlayer())));
-//        players.clear();
-
 
         newPlayers.stream()
                 .filter(player -> !oldPlayers.contains(player))
                 .forEach(player1 -> {
-                    if (MomentManager.of(level).addPlayerToMoment(player1, this)) {
-//                        bar.addPlayer(serverPlayer);
+                    if (getMomentManager().addPlayerToMoment(player1, this)) {
                         players.add(player1);
                         playerUUIDs.add(player1.getUUID());
                         if (this.bar != null) {
                             this.bar.addPlayer(player1);
+                            if (!level.isClientSide) {
+                                getMomentManager().sync(this, (ServerLevel) level);
+                            }
                         }
                     }
                 });
         oldPlayers.stream()
                 .filter(player -> !newPlayers.contains(player))
                 .forEach(player1 -> {
-
-                    if (MomentManager.of(level).removePlayerToMoment(player1, this)) {
-//                      bar.removePlayer(player1);
+                    if (getMomentManager().removePlayerToMoment(player1, this)) {
                         players.remove(player1);
                         playerUUIDs.add(player1.getUUID());
                         if (this.bar != null) {
                             this.bar.removePlayer(player1);
+                            if (!level.isClientSide) {
+                                getMomentManager().sync(this, (ServerLevel) level);
+                            }
                         }
                     }
                 });
