@@ -1,6 +1,5 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance;
 
-import com.google.common.collect.Lists;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
@@ -11,6 +10,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class RaidInstance extends MomentInstance<RaidMoment> {
@@ -216,10 +217,12 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
 
     private void attackRandomPlayer(Entity entity) {
         if (!level.isClientSide && entity instanceof Mob mob && !this.players.isEmpty()) {
-            List<Player> players = Lists.newArrayList(this.players);
-            Player target = players.get(level.random.nextInt(players.size()));
-            mob.getBrain().setMemory(MemoryModuleType.ANGRY_AT, target.getUUID());
-            mob.setTarget(target);
+            List<Player> players = this.players.stream().filter(player -> !player.isCreative()).toList();
+            Optional<Player> target = Util.getRandomSafe(players, level.random);
+            target.ifPresent(player -> {
+                mob.getBrain().setMemory(MemoryModuleType.ANGRY_AT, player.getUUID());
+                mob.setTarget(player);
+            });
         }
     }
 }
