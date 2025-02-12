@@ -1,10 +1,12 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
+import com.xiaohunao.heaven_destiny_moment.common.mixed.EntityManagerAccessor;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
@@ -17,6 +19,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
@@ -24,14 +27,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class RaidInstance extends MomentInstance<RaidMoment> {
     protected Vec3 originalPos;
     protected Set<UUID> enemies = Sets.newHashSet();
+    private Map<UUID,CompoundTag> enemiesStorage = Maps.newHashMap();
     protected int currentWave = -1;
     private int totalWaves;
     protected int totalEnemy;
@@ -145,6 +146,19 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         compoundTag.getList("enemies", Tag.TAG_STRING).forEach(uid -> {
             enemies.add(UUID.fromString(uid.getAsString()));
         });
+
+        compoundTag.getList("enemiesStorage", Tag.TAG_COMPOUND).forEach(tag -> {
+            CompoundTag tag1 = (CompoundTag) tag;
+            UUID uuid = tag1.getUUID("uuid");
+            CompoundTag compoundTag1 = tag1.getCompound("tag");
+            enemiesStorage.put(uuid,compoundTag1);
+            EntityType.create((compoundTag1), level).ifPresent(entity -> {
+                level.addFreshEntity(entity);
+                if (!enemies.contains(uuid)){
+                    enemies.add(uuid);
+                }
+            });
+        });
     }
 
     @Override
@@ -159,14 +173,27 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         }
 
         ListTag enemiesListTag = new ListTag();
+        ListTag enemiesStorageTag = new ListTag();
         enemies.forEach(uid -> {
             enemiesListTag.add(StringTag.valueOf(uid.toString()));
         });
+
+        enemiesStorage.forEach((uuid,tag) -> {
+            CompoundTag tag1 = new CompoundTag();
+            tag1.putUUID("uuid",uuid);
+            tag1.put("tag",tag);
+            enemiesStorageTag.add(tag1);
+        });
+
         compoundTag.put("enemies",enemiesListTag);
+        compoundTag.put("enemiesStorage",enemiesStorageTag);
         return compoundTag;
     }
 
     protected void checkNextWave(){
+        if (level.isClientSide){
+            return;
+        }
         if (enemies.isEmpty()){
             if(this.currentWave >= this.totalWaves - 1) {
                 setState(MomentState.VICTORY);
@@ -188,6 +215,9 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
                     .map(entitySpawnSettings -> entitySpawnSettings.spawnList(level, currentWave))
                     .ifPresent(entities -> entities.forEach(entity -> {
                         enemies.add(entity.getUUID());
+                        CompoundTag tag = new CompoundTag();
+                        entity.save(tag);
+                        enemiesStorage.put(entity.getUUID(), tag);
                         entity.setGlowingTag(true);
                         spawnEntity(entity);
                         totalEnemy++;
@@ -197,7 +227,18 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         enemies.removeIf(uid -> {
             Entity entity = serverLevel.getEntity(uid);
             updateBarProgress(enemies.size() / (float) totalEnemy);
-            return entity == null;
+            EntityManagerAccessor managerAccessor = (EntityManagerAccessor) serverLevel;
+            if (entity == null && !managerAccessor.getEntityManager().isLoaded(uid)){
+                enemiesStorage.remove(uid);
+                return true;
+            }
+
+            if (entity != null){
+                CompoundTag tag = new CompoundTag();
+                entity.save(tag);
+                enemiesStorage.put(uid, tag);
+            }
+            return false;
         });
     }
 

@@ -62,8 +62,7 @@ public class MomentManager {
             ListTag momentListTag = compoundTag.getList("runMoments", 10);
             momentListTag.forEach(momentTag -> {
                 Optional.ofNullable(MomentInstance.loadStatic(level,(CompoundTag) momentTag)).ifPresent(momentInstance -> {
-                    runMoments.put(momentInstance.getID(), momentInstance);
-                    momentMap.put(momentInstance.getResourceKey(), momentInstance);
+                    addMomentInstance(momentInstance, true);
                 });
 
             });
@@ -194,9 +193,17 @@ public class MomentManager {
     private void addPlayerAndSync(Player player, MomentInstance<?> instance){
         playerMoments.put(player.getUUID(), instance);
 
-        if (!level.isClientSide && instance.isClientOnlyMoment()) {
-            PacketDistributor.sendToPlayer((ServerPlayer) player, new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
+        if (!level.isClientSide) {
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            if (instance.isClientOnlyMoment()) {
+                PacketDistributor.sendToPlayer((ServerPlayer) player, new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
+            }
+            if (instance.getBar() != null) {
+                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.bar));
+            }
         }
+
+
     }
 
     public boolean removePlayerToMoment(Player player, MomentInstance<?> instance) {
