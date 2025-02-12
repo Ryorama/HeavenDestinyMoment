@@ -16,6 +16,7 @@
     "SlimeMixin"
   ],
   "client": [
+    "client.ClientLevelMixin",
     "client.LevelRendererMixin",
     "client.LightMapTextureMixin"
   ],

@@ -20,7 +20,7 @@ public abstract class LightMapTextureMixin {
     private void updateLightTexture(float p_109882_, CallbackInfo ci, @Local ClientLevel clientlevel, @Local Vector3f vector3f) {
         MomentManager momentManager = MomentManager.of(clientlevel);
 
-        momentManager.getClientOnlyMoment()
+        momentManager.getClientMomentInstance()
                 .flatMap(MomentInstance::moment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::environmentColor)

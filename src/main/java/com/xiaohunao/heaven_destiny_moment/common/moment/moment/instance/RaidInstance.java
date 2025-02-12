@@ -1,5 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance;
 
+import com.google.common.collect.Sets;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
@@ -8,7 +9,6 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.nbt.*;
@@ -26,17 +26,16 @@ import net.minecraft.world.scores.PlayerTeam;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class RaidInstance extends MomentInstance<RaidMoment> {
     protected Vec3 originalPos;
-    protected IntArrayList enemies = new IntArrayList();
+    protected Set<UUID> enemies = Sets.newHashSet();
     protected int currentWave = -1;
     private int totalWaves;
     protected int totalEnemy;
     private int readyTime;
-
-
 
     public RaidInstance(Level level, ResourceKey<Moment<?>> momentKey) {
         super(HDMMomentRegister.RAID.get(), level, momentKey);
@@ -73,11 +72,6 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         addRaidTeam(entity);
         attackRandomPlayer(entity);
     }
-
-
-
-
-
 
     @Override
     public void end() {
@@ -140,7 +134,6 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
     @Override
     public void deserializeNBT(CompoundTag compoundTag) {
         super.deserializeNBT(compoundTag);
-        this.enemies = new IntArrayList(compoundTag.getIntArray("enemies"));
         this.currentWave = compoundTag.getInt("currentWave");
         this.totalWaves = compoundTag.getInt("totalWaves");
         this.totalEnemy = compoundTag.getInt("totalEnemy");
@@ -149,13 +142,14 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
             this.originalPos = Vec3.CODEC.decode(NbtOps.INSTANCE, compoundTag.getCompound("originalPos")).getOrThrow().getFirst();
         }
 
-        compoundTag.getList("enemies", Tag.TAG_INT).forEach(id -> enemies.add(((IntTag)id).getAsInt()));
+        compoundTag.getList("enemies", Tag.TAG_STRING).forEach(uid -> {
+            enemies.add(UUID.fromString(uid.getAsString()));
+        });
     }
 
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compoundTag = super.serializeNBT();
-        compoundTag.put("enemies",new IntArrayTag(enemies));
         compoundTag.put("currentWave",IntTag.valueOf(currentWave));
         compoundTag.put("totalWaves",IntTag.valueOf(totalWaves));
         compoundTag.put("totalEnemy",IntTag.valueOf(totalEnemy));
@@ -165,9 +159,10 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         }
 
         ListTag enemiesListTag = new ListTag();
-        enemies.forEach(id -> enemiesListTag.add(IntTag.valueOf(id)));
+        enemies.forEach(uid -> {
+            enemiesListTag.add(StringTag.valueOf(uid.toString()));
+        });
         compoundTag.put("enemies",enemiesListTag);
-
         return compoundTag;
     }
 
@@ -183,24 +178,24 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
     }
 
     protected void updateWave() {
+        if (level.isClientSide){
+            return;
+        }
+        ServerLevel serverLevel = (ServerLevel) level;
         if (enemies.isEmpty() && state == MomentState.ONGOING){
             moment().flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .map(entitySpawnSettings -> entitySpawnSettings.spawnList(level, currentWave))
                     .ifPresent(entities -> entities.forEach(entity -> {
-                        enemies.add(entity.getId());
+                        enemies.add(entity.getUUID());
                         entity.setGlowingTag(true);
                         spawnEntity(entity);
                         totalEnemy++;
                     }));
         }
-        enemies.removeIf(id -> {
-            //TODO :: 可能不是正确的解决办法
-            if (level.isClientSide){
-                return false;
 
-            }
-            Entity entity = level.getEntity(id);
+        enemies.removeIf(uid -> {
+            Entity entity = serverLevel.getEntity(uid);
             updateBarProgress(enemies.size() / (float) totalEnemy);
             return entity == null;
         });

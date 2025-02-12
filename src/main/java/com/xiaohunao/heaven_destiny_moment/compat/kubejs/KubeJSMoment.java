@@ -12,7 +12,6 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -204,8 +203,8 @@ public class KubeJSMoment extends Moment<KubeJSMoment> {
         }
 
         @Override
-        public boolean canCreate(Map<UUID, MomentInstance<?>> runMoments, ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
-            return executeCallback("canCreate", new CreateParams(runMoments, serverLevel, pos, player), () -> super.canCreate(runMoments, serverLevel, pos, player));
+        public boolean canCreate(Map<UUID, MomentInstance<?>> runMoments, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
+            return executeCallback("canCreate", new CreateParams(runMoments, level, pos, player), () -> super.canCreate(runMoments, level, pos, player));
         }
 
         @Override
@@ -219,6 +218,6 @@ public class KubeJSMoment extends Moment<KubeJSMoment> {
         R execute(KubeJSMoment.KubeJSMomentInstance instance, T param);
     }
 
-    public record CreateParams(Map<UUID, MomentInstance<?>> runMoments, ServerLevel serverLevel, BlockPos pos, ServerPlayer player) {}
+    public record CreateParams(Map<UUID, MomentInstance<?>> runMoments, Level level, BlockPos pos, ServerPlayer player) {}
     public record SpawnParams(Level level, Entity entity, BlockPos pos) {}
 }

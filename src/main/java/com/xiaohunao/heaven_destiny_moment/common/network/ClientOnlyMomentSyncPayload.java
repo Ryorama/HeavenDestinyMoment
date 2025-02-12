@@ -33,10 +33,10 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment,boolean i
                 MomentInstance<?> momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
 
                 if (!isRemove){
-                    momentManager.setClientOnlyMoment(momentInstance);
+                    momentManager.setClientMomentInstance(momentInstance);
                 }else {
                     if (momentInstance.isClientOnlyMoment()) {
-                        momentManager.setClientOnlyMoment(null);
+                        momentManager.setClientMomentInstance(null);
                     }
                 }
             }

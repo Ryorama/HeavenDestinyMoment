@@ -9,9 +9,6 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-
-import java.util.Objects;
 
 public class EffectReward extends Reward {
     public static final MapCodec<EffectReward> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(

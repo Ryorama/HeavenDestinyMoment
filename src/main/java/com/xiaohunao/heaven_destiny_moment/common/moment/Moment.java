@@ -85,7 +85,7 @@ public abstract class Moment<T extends Moment<?>> implements IMoment {
         return this;
     }
 
-    public boolean isClientOnlyMoment(){
+    public boolean isClientMomentInstanceOccupied(){
         return clientSettings.map(ClientSettings::isPresent).orElse(false);
     }
 }

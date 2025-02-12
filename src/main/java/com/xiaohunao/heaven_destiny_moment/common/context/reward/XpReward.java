@@ -9,8 +9,6 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.Objects;
-
 public class XpReward extends Reward {
     public static final MapCodec<XpReward> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             CallbackSerializable.CODEC.fieldOf("rewardCallback").forGetter(XpReward::getRewardCallback),

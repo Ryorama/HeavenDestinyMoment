@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.compat.kubejs.builder;
 
 
-
 import com.xiaohunao.heaven_destiny_moment.common.callback.CallbackSerializable;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentType;
@@ -10,7 +9,6 @@ import dev.latvian.mods.kubejs.registry.BuilderBase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -133,7 +131,7 @@ public class MomentTypeKubeJSBuilder extends BuilderBase<MomentType<?>> {
     public MomentTypeKubeJSBuilder setCanCreate(CanCreateCallback handler) {
         callbacks.put("canCreate", (instance, param) -> {
             KubeJSMoment.CreateParams params = (KubeJSMoment.CreateParams) param;
-            return handler.canCreate(instance, params.runMoments(), params.serverLevel(), params.pos(), params.player());
+            return handler.canCreate(instance, params.runMoments(), params.level(), params.pos(), params.player());
         });
         return this;
     }
@@ -149,7 +147,7 @@ public class MomentTypeKubeJSBuilder extends BuilderBase<MomentType<?>> {
     @FunctionalInterface
     public interface CanCreateCallback extends CallbackSerializable{
         boolean canCreate(KubeJSMoment.KubeJSMomentInstance instance, Map<UUID, MomentInstance<?>> runMoments,
-                          ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer player);
+                          Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player);
     }
 
     @FunctionalInterface

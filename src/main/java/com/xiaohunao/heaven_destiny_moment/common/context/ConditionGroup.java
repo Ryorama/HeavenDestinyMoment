@@ -5,6 +5,10 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +29,12 @@ public record ConditionGroup(
             Codec.list(ICondition.CODEC).optionalFieldOf("lose").forGetter(ConditionGroup::lose),
             Codec.list(ICondition.CODEC).optionalFieldOf("end").forGetter(ConditionGroup::end)
     ).apply(instance, ConditionGroup::new));
+
+    public boolean matchCreate(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        return create.map(pair -> pair.getSecond().stream()
+                .allMatch(condition -> condition.matches(instance, pos, serverPlayer)))
+                .orElse(true);
+    }
 
 
     public static class Builder {

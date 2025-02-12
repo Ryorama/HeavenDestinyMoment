@@ -3,7 +3,6 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
-import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
@@ -13,7 +12,6 @@ import com.xiaohunao.heaven_destiny_moment.common.event.PlayerMomentAreaEvent;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import net.minecraft.core.BlockPos;
@@ -35,7 +33,6 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHolder {
@@ -80,29 +77,6 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         return this.momentManager;
     }
 
-    public static MomentInstance<?> create(ResourceKey<Moment<?>> momentKey, ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance<?>> modifier) {
-        return Optional.of(serverLevel.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT))
-                .map(registry -> registry.get(momentKey))
-                .map(moment -> moment.newMomentInstance(serverLevel, momentKey))
-                .map(instance -> {
-                    Optional.ofNullable(modifier).ifPresent(m -> m.accept(instance));
-                    return MomentManager.of(serverLevel).addMoment(instance, serverLevel, pos, serverPlayer);
-                })
-                .orElse(null);
-    }
-
-    public static MomentInstance<?> create(ResourceKey<Moment<?>> momentKey, ServerLevel serverLevel, BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return create(momentKey, serverLevel, pos, serverPlayer, null);
-    }
-
-    public static Registry<Moment<?>> registryChecked(ResourceKey<Moment<?>> momentKey, Level level) {
-        Registry<Moment<?>> registry = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-        if (registry.getHolder(momentKey).isEmpty()) {
-            HeavenDestinyMoment.LOGGER.error("Moment {} not found in registry", momentKey.location());
-            return null;
-        }
-        return registry;
-    }
 
     /**
      * 检查是否为指定类型的时刻
@@ -411,9 +385,6 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     public MomentEvent setState(MomentState state) {
         this.state = state;
-        if (level instanceof ServerLevel serverLevel) {
-            getMomentManager().sync(this,serverLevel);
-        }
         moment().flatMap(Moment::tipSettings).ifPresent(tip -> tip.playTooltip(this));
         return NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, state));
     }
@@ -445,14 +416,11 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         newPlayers.stream()
                 .filter(player -> !oldPlayers.contains(player))
                 .forEach(player1 -> {
-                    if (getMomentManager().addPlayerToMoment(player1, this)) {
+                    if (getMomentManager().addPlayerToInstance(player1, this)) {
                         players.add(player1);
                         playerUUIDs.add(player1.getUUID());
                         if (this.bar != null) {
                             this.bar.addPlayer(player1);
-                            if (!level.isClientSide) {
-                                getMomentManager().sync(this, (ServerLevel) level);
-                            }
                         }
                     }
                 });
@@ -464,9 +432,6 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
                         playerUUIDs.add(player1.getUUID());
                         if (this.bar != null) {
                             this.bar.removePlayer(player1);
-                            if (!level.isClientSide) {
-                                getMomentManager().sync(this, (ServerLevel) level);
-                            }
                         }
                     }
                 });
@@ -524,7 +489,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     }
 
-    public boolean canCreate(Map<UUID, MomentInstance<?>> runMoments, ServerLevel serverLevel, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
+    public boolean canCreate(Map<UUID, MomentInstance<?>> runMoments, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
         return true;
     }
 
@@ -538,7 +503,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     public boolean isClientOnlyMoment() {
-        return moment().map(Moment::isClientOnlyMoment).orElse(false);
+        return moment().map(Moment::isClientMomentInstanceOccupied).orElse(false);
     }
 
     public boolean canSpawnEntity(Level level, Entity entity, BlockPos pos) {
@@ -547,6 +512,10 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     public void setEntityTagMark(Entity entity) {
         entity.setData(HDMAttachments.MOMENT_ENTITY, entity.getData(HDMAttachments.MOMENT_ENTITY).setUid(this.uuid));
+    }
+
+    public ResourceKey<Moment<?>> getResourceKey() {
+        return momentKey;
     }
 
     public void setSpawnPos(Entity entity) {

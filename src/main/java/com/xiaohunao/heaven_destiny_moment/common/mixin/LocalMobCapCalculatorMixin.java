@@ -39,7 +39,7 @@ public abstract class LocalMobCapCalculatorMixin {
 
         for(ServerPlayer serverplayer : serverPlayers) {
             LocalMobCapCalculator.MobCounts localmobcapcalculator$mobcounts = this.playerMobCounts.get(serverplayer);
-            for (MomentInstance<?> instance : momentManager.getImmutableRunMoments().values()) {
+            for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
                 Boolean aBoolean = instance.moment()
                         .filter(moment -> moment.isInArea((ServerLevel) serverplayer.level(), serverplayer.blockPosition()))
                         .flatMap(Moment::momentData)

@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin;
 import com.google.common.collect.Maps;
 import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierInstance;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierInstanceMixed;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManagerSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobCategory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,6 +24,8 @@ public class ServerLevelMixin implements SpawnCategoryMultiplierInstanceMixed {
         for (MobCategory value : MobCategory.values()) {
             heaven_destiny_moment$mobCategoryMultiplierInstance.put(value,new SpawnCategoryMultiplierInstance(value));
         }
+
+        MomentManagerSavedData.init((ServerLevel)(Object)this);
     }
 
     @Override

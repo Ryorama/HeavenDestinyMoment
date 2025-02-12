@@ -28,7 +28,7 @@ public abstract class LevelRendererMixin {
     private float renderSky(float originalSize) {
         MomentManager momentManager = MomentManager.of(level);
 
-        Float moonSize = momentManager.getClientOnlyMoment()
+        Float moonSize = momentManager.getClientMomentInstance()
                 .flatMap(MomentInstance::moment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
@@ -44,7 +44,7 @@ public abstract class LevelRendererMixin {
     private void renderSky(int moonTextureId, ResourceLocation originaResourceLocation) {
         MomentManager momentManager = MomentManager.of(level);
 
-        ResourceLocation moonTexture = momentManager.getClientOnlyMoment()
+        ResourceLocation moonTexture = momentManager.getClientMomentInstance()
                 .flatMap(MomentInstance::moment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
@@ -57,7 +57,7 @@ public abstract class LevelRendererMixin {
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getMoonPhase()I"))
     private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) {
         MomentManager momentManager = MomentManager.of(level);
-        Integer moonColor = momentManager.getClientOnlyMoment()
+        Integer moonColor = momentManager.getClientMomentInstance()
                 .flatMap(MomentInstance::moment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
