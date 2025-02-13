@@ -43,7 +43,7 @@ public class MobTeamTracker extends Tracker{
             return;
         }
 
-        if (hurtEntity.level() instanceof ServerLevel && attackEntity != null && attackEntity != hurtEntity) {
+        if (hurtEntity.level() instanceof ServerLevel && attackEntity != hurtEntity) {
             if (hurtEntity.hasData(HDMAttachments.MOMENT_ENTITY) && attackEntity.hasData(HDMAttachments.MOMENT_ENTITY)) {
                 MomentEntityAttachment hurtEntityTeam = hurtEntity.getData(HDMAttachments.MOMENT_ENTITY);
                 MomentEntityAttachment attackEntityTeam = attackEntity.getData(HDMAttachments.MOMENT_ENTITY);
