@@ -1,5 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.compat.kubejs;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.render.IBarRenderType;
@@ -9,6 +10,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
@@ -20,10 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -34,12 +33,13 @@ public class KubeJSMoment extends Moment<KubeJSMoment> {
             Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
             MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
             TipSettings.CODEC.optionalFieldOf("tips").forGetter(Moment::tipSettings),
-            ClientSettings.CODEC.optionalFieldOf("clientSettings").forGetter(Moment::clientSettings)
+            ClientSettings.CODEC.optionalFieldOf("clientSettings").forGetter(Moment::clientSettings),
+            Codec.list(ITracker.CODEC).optionalFieldOf("trackers").forGetter(Moment::trackers)
     ).apply(instance, KubeJSMoment::new));
 
     public KubeJSMoment(Optional<IBarRenderType> renderType, Optional<Area> area, Optional<MomentData> momentData, 
-                       Optional<TipSettings> tipSettings, Optional<ClientSettings> clientSettings) {
-        super(renderType, area, momentData, tipSettings, clientSettings);
+                       Optional<TipSettings> tipSettings, Optional<ClientSettings> clientSettings,Optional<List<ITracker>> trackers) {
+        super(renderType, area, momentData, tipSettings, clientSettings,trackers);
     }
 
     @Override

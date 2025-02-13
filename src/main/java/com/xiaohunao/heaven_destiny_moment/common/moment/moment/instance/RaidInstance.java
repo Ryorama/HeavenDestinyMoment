@@ -70,44 +70,7 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
 
     @Override
     public void finalizeSpawn(Entity entity) {
-        addRaidTeam(entity);
         attackRandomPlayer(entity);
-    }
-
-    @Override
-    public void end() {
-        if (!level.isClientSide) {
-            ServerScoreboard scoreboard = ((ServerLevel)level).getServer().getScoreboard();
-            String teamName = getTeamName();
-            PlayerTeam playerTeam = scoreboard.getPlayerTeam(teamName);
-            if (playerTeam != null) {
-                scoreboard.removePlayerTeam(playerTeam);
-            }
-        }
-    }
-
-    private void addRaidTeam(Entity entity){
-        if(!level.isClientSide) {
-            String teamName = getTeamName();
-            ServerScoreboard scoreboard = ((ServerLevel)level).getServer().getScoreboard();
-            PlayerTeam playerTeam = scoreboard.getPlayerTeam(teamName);
-            if (playerTeam == null){
-                PlayerTeam team = scoreboard.addPlayerTeam(teamName);
-                team.setColor(ChatFormatting.RED);
-                team.setDisplayName(Component.translatable(HeavenDestinyMoment.asDescriptionId("team." + teamName)));
-                team.setAllowFriendlyFire(false);
-                scoreboard.addPlayerToTeam(entity.getScoreboardName(), team);
-            }else {
-                scoreboard.addPlayerToTeam(entity.getScoreboardName(), playerTeam);
-            }
-        }
-    }
-
-
-
-
-    private String getTeamName() {
-        return momentKey.location().toLanguageKey() + uuid;
     }
 
 
@@ -242,13 +205,8 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         });
     }
 
-    public int getReadyTime() {
-        return readyTime;
-    }
-
-    public RaidInstance setOriginalPos(Vec3 originalPos) {
+    public void setOriginalPos(Vec3 originalPos) {
         this.originalPos = originalPos;
-        return this;
     }
 
     private void attackRandomPlayer(Entity entity) {

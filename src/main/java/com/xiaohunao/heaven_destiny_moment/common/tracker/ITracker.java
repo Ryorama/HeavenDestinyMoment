@@ -1,0 +1,19 @@
+package com.xiaohunao.heaven_destiny_moment.common.tracker;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.xiaohunao.heaven_destiny_moment.common.context.attachable.IAttachable;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
+import net.minecraft.world.entity.LivingEntity;
+
+import java.util.function.Function;
+
+public interface ITracker {
+    Codec<ITracker> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.TRACKER_CODEC.get().byNameCodec()).dispatch(ITracker::codec, Function.identity());
+
+    void register();
+
+    void unregister();
+
+    MapCodec<? extends ITracker> codec();
+}

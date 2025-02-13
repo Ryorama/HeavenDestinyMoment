@@ -12,9 +12,11 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.RaidInstance;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import java.util.List;
 import java.util.Optional;
 
 public class RaidMoment extends Moment<RaidMoment> {
@@ -24,6 +26,7 @@ public class RaidMoment extends Moment<RaidMoment> {
             MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
             TipSettings.CODEC.optionalFieldOf("tips").forGetter(Moment::tipSettings),
             ClientSettings.CODEC.optionalFieldOf("clientSettings").forGetter(Moment::clientSettings),
+            Codec.list(ITracker.CODEC).optionalFieldOf("trackers").forGetter(Moment::trackers),
             Codec.INT.optionalFieldOf("readyTime",100).forGetter(RaidMoment::readyTime)
     ).apply(instance, RaidMoment::new));
 
@@ -35,9 +38,9 @@ public class RaidMoment extends Moment<RaidMoment> {
     }
 
     public RaidMoment(Optional<IBarRenderType> renderType, Optional<Area> area, Optional<MomentData> momentDataContext,
-                      Optional<TipSettings> tipSettingsContext, Optional<ClientSettings> clientSettings,
+                      Optional<TipSettings> tipSettingsContext, Optional<ClientSettings> clientSettings,Optional<List<ITracker>> trackers,
                       int readyTime) {
-        super(renderType, area, momentDataContext, tipSettingsContext, clientSettings);
+        super(renderType, area, momentDataContext, tipSettingsContext, clientSettings,trackers);
         this.readyTime = readyTime;
     }
 

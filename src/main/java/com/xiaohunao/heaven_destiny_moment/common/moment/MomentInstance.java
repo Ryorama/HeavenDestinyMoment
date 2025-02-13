@@ -14,6 +14,7 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
@@ -505,6 +506,15 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     public boolean isClientOnlyMoment() {
         return moment().map(Moment::isClientMomentInstanceOccupied).orElse(false);
     }
+
+    public void registerTracker(){
+        moment().flatMap(Moment::trackers).ifPresent(trackers -> trackers.forEach(ITracker::register));
+    }
+
+    public void unregisterTracker(){
+        moment().flatMap(Moment::trackers).ifPresent(trackers -> trackers.forEach(ITracker::unregister));
+    }
+
 
     public boolean canSpawnEntity(Level level, Entity entity, BlockPos pos) {
         return true;

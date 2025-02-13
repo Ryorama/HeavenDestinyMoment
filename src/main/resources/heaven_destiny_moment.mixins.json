@@ -6,6 +6,7 @@
   "refmap": "heaven_destiny_moment.refmap.json",
   "mixins": [
     "LevelMixin",
+    "LivingEntityMixin",
     "LocalMobCapCalculatorMixin",
     "MonsterMixin",
     "NaturalSpawnerMixin",

@@ -27,6 +27,9 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.LocationArea;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.MobTeamTracker;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -41,6 +44,7 @@ public class HDMContextRegister {
     public static final DeferredRegister<MapCodec<? extends IEquippableSlot>> EQUIPPABLE_SLOT_CODEC = DeferredRegister.create(HDMRegistries.Keys.EQUIPPABLE_SLOT_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends IAttachable>> ATTACHABLE_CODEC = DeferredRegister.create(HDMRegistries.Keys.ATTACHABLE_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends ISpawnAlgorithm>> SPAWN_ALGORITHM_CODEC = DeferredRegister.create(HDMRegistries.Keys.SPAWN_ALGORITHM_CODEC, HeavenDestinyMoment.MODID);
+    public static final DeferredRegister<MapCodec<? extends ITracker>> TRACKER_CODEC = DeferredRegister.create(HDMRegistries.Keys.TRACKER_CODEC, HeavenDestinyMoment.MODID);
 
 
     public static final DeferredHolder<MapCodec<? extends IBarRenderType>, MapCodec<? extends IBarRenderType>> DEFAULT_BAR_RENDER_TYPE = BAR_RENDER_TYPE_CODEC.register("default", () -> DefaultBarRenderType.CODEC);
@@ -83,6 +87,10 @@ public class HDMContextRegister {
     public static final DeferredHolder<MapCodec<? extends ISpawnAlgorithm>, MapCodec<? extends ISpawnAlgorithm>> OPEN_AREA_SPAWN_ALGORITHM = SPAWN_ALGORITHM_CODEC.register("open_area", () -> OpenAreaSpawnAlgorithm.CODEC);
 
 
+    public static final DeferredHolder<MapCodec<? extends ITracker>, MapCodec<? extends ITracker>> DEFAULT_TRACKER = TRACKER_CODEC.register("tracker", () -> Tracker.CODEC);
+    public static final DeferredHolder<MapCodec<? extends ITracker>, MapCodec<? extends ITracker>> MOB_TEAM_TRACKER = TRACKER_CODEC.register("mob_team_tracker", () -> MobTeamTracker.CODEC);
+
+
     public static void register(IEventBus modEventBus) {
         BAR_RENDER_TYPE_CODEC.register(modEventBus);
         AMOUNT_CODEC.register(modEventBus);
@@ -93,5 +101,6 @@ public class HDMContextRegister {
         ATTACHABLE_CODEC.register(modEventBus);
         SPAWN_ALGORITHM_CODEC.register(modEventBus);
         EQUIPPABLE_SLOT_CODEC.register(modEventBus);
+        TRACKER_CODEC.register(modEventBus);
     }
 }

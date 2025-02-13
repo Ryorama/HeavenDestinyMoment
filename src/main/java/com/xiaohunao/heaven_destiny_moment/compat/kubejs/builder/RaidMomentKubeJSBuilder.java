@@ -13,7 +13,7 @@ public class RaidMomentKubeJSBuilder extends MomentKubeJSBuilder{
 
     @Override
     public Moment<?> createObject() {
-        return new RaidMoment(barRenderType, area, momentData, tipSettings, clientSettings,readyTime);
+        return new RaidMoment(barRenderType, area, momentData, tipSettings, clientSettings,trackers,readyTime);
     }
 
     public RaidMomentKubeJSBuilder readyTime(int readyTime) {

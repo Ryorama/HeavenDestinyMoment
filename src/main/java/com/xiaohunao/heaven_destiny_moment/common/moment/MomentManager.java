@@ -62,6 +62,7 @@ public class MomentManager {
             ListTag momentListTag = compoundTag.getList("runMoments", 10);
             momentListTag.forEach(momentTag -> {
                 Optional.ofNullable(MomentInstance.loadStatic(level,(CompoundTag) momentTag)).ifPresent(momentInstance -> {
+                    momentInstance.registerTracker();
                     addMomentInstance(momentInstance, true);
                 });
 
@@ -89,6 +90,7 @@ public class MomentManager {
         runMoments.values().forEach(instance -> {
             if (instance.state == MomentState.END) {
                 instance.end();
+                instance.unregisterTracker();
                 removeMomentInstance(instance, true);
             }
             instance.baseTick();
@@ -145,6 +147,7 @@ public class MomentManager {
 
                     if (canCreate && conditionMatch) {
                         instance.init();
+                        instance.registerTracker();
                         addMomentInstance(instance, true);
                         return instance;
                     }

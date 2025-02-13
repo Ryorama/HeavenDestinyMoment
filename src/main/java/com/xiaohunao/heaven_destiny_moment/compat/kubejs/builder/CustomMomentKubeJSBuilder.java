@@ -11,6 +11,6 @@ public class CustomMomentKubeJSBuilder extends MomentKubeJSBuilder{
 
     @Override
     public Moment<?> createObject() {
-        return new KubeJSMoment(barRenderType, area, momentData, tipSettings, clientSettings);
+        return new KubeJSMoment(barRenderType, area, momentData, tipSettings, clientSettings,trackers);
     }
 }

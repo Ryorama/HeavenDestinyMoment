@@ -13,6 +13,8 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentType;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -26,6 +28,7 @@ import java.util.function.Supplier;
 public class HDMRegistries {
     public static final Registry<MomentType<?>> MOMENT_TYPE = new RegistryBuilder<>(Keys.MOMENT_TYPE).create();
 
+    public static final Registry<MapCodec<? extends ITracker>> TRACKER_CODEC = new RegistryBuilder<>(Keys.TRACKER_CODEC).create();
     public static final Registry<MapCodec<? extends IBarRenderType>> BAR_RENDER_TYPE_CODEC = new RegistryBuilder<>(Keys.BAR_RENDER_TYPE_CODEC).create();
     public static final Registry<MapCodec<? extends Area>> AREA_CODEC = new RegistryBuilder<>(Keys.AREA_CODEC).create();
     public static final Registry<MapCodec<? extends Moment<?>>> MOMENT_CODEC = new RegistryBuilder<>(Keys.MOMENT_CODEC).create();
@@ -39,6 +42,7 @@ public class HDMRegistries {
 
     public static final class Keys {
         public static final ResourceKey<Registry<MomentType<?>>> MOMENT_TYPE = HeavenDestinyMoment.asResourceKey("moment_type");
+        public static final ResourceKey<Registry<MapCodec<? extends ITracker>>> TRACKER_CODEC = HeavenDestinyMoment.asResourceKey("tracker");
 
         public static final ResourceKey<Registry<MapCodec<? extends IBarRenderType>>> BAR_RENDER_TYPE_CODEC = HeavenDestinyMoment.asResourceKey("bar_render_type_codec");
         public static final ResourceKey<Registry<MapCodec<? extends Area>>> AREA_CODEC = HeavenDestinyMoment.asResourceKey("area_codec");
@@ -67,11 +71,13 @@ public class HDMRegistries {
         public static final Supplier<Registry<MapCodec<? extends IAttachable>>> ATTACHABLE_CODEC = supplyRegistry(Keys.ATTACHABLE_CODEC);
         public static final Supplier<Registry<MapCodec<? extends IEquippableSlot>>> EQUIPPABLE_SLOT_CODEC = supplyRegistry(Keys.EQUIPPABLE_SLOT_CODEC);
         public static final Supplier<Registry<MapCodec<? extends ISpawnAlgorithm>>> SPAWN_ALGORITHM_CODEC = supplyRegistry(Keys.SPAWN_ALGORITHM_CODEC);
+        public static final Supplier<Registry<MapCodec<? extends ITracker>>> TRACKER_CODEC = supplyRegistry(Keys.TRACKER_CODEC);
     }
 
 
     public static void registerRegistries(NewRegistryEvent event) {
         event.register(MOMENT_TYPE);
+        event.register(TRACKER_CODEC);
 
         event.register(BAR_RENDER_TYPE_CODEC);
         event.register(AREA_CODEC);
