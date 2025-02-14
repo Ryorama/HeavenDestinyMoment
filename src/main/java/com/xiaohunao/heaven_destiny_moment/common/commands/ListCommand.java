@@ -2,68 +2,59 @@ package com.xiaohunao.heaven_destiny_moment.common.commands;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
-import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.core.Registry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.ChatFormatting;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 public class ListCommand {
-    public static LiteralArgumentBuilder<CommandSourceStack> register(){
+    public static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("list")
-                .executes(ctx -> {
-                    var source = ctx.getSource();
-                    var manager = MomentManager.of(source.getLevel());
-                    var moments = manager.getMomentInstances();
-                    return list(ctx, moments);
-                })
+                .executes(ListCommand::listAll)
                 .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> {
-                            var source = ctx.getSource();
-                            var manager = MomentManager.of(source.getLevel());
-                            var player = EntityArgument.getPlayer(ctx, "player");
-                            var moments = manager.getPlayerMoments(player);
-                            return list(ctx, moments);
-                        }));
+                        .executes(ListCommand::listPlayer));
     }
 
-    private static int list(CommandContext<CommandSourceStack> ctx, Collection<MomentInstance<?>> momentInstances) {
+    private static int listAll(CommandContext<CommandSourceStack> ctx) {
+        var source = ctx.getSource();
+        var manager = MomentManager.of(source.getLevel());
+        return list(ctx, manager.getMomentInstances(), null);
+    }
+
+    private static int listPlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        var manager = MomentManager.of(source.getLevel());
+        var player = EntityArgument.getPlayer(ctx, "player");
+        return list(ctx, manager.getPlayerMoments(player), player);
+    }
+
+    private static int list(CommandContext<CommandSourceStack> ctx, Collection<MomentInstance<?>> moments, @Nullable ServerPlayer player) {
         var source = ctx.getSource();
         ServerLevel level = source.getLevel();
-        if (momentInstances.isEmpty()) {
+        
+        if (moments.isEmpty()) {
             source.sendFailure(Component.translatable("commands.moment.list.empty"));
             return 0;
         }
 
-        try {
-            var player = EntityArgument.getPlayer(ctx, "player");
+        if (player != null) {
             source.sendSuccess(() -> Component.translatable("commands.moment.list.player_header", 
-                    player.getDisplayName(), momentInstances.size()), false);
-        } catch (Exception e) {
-            source.sendSuccess(() -> Component.translatable("commands.moment.list.header", momentInstances.size()), false);
+                    player.getDisplayName(), moments.size()), false);
+        } else {
+            source.sendSuccess(() -> Component.translatable("commands.moment.list.header", moments.size()), false);
         }
 
-        for (var momentInstance : momentInstances) {
-            Registry<Moment<?>> momentRegistry = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-
-            MutableComponent message = Component.literal("- ")
-                    .append(Component.translatable(momentRegistry.getKey(momentInstance.moment().get()).toLanguageKey()))
-                    .append(" (")
-                    .append(Component.literal(momentInstance.getID().toString()).withStyle(ChatFormatting.GRAY))
-                    .append(")");
-            source.sendSuccess(() -> message, false);
-        }
+        moments.forEach(moment -> 
+            source.sendSuccess(() -> MomentCommand.formatMomentInfo(moment, level), false)
+        );
         
-        return momentInstances.size();
+        return moments.size();
     }
 }
