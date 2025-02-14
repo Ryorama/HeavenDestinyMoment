@@ -237,4 +237,8 @@ public class MomentManager {
 
         ((ClientMomentInstanceMixed) level).heaven_destiny_moment$setClientMomentInstance(momentInstance);
     }
+
+    public Collection<MomentInstance<?>> getPlayerMoments(ServerPlayer player) {
+        return playerMoments.get(player.getUUID());
+    }
 }

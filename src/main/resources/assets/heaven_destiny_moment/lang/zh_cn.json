@@ -1,0 +1,22 @@
+{
+  "commands.moment.list.empty": "当前没有运行中的时刻",
+  "commands.moment.list.header": "共有 %d 个运行中的时刻：",
+  "commands.moment.list.player_header": "%s 正在参加的 %d 个运行中的时刻：",
+  "moment.unknown": "未知时刻",
+  "commands.moment.remove.invalid_uuid": "无效的UUID格式",
+  "commands.moment.remove.not_found": "找不到指定UUID的时刻",
+  "commands.moment.remove.success": "成功删除UUID为 %s 的时刻",
+  "commands.moment.query.invalid_uuid": "无效的UUID格式",
+  "commands.moment.query.not_found": "找不到指定UUID的时刻",
+  "commands.moment.query.info": "时刻信息：%s (UUID: %s)",
+  "commands.moment.query.players.empty": "当前没有玩家参与此时刻",
+  "commands.moment.query.players.header": "共有 %d 个玩家参与此时刻：",
+  "commands.moment.query.persistent_data": "持久化数据：%s",
+  "commands.moment.query.state": "当前状态：%s",
+  "commands.moment.query.persistent_data.empty": "该时刻没有持久化数据",
+  "commands.moment.query.persistent_data.header": "持久化数据：",
+  "commands.moment.query.field": "字段 %s 的值：%s",
+  "commands.moment.query.field.not_found": "找不到字段：%s",
+  "commands.moment.query.field.access_denied": "无法访问字段：%s",
+  "commands.moment.query.collection.header": "%s 列表 (共 %d 个)："
+} 

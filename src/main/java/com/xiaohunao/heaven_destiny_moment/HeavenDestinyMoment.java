@@ -1,12 +1,15 @@
 package com.xiaohunao.heaven_destiny_moment;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.logging.LogUtils;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
+import com.xiaohunao.heaven_destiny_moment.common.commands.MomentCommand;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.compat.LoadedCompat;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -19,6 +22,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.slf4j.Logger;
 
 @Mod(HeavenDestinyMoment.MODID)
@@ -35,6 +40,7 @@ public class HeavenDestinyMoment {
         modEventBus.addListener(HDMRegistries::registerRegistries);
         modEventBus.addListener(HDMRegistries::registerDataPackRegistries);
         modEventBus.addListener(this::onFMLCommonSetup);
+        NeoForge.EVENT_BUS.addListener(this::registerCommands);
     }
 
     public static ResourceLocation asResource(String path) {
@@ -59,15 +65,13 @@ public class HeavenDestinyMoment {
         return ResourceKey.createRegistryKey(HeavenDestinyMoment.asResource(path));
     }
 
+    public void registerCommands(RegisterCommandsEvent event) {
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+        MomentCommand.register(dispatcher);
+    }
+
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            event.enqueueWork(() -> {
-
-            });
-        }
-
         @SubscribeEvent
         public static void registerOverlay(RegisterGuiLayersEvent event) {
             event.registerAboveAll(HeavenDestinyMoment.asResource("moment_bar"), new MomentBarOverlay());

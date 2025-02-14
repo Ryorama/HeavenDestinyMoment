@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.AutoProbabilityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,8 +33,9 @@ public record ConditionGroup(
 
     public boolean matchCreate(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return create.map(pair -> pair.getSecond().stream()
-                .allMatch(condition -> condition.matches(instance, pos, serverPlayer)))
-                .orElse(true);
+                        .filter(condition -> !(condition instanceof AutoProbabilityCondition))
+                        .allMatch(condition -> condition.matches(instance, pos, serverPlayer)))
+                        .orElse(true);
     }
 
 
