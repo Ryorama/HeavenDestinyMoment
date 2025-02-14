@@ -179,7 +179,7 @@ public class NaturalSpawnerMixin {
         MomentManager momentManager = MomentManager.of(serverLevel.getLevel());
         for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
             if (instance.canSpawnEntity(serverLevel,mob,pos)) {
-                instance.setEntityTagMark(mob);
+                instance.addEnemy(mob);
             }else {
                 ci.cancel();
             }

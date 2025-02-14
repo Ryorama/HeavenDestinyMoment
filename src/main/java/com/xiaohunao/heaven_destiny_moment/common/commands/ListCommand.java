@@ -46,12 +46,10 @@ public class ListCommand {
         }
 
         try {
-            // 尝试获取玩家参数，如果存在则使用玩家header
             var player = EntityArgument.getPlayer(ctx, "player");
             source.sendSuccess(() -> Component.translatable("commands.moment.list.player_header", 
                     player.getDisplayName(), momentInstances.size()), false);
         } catch (Exception e) {
-            // 如果获取玩家参数失败，说明是查看所有时刻，使用普通header
             source.sendSuccess(() -> Component.translatable("commands.moment.list.header", momentInstances.size()), false);
         }
 

@@ -67,7 +67,7 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
 
     private boolean matchesLevel(ServerPlayer serverplayer) {
         return this.level.map(level -> {
-            if (level().isEmpty()) {
+            if (level().isEmpty() || level().get().isAny()) {
                 return true;
             }
             return level.matches(serverplayer.experienceLevel);
@@ -76,7 +76,7 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
 
     private boolean matchesGameType(ServerPlayer serverplayer) {
         return this.gameType.map(gameMode -> {
-            if (level().isEmpty()) {
+            if (gameType().isEmpty() || gameType().get().isEmpty()) {
                 return true;
             }
             return gameMode.contains(serverplayer.gameMode.getGameModeForPlayer());

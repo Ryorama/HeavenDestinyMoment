@@ -18,6 +18,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.UUID;
 import java.lang.reflect.Field;
@@ -53,21 +56,45 @@ public class QueryCommand {
                         .then(Commands.literal("field")
                                 .then(Commands.argument("fieldName", StringArgumentType.word())
                                         .suggests((context, builder) -> {
-                                            // 提供常用字段名作为建议
                                             String[] suggestions = {
-                                                "persistentData",
-                                                "players",
-                                                "state",
-                                                "uuid",
-                                                "tick",
-                                                "bar"
+                                                    "persistentData",
+                                                    "players",
+                                                    "state",
+                                                    "uuid",
+                                                    "tick",
+                                                    "bar"
                                             };
                                             for (String suggestion : suggestions) {
                                                 builder.suggest(suggestion);
                                             }
                                             return builder.buildFuture();
                                         })
-                                        .executes(QueryCommand::queryField))));
+                                        .executes(QueryCommand::queryField)))
+                        .then(Commands.literal("enemiesManager")
+                                .then(Commands.literal("list")
+                                        .executes(QueryCommand::listEnemies))
+                                .then(Commands.literal("kill")
+                                        .then(Commands.literal("all")
+                                                .executes(QueryCommand::killAllEnemies))
+                                        .then(Commands.argument("enemyUUID", StringArgumentType.string())
+                                                .suggests((context, builder) -> {
+                                                    try {
+                                                        MomentInstance<?> instance = getMomentInstance(context);
+                                                        ServerLevel level = context.getSource().getLevel();
+                                                        instance.getEnemies().forEach(uuid -> {
+                                                            Entity entity = level.getEntity(uuid);
+                                                            if (entity != null) {
+                                                                builder.suggest(uuid.toString(), 
+                                                                    Component.literal(entity.getName().getString())
+                                                                        .withStyle(ChatFormatting.GRAY));
+                                                            }
+                                                        });
+                                                    } catch (CommandSyntaxException e) {
+                                                        // 忽略异常
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
+                                                .executes(QueryCommand::killEnemy)))));
     }
 
     private static MomentInstance<?> getMomentInstance(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
@@ -177,6 +204,95 @@ public class QueryCommand {
             return player.getDisplayName();
         } else {
             return formatValue(item);
+        }
+    }
+
+    private static int listEnemies(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        MomentInstance<?> instance = getMomentInstance(ctx);
+        ServerLevel level = source.getLevel();
+
+        if (instance.getEnemies().isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.moment.query.enemies.empty")
+                    .withStyle(ChatFormatting.YELLOW), false);
+            return 0;
+        }
+
+        source.sendSuccess(() -> Component.translatable("commands.moment.query.enemies.header", 
+                instance.getEnemyCount())
+                .withStyle(ChatFormatting.GREEN), false);
+
+        instance.getEnemies().forEach(uuid -> {
+            Entity entity = level.getEntity(uuid);
+            Component message;
+            if (entity != null) {
+                message = Component.literal("- ")
+                        .append(entity.getName())
+                        .append(" (")
+                        .append(Component.literal(uuid.toString()).withStyle(ChatFormatting.GRAY))
+                        .append(")");
+            } else {
+                message = Component.literal("- ")
+                        .append(Component.literal("Unknown Entity").withStyle(ChatFormatting.RED))
+                        .append(" (")
+                        .append(Component.literal(uuid.toString()).withStyle(ChatFormatting.GRAY))
+                        .append(")");
+            }
+            source.sendSuccess(() -> message, false);
+        });
+
+        return instance.getEnemyCount();
+    }
+
+    private static int killAllEnemies(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        MomentInstance<?> instance = getMomentInstance(ctx);
+        ServerLevel level = source.getLevel();
+
+        if (instance.getEnemies().isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.moment.query.enemies.empty")
+                    .withStyle(ChatFormatting.YELLOW), false);
+            return 0;
+        }
+
+        int count = instance.getEnemyCount();
+        instance.killAllEnemies(level);
+
+        source.sendSuccess(() -> Component.translatable("commands.moment.query.enemies.kill.all", count)
+                .withStyle(ChatFormatting.GREEN), true);
+        return count;
+    }
+
+    private static int killEnemy(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        MomentInstance<?> instance = getMomentInstance(ctx);
+        ServerLevel level = source.getLevel();
+
+        String uuidStr = StringArgumentType.getString(ctx, "enemyUUID");
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(uuidStr);
+        } catch (IllegalArgumentException e) {
+            throw ERROR_INVALID_UUID.create();
+        }
+
+        if (!instance.hasEnemy(uuid)) {
+            throw new SimpleCommandExceptionType(
+                    Component.translatable("commands.moment.query.enemies.not_found", uuidStr))
+                    .create();
+        }
+
+        Entity entity = level.getEntity(uuid);
+        if (entity != null) {
+            entity.kill();
+            instance.removeEnemy(uuid);
+            source.sendSuccess(() -> Component.translatable("commands.moment.query.enemies.kill.single", 
+                    entity.getName()), true);
+            return 1;
+        } else {
+            throw new SimpleCommandExceptionType(
+                    Component.translatable("commands.moment.query.enemies.entity_not_found", uuidStr))
+                    .create();
         }
     }
 } 

@@ -54,6 +54,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     protected Set<UUID> inAreaPlayers = Sets.newHashSet();
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
+    protected final EnemiesManager enemiesManager = new EnemiesManager();
 
     protected MomentInstance(MomentType<?> type, Level level, ResourceKey<Moment<?>> momentKey) {
         this.uuid = UUID.randomUUID();
@@ -79,38 +80,21 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
 
-    /**
-     * 检查是否为指定类型的时刻
-     *
-     * @param key 时刻注册键
-     * @return 是否匹配
-     */
     public boolean is(ResourceKey<Moment<?>> key) {
         return momentKey == key;
     }
 
-    /**
-     * 获取时刻实例
-     *
-     * @return 时刻实例的Optional包装
-     */
     public Optional<T> moment() {
         Registry<Moment<?>> registry = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
         Moment<?> moment = registry.get(momentKey);
         return (Optional<T>) Optional.ofNullable(moment);
     }
 
-    /**
-     * 初始化时刻实例
-     */
     public void init() {
         initMomentBar();
         initSpawnPosList();
     }
 
-    /**
-     * 初始化时刻进度条
-     */
     public void initMomentBar() {
         moment().flatMap(Moment::barRenderType).ifPresent(type ->
                 this.bar = new MomentBar(uuid, type));
@@ -121,18 +105,10 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     }
 
-    /**
-     * 初始化生成点列表
-     */
     public void initSpawnPosList() {
 
     }
 
-    /**
-     * 获取随机生成点
-     *
-     * @return 随机生成点坐标
-     */
     public Vec3 getRandomSpawnPos() {
         if (spawnPosList.isEmpty()) {
             return Vec3.ZERO;
@@ -143,11 +119,6 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
 
-    /**
-     * 更新进度条进度
-     *
-     * @param progress 进度值(0-1)
-     */
     public void updateBarProgress(float progress) {
         if (this.bar != null) {
             this.bar.updateProgress(progress);
@@ -157,13 +128,6 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         }
     }
 
-    /**
-     * 从NBT标签加载时刻实例
-     *
-     * @param level       世界实例
-     * @param compoundTag NBT数据
-     * @return 加载的时刻实例
-     */
     @Nullable
     public static MomentInstance<?> loadStatic(Level level, CompoundTag compoundTag) {
         String id = compoundTag.getString("id");
@@ -175,7 +139,9 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
             return HDMRegistries.MOMENT_TYPE.getOptional(resourcelocation).map(momentType -> {
                 try {
                     Tag tag = compoundTag.get("moment");
-                    return momentType.create(compoundTag.getUUID("uuid"), level, ResourceKey.codec(HDMRegistries.Keys.MOMENT).decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst());
+                    return momentType.create(compoundTag.getUUID("uuid"), level,
+                            ResourceKey.codec(HDMRegistries.Keys.MOMENT).decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()
+                    );
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to create MomentInstance {}", id, throwable);
                     return null;
@@ -214,6 +180,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         spawnPosList.forEach(vec3 -> spawnPosListTag.add(Vec3.CODEC.encodeStart(NbtOps.INSTANCE, vec3).getOrThrow()));
         compoundTag.put("spawnPosList", spawnPosListTag);
 
+        compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
 
         return compoundTag;
     }
@@ -244,6 +211,11 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
         ListTag spawnPosListTag = compoundTag.getList("spawnPosList", Tag.TAG_LIST);
         spawnPosListTag.forEach(tag -> spawnPosList.add(Vec3.CODEC.decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()));
+
+        if (compoundTag.contains("enemies_manager")) {
+            enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
+            enemiesManager.loadStoredEntities(level);
+        }
     }
 
     private void serializeMetaData(CompoundTag compoundTag) {
@@ -543,4 +515,35 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         finalizeSpawn(entity);
         level.addFreshEntity(entity);
     }
+
+    public void killAllEnemies(ServerLevel level){
+        enemiesManager.killAllEnemies(level);
+    }
+
+    public void addEnemy(Entity entity) {
+        enemiesManager.addEnemy(entity);
+        setEntityTagMark(entity);
+        finalizeSpawn(entity);
+    }
+
+    public void removeEnemy(UUID uuid) {
+        enemiesManager.removeEnemy(uuid);
+    }
+
+    public boolean hasEnemy(UUID uuid) {
+        return enemiesManager.hasEnemy(uuid);
+    }
+
+    public boolean hasEnemies() {
+        return !enemiesManager.isEmpty();
+    }
+
+    public int getEnemyCount() {
+        return enemiesManager.size();
+    }
+
+    public Set<UUID> getEnemies() {
+        return enemiesManager.getEnemies();
+    }
+
 }

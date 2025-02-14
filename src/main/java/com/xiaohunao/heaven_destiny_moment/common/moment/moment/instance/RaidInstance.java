@@ -11,6 +11,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.EnemiesManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.nbt.*;
@@ -31,8 +32,6 @@ import java.util.*;
 
 public class RaidInstance extends MomentInstance<RaidMoment> {
     protected Vec3 originalPos;
-    protected Set<UUID> enemies = Sets.newHashSet();
-    private Map<UUID,CompoundTag> enemiesStorage = Maps.newHashMap();
     protected int currentWave = -1;
     private int totalWaves;
     protected int totalEnemy;
@@ -103,53 +102,20 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         this.totalEnemy = compoundTag.getInt("totalEnemy");
         this.readyTime = compoundTag.getInt("readyTime");
         if (compoundTag.contains("originalPos")) {
-            this.originalPos = Vec3.CODEC.decode(NbtOps.INSTANCE, compoundTag.getCompound("originalPos")).getOrThrow().getFirst();
+            this.originalPos = Vec3.CODEC.decode(NbtOps.INSTANCE, compoundTag.getList("originalPos", 6)).getOrThrow().getFirst();
         }
-
-        compoundTag.getList("enemies", Tag.TAG_STRING).forEach(uid -> {
-            enemies.add(UUID.fromString(uid.getAsString()));
-        });
-
-        compoundTag.getList("enemiesStorage", Tag.TAG_COMPOUND).forEach(tag -> {
-            CompoundTag tag1 = (CompoundTag) tag;
-            UUID uuid = tag1.getUUID("uuid");
-            CompoundTag compoundTag1 = tag1.getCompound("tag");
-            enemiesStorage.put(uuid,compoundTag1);
-            EntityType.create((compoundTag1), level).ifPresent(entity -> {
-                level.addFreshEntity(entity);
-                if (!enemies.contains(uuid)){
-                    enemies.add(uuid);
-                }
-            });
-        });
     }
 
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag compoundTag = super.serializeNBT();
-        compoundTag.put("currentWave",IntTag.valueOf(currentWave));
-        compoundTag.put("totalWaves",IntTag.valueOf(totalWaves));
-        compoundTag.put("totalEnemy",IntTag.valueOf(totalEnemy));
-        compoundTag.put("readyTime",IntTag.valueOf(readyTime));
-        if (compoundTag.contains("originalPos")) {
+        compoundTag.putInt("currentWave", currentWave);
+        compoundTag.putInt("totalWaves", totalWaves);
+        compoundTag.putInt("totalEnemy", totalEnemy);
+        compoundTag.putInt("readyTime", readyTime);
+        if (this.originalPos != null) {
             compoundTag.put("originalPos", Vec3.CODEC.encodeStart(NbtOps.INSTANCE, this.originalPos).getOrThrow());
         }
-
-        ListTag enemiesListTag = new ListTag();
-        ListTag enemiesStorageTag = new ListTag();
-        enemies.forEach(uid -> {
-            enemiesListTag.add(StringTag.valueOf(uid.toString()));
-        });
-
-        enemiesStorage.forEach((uuid,tag) -> {
-            CompoundTag tag1 = new CompoundTag();
-            tag1.putUUID("uuid",uuid);
-            tag1.put("tag",tag);
-            enemiesStorageTag.add(tag1);
-        });
-
-        compoundTag.put("enemies",enemiesListTag);
-        compoundTag.put("enemiesStorage",enemiesStorageTag);
         return compoundTag;
     }
 
@@ -157,7 +123,7 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
         if (level.isClientSide){
             return;
         }
-        if (enemies.isEmpty()){
+        if (enemiesManager.isEmpty()){
             if(this.currentWave >= this.totalWaves - 1) {
                 setState(MomentState.VICTORY);
             } else {
@@ -172,37 +138,33 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
             return;
         }
         ServerLevel serverLevel = (ServerLevel) level;
-        if (enemies.isEmpty() && state == MomentState.ONGOING){
+        if (enemiesManager.isEmpty() && state == MomentState.ONGOING){
             moment().flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .map(entitySpawnSettings -> entitySpawnSettings.spawnList(level, currentWave))
                     .ifPresent(entities -> entities.forEach(entity -> {
-                        enemies.add(entity.getUUID());
-                        CompoundTag tag = new CompoundTag();
-                        entity.save(tag);
-                        enemiesStorage.put(entity.getUUID(), tag);
+                        addEnemy(entity);
                         entity.setGlowingTag(true);
                         spawnEntity(entity);
                         totalEnemy++;
                     }));
         }
 
-        enemies.removeIf(uid -> {
+        Set<UUID> toRemove = Sets.newHashSet();
+        getEnemies().forEach(uid -> {
             Entity entity = serverLevel.getEntity(uid);
-            updateBarProgress(enemies.size() / (float) totalEnemy);
+            updateBarProgress(getEnemyCount() / (float) totalEnemy);
             EntityManagerAccessor managerAccessor = (EntityManagerAccessor) serverLevel;
             if (entity == null && !managerAccessor.getEntityManager().isLoaded(uid)){
-                enemiesStorage.remove(uid);
-                return true;
+                toRemove.add(uid);
             }
 
             if (entity != null){
-                CompoundTag tag = new CompoundTag();
-                entity.save(tag);
-                enemiesStorage.put(uid, tag);
+                enemiesManager.updateEntityStorage(entity);
             }
-            return false;
         });
+        
+        toRemove.forEach(this::removeEnemy);
     }
 
     public void setOriginalPos(Vec3 originalPos) {
