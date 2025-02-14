@@ -34,26 +34,39 @@ public abstract class LocalMobCapCalculatorMixin {
 
     @Inject(method = "canSpawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/LocalMobCapCalculator$MobCounts;canSpawn(Lnet/minecraft/world/entity/MobCategory;)Z"), cancellable = true)
     private void canSpawn(MobCategory category, ChunkPos pos, CallbackInfoReturnable<Boolean> cir) {
-        List<ServerPlayer> serverPlayers = this.playersNearChunk.computeIfAbsent(pos.toLong(), (p_186511_) -> this.chunkMap.getPlayersCloseForSpawning(pos));
+        List<ServerPlayer> serverPlayers = this.playersNearChunk.computeIfAbsent(pos.toLong(),
+                (p_186511_) -> this.chunkMap.getPlayersCloseForSpawning(pos));
+
         MomentManager momentManager = MomentManager.of(chunkMap.level);
 
         for(ServerPlayer serverplayer : serverPlayers) {
-            LocalMobCapCalculator.MobCounts localmobcapcalculator$mobcounts = this.playerMobCounts.get(serverplayer);
+            LocalMobCapCalculator.MobCounts mobCounts = this.playerMobCounts.get(serverplayer);
+
+            if (mobCounts == null) {
+                continue;
+            }
+
+            // 遍历所有时刻实例
             for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-                Boolean aBoolean = instance.moment()
+                Boolean canSpawn = instance.moment()
                         .filter(moment -> moment.isInArea((ServerLevel) serverplayer.level(), serverplayer.blockPosition()))
                         .flatMap(Moment::momentData)
                         .flatMap(MomentData::entitySpawnSettings)
                         .flatMap(EntitySpawnSettings::biomeEntitySpawnSettings)
                         .flatMap(BiomeEntitySpawnSettings::spawnCategoryMultiplier)
                         .map(multiplierMap -> {
-                            Object2IntMap<MobCategory> counts = localmobcapcalculator$mobcounts.counts;
+                            Object2IntMap<MobCategory> counts = mobCounts.counts;
                             final int currentCount = counts.getOrDefault(category, 0);
 
-                            SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) chunkMap.level;
-                            SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.getMobCategoryMultiplierInstance(category);
+
+                            SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed =
+                                    (SpawnCategoryMultiplierInstanceMixed) chunkMap.level;
+                            SpawnCategoryMultiplierInstance multiplierInstance =
+                                    spawnCategoryMultiplierInstanceMixed.getMobCategoryMultiplierInstance(category);
+
+
                             SpawnCategoryMultiplierModifier multiplierModifier = multiplierMap.get(category);
-                            if (multiplierModifier != null){
+                            if (multiplierModifier != null) {
                                 multiplierInstance.addModifier(multiplierModifier);
                                 double maxLimit = category.getMaxInstancesPerChunk() * multiplierInstance.getValue();
                                 return currentCount < maxLimit;
@@ -61,8 +74,13 @@ public abstract class LocalMobCapCalculatorMixin {
                             return currentCount < category.getMaxInstancesPerChunk();
                         })
                         .orElse(false);
-                cir.setReturnValue(aBoolean);
+
+                if (canSpawn) {
+                    cir.setReturnValue(true);
+                    return;
+                }
             }
         }
+        cir.setReturnValue(false);
     }
 }
