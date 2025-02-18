@@ -11,7 +11,6 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,11 +47,11 @@ public record TipSettings(Optional<Map<MomentState, Holder<SoundEvent>>> soundEv
         private Map<MomentState, Holder<SoundEvent>> soundEvents;
 
         public Builder tooltip(MomentState momentState, String descriptionId) {
-            return tooltip(momentState,Component.translatable("moment.tooltip.text." + momentState.name().toLowerCase(Locale.ROOT) + "." + descriptionId));
+            return tooltip(momentState,Component.translatable("moment.tooltip.text." + momentState.getSerializedName() + "." + descriptionId));
         }
 
         public Builder tooltip(MomentState momentState, String descriptionId, int color) {
-            return tooltip(momentState,Component.translatable("moment.tooltip.text." + momentState.name().toLowerCase(Locale.ROOT) + "." + descriptionId),color);
+            return tooltip(momentState,Component.translatable("moment.tooltip.text." + momentState.getSerializedName() + "." + descriptionId),color);
         }
 
         public Builder tooltip(MomentState momentState, Component component) {

@@ -10,6 +10,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +75,11 @@ public abstract class MomentLanguageProvider extends LanguageProvider {
 
     private void processTooltipTexts(Map<MomentState, ?> texts, Map<MomentState, String> en, Map<MomentState, String> zh) {
         texts.forEach((state, component) -> {
-            String componentString = component.toString();
-            addTranslation(componentString,
-                    en.getOrDefault(state, "null"),
-                    zh.getOrDefault(state, null));
+            if (component instanceof MutableComponent mutable && mutable.getContents() instanceof TranslatableContents translatable) {
+                addTranslation(translatable.getKey(),
+                        en.getOrDefault(state, null),
+                        zh.getOrDefault(state, null));
+            }
         });
     }
 
