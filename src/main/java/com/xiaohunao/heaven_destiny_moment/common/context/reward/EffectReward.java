@@ -10,9 +10,11 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Optional;
+
 public class EffectReward extends Reward {
     public static final MapCodec<EffectReward> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            CallbackSerializable.CODEC.fieldOf("rewardCallback").forGetter(EffectReward::getRewardCallback),
+            CallbackSerializable.CODEC.optionalFieldOf("rewardCallback").forGetter(EffectReward::getRewardCallback),
             Weighted.codec(MobEffectInstance.CODEC).fieldOf("effects").forGetter(EffectReward::effects)
     ).apply(instance, (callback, effects) -> (EffectReward) new EffectReward(effects).rewardCallback(callback)));
 
@@ -42,7 +44,7 @@ public class EffectReward extends Reward {
         private RewardCallback rewardCallback;
 
         public EffectReward build() {
-            return(EffectReward) new EffectReward(builder.build()).rewardCallback(rewardCallback);
+            return(EffectReward) new EffectReward(builder.build()).rewardCallback(Optional.ofNullable(rewardCallback));
         }
 
         public Builder randomType(Weighted.RandomType randomType) {

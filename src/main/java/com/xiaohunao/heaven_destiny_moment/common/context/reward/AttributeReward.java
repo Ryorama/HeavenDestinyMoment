@@ -17,11 +17,13 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Optional;
+
 
 public class AttributeReward extends Reward {
     public static final ResourceLocation ID = HeavenDestinyMoment.asResource("attribute");
     public static final MapCodec<AttributeReward> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            CallbackSerializable.CODEC.fieldOf("rewardCallback").forGetter(AttributeReward::getRewardCallback),
+            CallbackSerializable.CODEC.optionalFieldOf("rewardCallback").forGetter(AttributeReward::getRewardCallback),
             Weighted.codec(AttributeElement.CODEC).fieldOf("attributes").forGetter(AttributeReward::attributes)
     ).apply(instance, (callback, attributes) -> (AttributeReward) new AttributeReward(attributes).rewardCallback(callback)));
 
@@ -58,7 +60,7 @@ public class AttributeReward extends Reward {
         private RewardCallback rewardCallback;
 
         public AttributeReward build() {
-            return (AttributeReward) new AttributeReward(builder.build()).rewardCallback(rewardCallback);
+            return (AttributeReward) new AttributeReward(builder.build()).rewardCallback(Optional.ofNullable(rewardCallback));
         }
 
         public Builder randomType(Weighted.RandomType randomType) {

@@ -19,8 +19,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 import java.util.Optional;
 
-public class RaidMoment extends Moment<RaidMoment> {
-    public static final MapCodec<RaidMoment> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+public class RaidMoment<T extends RaidMoment<?>> extends Moment<T> {
+    public static final MapCodec<RaidMoment<?>> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             IBarRenderType.CODEC.optionalFieldOf("bar_render_type").forGetter(Moment::barRenderType),
             Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
             MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
@@ -45,7 +45,7 @@ public class RaidMoment extends Moment<RaidMoment> {
     }
 
     @Override
-    public MomentInstance<RaidMoment> newMomentInstance(Level level, ResourceKey<Moment<?>> momentResourceKey) {
+    public MomentInstance<T> newMomentInstance(Level level, ResourceKey<Moment<?>> momentResourceKey) {
         return new RaidInstance(level,momentResourceKey);
     }
 

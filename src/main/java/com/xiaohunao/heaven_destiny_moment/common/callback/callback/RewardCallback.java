@@ -6,5 +6,7 @@ import net.minecraft.world.entity.player.Player;
 
 @FunctionalInterface
 public interface RewardCallback extends CallbackSerializable {
+    RewardCallback EMPTY = (instance, player) -> {};
+
     void createReward(MomentInstance<?> instance, Player player);
 }

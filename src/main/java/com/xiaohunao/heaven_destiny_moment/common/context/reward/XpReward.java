@@ -9,9 +9,11 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Optional;
+
 public class XpReward extends Reward {
     public static final MapCodec<XpReward> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            CallbackSerializable.CODEC.fieldOf("rewardCallback").forGetter(XpReward::getRewardCallback),
+            CallbackSerializable.CODEC.optionalFieldOf("rewardCallback").forGetter(XpReward::getRewardCallback),
             Codec.INT.fieldOf("xp").forGetter(XpReward::getXp)
     ).apply(instance, (callback, xp) -> (XpReward) new XpReward(xp).rewardCallback(callback)));
     private final int xp;
@@ -47,7 +49,7 @@ public class XpReward extends Reward {
         }
 
         public XpReward build() {
-            return (XpReward) new XpReward(xp).rewardCallback(rewardCallback);
+            return (XpReward) new XpReward(xp).rewardCallback(Optional.ofNullable(rewardCallback));
         }
 
         public Builder rewardCallback(RewardCallback rewardCallback){

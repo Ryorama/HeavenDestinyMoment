@@ -8,11 +8,11 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Optional;
 
 public abstract class Reward implements IReward{
-    protected RewardCallback rewardCallback;
+    protected Optional<RewardCallback> rewardCallback;
 
     @Override
     public void createReward(MomentInstance<?> momentInstance, Player player) {
-        Optional.ofNullable(rewardCallback).ifPresentOrElse(
+        rewardCallback.ifPresentOrElse(
                 callback -> callback.createReward(momentInstance, player),
                 () -> defaultRewards(momentInstance, player)
         );
@@ -21,11 +21,18 @@ public abstract class Reward implements IReward{
 
     public abstract void defaultRewards(MomentInstance<?> momentInstance, Player player);
 
-    public CallbackSerializable getRewardCallback() {
-        return rewardCallback;
+    public Optional<CallbackSerializable> getRewardCallback() {
+        if (rewardCallback.isEmpty()){
+            return Optional.empty();
+        }
+        return Optional.of(rewardCallback.get());
     }
-    public Reward rewardCallback(CallbackSerializable rewardCallback) {
-        this.rewardCallback = (RewardCallback) rewardCallback;
+    public Reward rewardCallback(Optional<CallbackSerializable> rewardCallback) {
+        if (rewardCallback.isEmpty()){
+            this.rewardCallback = Optional.empty();
+            return this;
+        }
+        this.rewardCallback = Optional.of((RewardCallback)rewardCallback.get());
         return this;
     }
 }

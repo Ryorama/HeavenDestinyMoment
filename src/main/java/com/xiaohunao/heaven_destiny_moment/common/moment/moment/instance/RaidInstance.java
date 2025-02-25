@@ -7,11 +7,8 @@ import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.EntityManagerAccessor;
-import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.EnemiesManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.nbt.*;
@@ -30,7 +27,7 @@ import net.minecraft.world.scores.PlayerTeam;
 
 import java.util.*;
 
-public class RaidInstance extends MomentInstance<RaidMoment> {
+public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
     protected Vec3 originalPos;
     protected int currentWave = -1;
     private int totalWaves;
@@ -44,6 +41,14 @@ public class RaidInstance extends MomentInstance<RaidMoment> {
 
     public RaidInstance(UUID uuid, Level level, ResourceKey<Moment<?>> momentResourceKey) {
         super(HDMMomentRegister.RAID.get(), uuid, level, momentResourceKey);
+    }
+
+    public RaidInstance(MomentType<?> type, Level level, ResourceKey<Moment<?>> momentKey) {
+        super(type, level, momentKey);
+    }
+
+    public RaidInstance(MomentType<?> type, UUID uuid, Level level, ResourceKey<Moment<?>> momentKey) {
+        super(type, uuid, level, momentKey);
     }
 
     @Override
