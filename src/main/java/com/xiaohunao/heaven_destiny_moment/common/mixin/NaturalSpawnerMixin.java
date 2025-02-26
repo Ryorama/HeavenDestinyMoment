@@ -175,13 +175,15 @@ public class NaturalSpawnerMixin {
 
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)
-    private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob) {
-        MomentManager momentManager = MomentManager.of(serverLevel.getLevel());
-        for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-            if (instance.canSpawnEntity(serverLevel,mob,pos)) {
-                instance.addEnemy(mob);
-            }else {
-                ci.cancel();
+    private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
+        if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData) {
+            MomentManager momentManager = MomentManager.of(serverLevel.getLevel());
+            for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
+                if (instance.canSpawnEntity(serverLevel, mob, pos)) {
+                    instance.addEnemy(mob);
+                } else {
+                    ci.cancel();
+                }
             }
         }
     }
