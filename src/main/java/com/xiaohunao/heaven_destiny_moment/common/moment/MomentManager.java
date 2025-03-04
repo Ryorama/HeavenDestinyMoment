@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
@@ -79,7 +78,7 @@ public class MomentManager {
     }
 
     public Collection<MomentInstance<?>> getMomentInstances() {
-        return ImmutableList.copyOf(runMoments.values());
+        return runMoments.values();
     }
 
     public void tick() {
