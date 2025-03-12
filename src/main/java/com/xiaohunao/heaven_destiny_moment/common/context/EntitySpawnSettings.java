@@ -72,8 +72,6 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
         return list;
     }
 
-
-
     public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
         biomeEntitySpawnSettings.flatMap(BiomeEntitySpawnSettings::biomeMobSpawnSettings)
                 .map(mobSpawnSettings -> mobSpawnSettings.spawners.get(mobCategory).unwrap())
@@ -82,8 +80,13 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     if (allowOriginal) {
                         mergeSpawnerData(originalSpawnerData, newSpawnerData);
                     } else {
+                        List<BiomeEntitySpawnSettings.OwnSpawnerData> newSpawnerData1 = new ArrayList<>();
+                        newSpawnerData.forEach(data -> {
+                            newSpawnerData1.add(new BiomeEntitySpawnSettings.OwnSpawnerData(data));
+                        });
+
                         originalSpawnerData.clear();
-                        originalSpawnerData.addAll(newSpawnerData);
+                        originalSpawnerData.addAll(newSpawnerData1);
                     }
                 });
 
@@ -99,11 +102,12 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
 
         for (MobSpawnSettings.SpawnerData data : newData) {
             EntityType<?> newDataType = data.type;
+            BiomeEntitySpawnSettings.OwnSpawnerData ownSpawnerData = new BiomeEntitySpawnSettings.OwnSpawnerData(data);
             if (!originalTypes.contains(newDataType)) {
-                original.add(data);
+                original.add(ownSpawnerData);
             } else {
                 original.removeIf(d -> d.type.equals(newDataType));
-                original.add(data);
+                original.add(ownSpawnerData);
             }
         }
     }
@@ -116,7 +120,6 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     spawnerData.removeIf(filterPredicate);
                 });
     }
-
 
     public static class Builder {
         private List<Weighted<List<IEntityInfo>>> entitySpawnList;

@@ -13,6 +13,9 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.util.random.WeightedEntry;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -33,6 +36,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 @Mixin(NaturalSpawner.class)
@@ -80,6 +85,8 @@ public class NaturalSpawnerMixin {
                     .flatMap(MomentData::entitySpawnSettings)
                     .ifPresent(entitySpawnSettingsContext -> {
                         MobSpawnSettings mobSettings = cir.getReturnValue().getMobSettings();
+
+
                         entitySpawnSettingsContext.biomeEntitySpawnSettings().flatMap(BiomeEntitySpawnSettings::biomeMobSpawnSettings).ifPresent(mobSpawnSettings -> {
                             Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>> spawners = Maps.newHashMap(mobSettings.spawners);
                             Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>> newSpawners = Maps.newHashMap();
@@ -101,8 +108,8 @@ public class NaturalSpawnerMixin {
 
                             float oldCreatureProbability = mobSettings.getCreatureProbability();
                             float newCreatureProbability = mobSpawnSettings.getCreatureProbability();
-                            MobSpawnSettings newMobSpawnSettings = new MobSpawnSettings(Math.max(oldCreatureProbability, newCreatureProbability), newSpawners, mobSpawnCosts);
-                            fakeBiome.mobSpawnSettings(newMobSpawnSettings);
+
+                            fakeBiome.mobSpawnSettings(new MobSpawnSettings(Math.max(oldCreatureProbability, newCreatureProbability), newSpawners, mobSpawnCosts));
                         });
 
                         if (fakeBiome.mobSpawnSettings == null) {
@@ -172,6 +179,16 @@ public class NaturalSpawnerMixin {
 //        }
 //        return serverLevelAccessor;
 //    }
+
+    @Inject(method = "getRandomSpawnMobAt", at = @At("RETURN"), cancellable = true)
+    private static void getRandomSpawnMobAt(ServerLevel level, StructureManager structureManager, ChunkGenerator generator, MobCategory category, RandomSource random, BlockPos pos, CallbackInfoReturnable<Optional<MobSpawnSettings.SpawnerData>> cir) {
+        Optional<MobSpawnSettings.SpawnerData> returnValue = cir.getReturnValue();
+        if (returnValue.isPresent()){
+            System.out.println(returnValue);
+        }
+
+    }
+
 
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)

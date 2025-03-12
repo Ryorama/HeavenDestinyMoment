@@ -11,10 +11,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public record BiomeEntitySpawnSettings(Optional<OwnMobSpawnSettings> biomeMobSpawnSettings, Optional<Map<MobCategory, SpawnCategoryMultiplierModifier>> spawnCategoryMultiplier, Optional<EntitySpawnList> entitySpawnListContext) {
     public static final Codec<BiomeEntitySpawnSettings> CODEC = RecordCodecBuilder.create(builder -> builder.group(
@@ -95,6 +92,22 @@ public record BiomeEntitySpawnSettings(Optional<OwnMobSpawnSettings> biomeMobSpa
 
         public OwnSpawnerData(MobSpawnSettings.SpawnerData spawnerData) {
             super(spawnerData.type, spawnerData.getWeight(), spawnerData.minCount, spawnerData.maxCount);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this){
+                return true;
+            }
+            if (obj == null || obj.getClass() != this.getClass()) {
+                return false;
+            }
+
+            OwnSpawnerData that = (OwnSpawnerData) obj;
+            return this.type == that.type &&
+                    this.getWeight() == that.getWeight() &&
+                    this.minCount == that.minCount &&
+                    this.maxCount == that.maxCount;
         }
     }
 }
