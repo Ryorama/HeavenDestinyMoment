@@ -47,6 +47,9 @@ public class MobTeamTracker extends Tracker{
             if (hurtEntity.hasData(HDMAttachments.MOMENT_ENTITY) && attackEntity.hasData(HDMAttachments.MOMENT_ENTITY)) {
                 MomentEntityAttachment hurtEntityTeam = hurtEntity.getData(HDMAttachments.MOMENT_ENTITY);
                 MomentEntityAttachment attackEntityTeam = attackEntity.getData(HDMAttachments.MOMENT_ENTITY);
+                if (hurtEntityTeam.getMomentUid() == null){
+                    return;
+                }
 
                 if (hurtEntityTeam.getMomentUid().equals(attackEntityTeam.getMomentUid())){
                     event.setCanceled(true);

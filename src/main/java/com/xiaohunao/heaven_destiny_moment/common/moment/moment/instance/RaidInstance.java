@@ -11,6 +11,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -26,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
     protected Vec3 originalPos;
@@ -72,6 +74,8 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
         });
     }
 
+
+
     @Override
     public void finalizeSpawn(Entity entity) {
         attackRandomPlayer(entity);
@@ -97,6 +101,9 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
     protected void ongoing() {
         checkNextWave();
         updateWave();
+        if (players.isEmpty()){
+            setState(MomentState.LOSE);
+        }
     }
 
     @Override
@@ -185,5 +192,11 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
                 mob.setTarget(player);
             });
         }
+    }
+
+    @Override
+    public Predicate<Player> validPlayer() {
+        Predicate<Player> playerPredicate = super.validPlayer();
+        return playerPredicate.and(player -> this.originalPos == null || level.isLoaded(BlockPos.containing(this.originalPos)));
     }
 }
