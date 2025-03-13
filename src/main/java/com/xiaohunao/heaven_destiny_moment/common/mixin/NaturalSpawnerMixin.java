@@ -14,8 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.random.SimpleWeightedRandomList;
-import net.minecraft.util.random.WeightedEntry;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -37,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 @Mixin(NaturalSpawner.class)
@@ -182,11 +179,10 @@ public class NaturalSpawnerMixin {
 
     @Inject(method = "getRandomSpawnMobAt", at = @At("RETURN"), cancellable = true)
     private static void getRandomSpawnMobAt(ServerLevel level, StructureManager structureManager, ChunkGenerator generator, MobCategory category, RandomSource random, BlockPos pos, CallbackInfoReturnable<Optional<MobSpawnSettings.SpawnerData>> cir) {
-        Optional<MobSpawnSettings.SpawnerData> returnValue = cir.getReturnValue();
-        if (returnValue.isPresent()){
-            System.out.println(returnValue);
-        }
-
+//        Optional<MobSpawnSettings.SpawnerData> returnValue = cir.getReturnValue();
+//        if (returnValue.isPresent()){
+//            System.out.println(returnValue);
+//        }
     }
 
 
