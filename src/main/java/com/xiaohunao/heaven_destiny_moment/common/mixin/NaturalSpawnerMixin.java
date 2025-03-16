@@ -15,9 +15,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.random.WeightedRandomList;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.StructureManager;
@@ -94,12 +92,21 @@ public class NaturalSpawnerMixin {
                                 newSpawners.put(mobCategory, entitySpawnSettingsContext.adjustmentBiomeEntitySpawnSettings(mobCategory, unwrap));
                             }
 
-
                             Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> mobSpawnCosts = Maps.newHashMap(mobSettings.mobSpawnCosts);
                             for (Map.Entry<EntityType<?>, MobSpawnSettings.MobSpawnCost> entry : mobSpawnCosts.entrySet()) {
                                 EntityType<?> entityType = entry.getKey();
                                 MobSpawnSettings.MobSpawnCost mobSpawnCost = entry.getValue();
-                                mobSpawnCosts.put(entityType, mobSpawnSettings.mobSpawnCosts.get(entityType));
+                                MobSpawnSettings.MobSpawnCost newCost = mobSpawnSettings.mobSpawnCosts.get(entityType);
+//                                if (entitySpawnSettingsContext.rule().flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(true)) {
+//                                    mobSpawnCosts.put(entityType, mobSpawnCost);
+//                                    if (newCost != null) {
+//                                        mobSpawnCosts.put(entityType, newCost);
+//                                    }
+//                                }else {
+//                                    if (newCost == null) {
+//                                        mobSpawnCosts.remove(entityType);
+//                                    }
+//                                }
                             }
 
 
@@ -121,8 +128,8 @@ public class NaturalSpawnerMixin {
         }
     }
 
-    @Inject(method = "isRightDistanceToPlayerAndSpawnPoint", at =@At("RETURN"), cancellable = true)
-    private static void isRightDistanceToPlayerAndSpawnPoint(ServerLevel serverLevel, ChunkAccess chunk, BlockPos.MutableBlockPos pos, double distance, CallbackInfoReturnable<Boolean> cir){
+    @Inject(method = "isRightDistanceToPlayerAndSpawnPoint", at = @At("RETURN"), cancellable = true)
+    private static void isRightDistanceToPlayerAndSpawnPoint(ServerLevel serverLevel, ChunkAccess chunk, BlockPos.MutableBlockPos pos, double distance, CallbackInfoReturnable<Boolean> cir) {
         MomentManager momentManager = MomentManager.of(serverLevel);
         for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
             instance.moment()
@@ -135,8 +142,16 @@ public class NaturalSpawnerMixin {
         }
     }
 
-    @Inject(method = "getRandomPosWithin", at = @At("RETURN"), cancellable = true)
-    private static void forceSurface(Level level, LevelChunk levelChunk, CallbackInfoReturnable<BlockPos> cir) {
+//    @Inject(method = "isValidSpawnPostitionForType", at = @At("HEAD"), cancellable = true)
+//    private static void isValidSpawnPostitionForType(ServerLevel level, MobCategory category, StructureManager structureManager, ChunkGenerator generator, MobSpawnSettings.SpawnerData data, BlockPos.MutableBlockPos pos, double distance, CallbackInfoReturnable<Boolean> cir){
+//        EntityType<?> entitytype = data.type;
+//        boolean spawnPositionOk = SpawnPlacements.isSpawnPositionOk(entitytype, level, pos);
+//        System.out.println("isValidSpawnPostitionForType :" + spawnPositionOk);
+//    }
+
+
+//    @Inject(method = "getRandomPosWithin", at = @At("RETURN"), cancellable = true)
+//    private static void forceSurface(Level level, LevelChunk levelChunk, CallbackInfoReturnable<BlockPos> cir) {
 //        if (level.isClientSide) {
 //            return;
 //        }
@@ -160,7 +175,7 @@ public class NaturalSpawnerMixin {
 //                        }
 //                    });
 //        }
-    }
+//    }
 
 //    @ModifyReceiver(method = "spawnMobsForChunkGeneration", at = @At(value = "INVOKE",
 //            target = "Lnet/minecraft/world/level/ServerLevelAccessor;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"))
@@ -177,13 +192,13 @@ public class NaturalSpawnerMixin {
 //        return serverLevelAccessor;
 //    }
 
-    @Inject(method = "getRandomSpawnMobAt", at = @At("RETURN"), cancellable = true)
-    private static void getRandomSpawnMobAt(ServerLevel level, StructureManager structureManager, ChunkGenerator generator, MobCategory category, RandomSource random, BlockPos pos, CallbackInfoReturnable<Optional<MobSpawnSettings.SpawnerData>> cir) {
+//    @Inject(method = "getRandomSpawnMobAt", at = @At("RETURN"), cancellable = true)
+//    private static void getRandomSpawnMobAt(ServerLevel level, StructureManager structureManager, ChunkGenerator generator, MobCategory category, RandomSource random, BlockPos pos, CallbackInfoReturnable<Optional<MobSpawnSettings.SpawnerData>> cir) {
 //        Optional<MobSpawnSettings.SpawnerData> returnValue = cir.getReturnValue();
 //        if (returnValue.isPresent()){
 //            System.out.println(returnValue);
 //        }
-    }
+//    }
 
 
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
@@ -200,15 +215,17 @@ public class NaturalSpawnerMixin {
             }
         }
     }
+}
 
 
-    @Inject(method = "spawnCategoryForChunk" ,at = @At(value = "HEAD"), cancellable = true)
-    private static void spawnCategoryForChunk(MobCategory category, ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci){
+
+//    @Inject(method = "spawnCategoryForChunk" ,at = @At(value = "HEAD"), cancellable = true)
+//    private static void spawnCategoryForChunk(MobCategory category, ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci){
 //        MomentManager momentManager = MomentManager.of(level);
 //        for (MomentInstance<?> instance : momentManager.getImmutableRunMoments().values()) {
 //
 //        }
 //        NaturalSpawner.spawnCategoryForPosition(category, level, chunk, serverPlayer.blockPosition(), filter, callback);
 //        ci.cancel();
-    }
-}
+//
+//}

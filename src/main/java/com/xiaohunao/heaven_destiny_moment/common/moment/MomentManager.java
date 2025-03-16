@@ -100,8 +100,14 @@ public class MomentManager {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getResourceKey(), instance);
 
+        instance.setInitialized(true);
+
+        instance.getPlayers().forEach(player -> {
+            addPlayerAndSync(player, instance);
+        });
+
         if (isSync && !level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
             if (instance.getBar() != null) {
                 PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.getBar()));
             }
@@ -112,9 +118,13 @@ public class MomentManager {
         runMoments.remove(instance.getID());
         momentMap.remove(instance.getResourceKey(), instance);
 
+        instance.getPlayers().forEach(player -> {
+            removePlayerToMoment(player, instance);
+        });
+
         if (isSync && !level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),true));
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),true));
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBTWithoutEnemiesManager(), true));
             if (instance.getBar() != null) {
                 PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removePlayer(instance.bar));
             }
@@ -193,10 +203,14 @@ public class MomentManager {
     }
 
     private void addPlayerAndSync(Player player, MomentInstance<?> instance){
+        if (!instance.isInitialized()){
+            return;
+        }
+
         playerMoments.put(player.getUUID(), instance);
 
         if (!level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
             if (instance.isClientOnlyMoment()) {
                 PacketDistributor.sendToPlayer((ServerPlayer) player, new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
             }

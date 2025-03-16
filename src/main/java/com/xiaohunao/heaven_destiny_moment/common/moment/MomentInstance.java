@@ -46,6 +46,8 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     protected final UUID uuid;
 
 
+    private boolean initialized = false;
+
     protected MomentBar bar;
     protected long tick = -1L;
     protected MomentState state;
@@ -162,6 +164,14 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     public CompoundTag serializeNBT() {
+        CompoundTag compoundTag = serializeNBTWithoutEnemiesManager();
+
+        compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
+
+        return compoundTag;
+    }
+
+    public CompoundTag serializeNBTWithoutEnemiesManager() {
         CompoundTag compoundTag = new CompoundTag();
 
         serializeMetaData(compoundTag);
@@ -179,11 +189,10 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         ListTag spawnPosListTag = new ListTag();
         spawnPosList.forEach(vec3 -> spawnPosListTag.add(Vec3.CODEC.encodeStart(NbtOps.INSTANCE, vec3).getOrThrow()));
         compoundTag.put("spawnPosList", spawnPosListTag);
-
-        compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
-
         return compoundTag;
     }
+
+
 
     private void serializeBar(CompoundTag compoundTag) {
         if (this.bar != null) {
@@ -198,6 +207,14 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     public void deserializeNBT(CompoundTag compoundTag) {
+        deserializeNBTWithoutEnemiesManager(compoundTag);
+        if (compoundTag.contains("enemies_manager")) {
+            enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
+            enemiesManager.loadStoredEntities(level);
+        }
+    }
+
+    public void deserializeNBTWithoutEnemiesManager(CompoundTag compoundTag) {
         deserializeBar(compoundTag);
 
         this.persistentData = compoundTag.getCompound("persistentData");
@@ -211,12 +228,8 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
         ListTag spawnPosListTag = compoundTag.getList("spawnPosList", Tag.TAG_LIST);
         spawnPosListTag.forEach(tag -> spawnPosList.add(Vec3.CODEC.decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()));
-
-        if (compoundTag.contains("enemies_manager")) {
-            enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
-            enemiesManager.loadStoredEntities(level);
-        }
     }
+
 
     private void serializeMetaData(CompoundTag compoundTag) {
         compoundTag.putUUID("uuid", uuid);
@@ -487,6 +500,14 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         moment().flatMap(Moment::trackers).ifPresent(trackers -> trackers.forEach(ITracker::unregister));
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public MomentInstance<T> setInitialized(boolean initialized) {
+        this.initialized = initialized;
+        return this;
+    }
 
     public boolean canSpawnEntity(Level level, Entity entity, BlockPos pos) {
         return true;

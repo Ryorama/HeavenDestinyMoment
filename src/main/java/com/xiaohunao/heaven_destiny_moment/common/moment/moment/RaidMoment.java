@@ -13,6 +13,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.RaidInstance;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 

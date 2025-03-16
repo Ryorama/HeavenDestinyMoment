@@ -64,6 +64,8 @@ public class EnemiesManager {
         });
     }
 
+
+
     public CompoundTag serializeNBT() {
         CompoundTag compoundTag = new CompoundTag();
         
@@ -73,6 +75,7 @@ public class EnemiesManager {
         enemies.forEach(uid -> {
             enemiesListTag.add(StringTag.valueOf(uid.toString()));
         });
+        compoundTag.put("enemies", enemiesListTag);
 
         enemiesStorage.forEach((uuid, tag) -> {
             CompoundTag tag1 = new CompoundTag();
@@ -80,8 +83,6 @@ public class EnemiesManager {
             tag1.put("tag", tag);
             enemiesStorageTag.add(tag1);
         });
-
-        compoundTag.put("enemies", enemiesListTag);
         compoundTag.put("enemiesStorage", enemiesStorageTag);
         return compoundTag;
     }
@@ -105,10 +106,8 @@ public class EnemiesManager {
     }
 
     public void killAllEnemies(ServerLevel level) {
-        // 创建一个新的集合来存储要移除的UUID
         Set<UUID> toRemove = Sets.newHashSet();
-        
-        // 先收集所有需要移除的UUID
+
         enemies.forEach(uuid -> {
             Entity entity = level.getEntity(uuid);
             if (entity != null) {
@@ -116,8 +115,7 @@ public class EnemiesManager {
                 toRemove.add(uuid);
             }
         });
-        
-        // 然后统一移除
+
         toRemove.forEach(uuid -> {
             enemies.remove(uuid);
             enemiesStorage.remove(uuid);

@@ -9,7 +9,10 @@ import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.AutoP
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameRules;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,12 +33,35 @@ public record ConditionGroup(
             Codec.list(ICondition.CODEC).optionalFieldOf("lose").forGetter(ConditionGroup::lose),
             Codec.list(ICondition.CODEC).optionalFieldOf("end").forGetter(ConditionGroup::end)
     ).apply(instance, ConditionGroup::new));
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionGroup.class);
+
+    // 添加事件调试的GameRule
+    public static final GameRules.Key<GameRules.BooleanValue> RULE_MOMENT_DEBUG =
+            GameRules.register("momentDebug", GameRules.Category.MISC, GameRules.BooleanValue.create(false));
 
     public boolean matchCreate(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return create.map(pair -> pair.getSecond().stream()
-                        .filter(condition -> !(condition instanceof AutoProbabilityCondition))
-                        .allMatch(condition -> condition.matches(instance, pos, serverPlayer)))
-                        .orElse(true);
+        return create.map(pair -> {
+            List<ICondition> conditions = pair.getSecond().stream()
+                    .filter(condition -> !(condition instanceof AutoProbabilityCondition))
+                    .toList();
+            
+            boolean allMatch = true;
+
+            boolean debugEnabled = serverPlayer != null && 
+                    serverPlayer.level().getGameRules().getBoolean(RULE_MOMENT_DEBUG);
+            
+            for (ICondition condition : conditions) {
+                boolean matches = condition.matches(instance, pos, serverPlayer);
+                if (!matches) {
+                    allMatch = false;
+                    if (debugEnabled) {
+                        LOGGER.info("Condition Failed: {} For Event: {}", condition.getClass().getSimpleName(), instance.getResourceKey());
+                    }
+                }
+            }
+            
+            return allMatch;
+        }).orElse(true);
     }
 
 
