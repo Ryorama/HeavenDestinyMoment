@@ -74,7 +74,10 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
 
     public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
         biomeEntitySpawnSettings.flatMap(BiomeEntitySpawnSettings::biomeMobSpawnSettings)
-                .map(mobSpawnSettings -> mobSpawnSettings.spawners.get(mobCategory).unwrap())
+                .map(mobSpawnSettings -> {
+                    WeightedRandomList<MobSpawnSettings.SpawnerData> spawnerData = mobSpawnSettings.spawners.get(mobCategory);
+                    return spawnerData != null ? new ArrayList<>(spawnerData.unwrap()) : new ArrayList<MobSpawnSettings.SpawnerData>();
+                })
                 .ifPresent(newSpawnerData -> {
                     boolean allowOriginal = rule.flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(false);
                     if (allowOriginal) {
