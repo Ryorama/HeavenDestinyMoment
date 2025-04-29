@@ -1,27 +1,28 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "com.xiaohunao.heaven_destiny_moment.common.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "refmap": "heaven_destiny_moment.refmap.json",
-  "mixins": [
-    "LevelMixin",
-    "LivingEntityMixin",
-    "LocalMobCapCalculatorMixin",
-    "MonsterMixin",
-    "NaturalSpawnerMixin",
-    "NaturalSpawnerSpawnStateMixin",
-    "NeoForgeModMixin",
-    "PathfinderMobMixin",
-    "ServerLevelMixin",
-    "SlimeMixin"
-  ],
-  "client": [
-    "client.ClientLevelMixin",
-    "client.LevelRendererMixin",
-    "client.LightMapTextureMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.xiaohunao.heaven_destiny_moment.common.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "refmap": "heaven_destiny_moment.refmap.json",
+    "mixins": [
+        "LevelMixin",
+        "LivingEntityMixin",
+        "LocalMobCapCalculatorMixin",
+        "MonsterMixin",
+        "NaturalSpawnerMixin",
+        "NaturalSpawnerSpawnStateMixin",
+        "NeoForgeModMixin",
+        "PathfinderMobMixin",
+        "ServerLevelMixin",
+        "SlimeMixin",
+        "StructureStartMixin"
+    ],
+    "client": [
+        "client.ClientLevelMixin",
+        "client.LevelRendererMixin",
+        "client.LightMapTextureMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
   }
 }
