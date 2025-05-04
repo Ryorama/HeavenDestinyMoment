@@ -118,13 +118,12 @@ repositories {
 
 
 dependencies {
-    compileOnly "dev.latvian.mods:rhino:$rhino_version"
     compileOnly "dev.latvian.mods:kubejs-neoforge:$kubejs_version"
-    compileOnly "dev.architectury:architectury-neoforge:$architectury_version"
-
-    runtimeOnly "dev.latvian.mods:rhino:$rhino_version"
-    runtimeOnly "dev.latvian.mods:kubejs-neoforge:$kubejs_version"
-    runtimeOnly "dev.architectury:architectury-neoforge:$architectury_version"
+    if (false) {
+        runtimeOnly "dev.latvian.mods:rhino:$rhino_version"
+        runtimeOnly "dev.latvian.mods:kubejs-neoforge:$kubejs_version"
+        runtimeOnly "dev.architectury:architectury-neoforge:$architectury_version"
+    }
 
     compileOnly "curse.maven:champions-unofficial-1074990:6086086"
 //    runtimeOnly "curse.maven:champions-unofficial-1074990:6086086"
