@@ -1,7 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -28,7 +28,7 @@ public class LevelEventSubscriber {
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Pre event) {
         Level level = event.getLevel();
-        MomentManager.of(level).tick();
+        MomentInstanceManager.of(level).tick();
 //        if (level instanceof ServerLevel serverLevel) {
 //            Registry<Moment<?>> moments = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
 //            moments.entrySet().forEach(resourceKeyMomentEntry -> {

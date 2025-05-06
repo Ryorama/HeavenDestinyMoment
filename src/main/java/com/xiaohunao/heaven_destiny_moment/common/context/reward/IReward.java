@@ -13,7 +13,7 @@ public interface IReward {
 
     MapCodec<? extends IReward> codec();
 
-    void createReward(MomentInstance<?> momentInstance, Player player);
+    void createReward(MomentInstance momentInstance, Player player);
 
     default String identifier() {
         return "";

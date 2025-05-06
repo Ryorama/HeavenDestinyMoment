@@ -15,6 +15,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -26,12 +27,14 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class HDMRegistries {
+    public static final Registry<TriggerType<?>> TRIGGER_TYPE = new RegistryBuilder<>(Keys.TRIGGER_TYPE).create();
+    public static final Registry<Moment> MOMENT = new RegistryBuilder<>(Keys.MOMENT).create();
     public static final Registry<MomentType<?>> MOMENT_TYPE = new RegistryBuilder<>(Keys.MOMENT_TYPE).create();
 
     public static final Registry<MapCodec<? extends ITracker>> TRACKER_CODEC = new RegistryBuilder<>(Keys.TRACKER_CODEC).create();
     public static final Registry<MapCodec<? extends IBarRenderType>> BAR_RENDER_TYPE_CODEC = new RegistryBuilder<>(Keys.BAR_RENDER_TYPE_CODEC).create();
     public static final Registry<MapCodec<? extends Area>> AREA_CODEC = new RegistryBuilder<>(Keys.AREA_CODEC).create();
-    public static final Registry<MapCodec<? extends Moment<?>>> MOMENT_CODEC = new RegistryBuilder<>(Keys.MOMENT_CODEC).create();
+    public static final Registry<MapCodec<? extends Moment>> MOMENT_CODEC = new RegistryBuilder<>(Keys.MOMENT_CODEC).create();
     public static final Registry<MapCodec<? extends IAmount>> AMOUNT_CODEC = new RegistryBuilder<>(Keys.AMOUNT_CODEC).create();
     public static final Registry<MapCodec<? extends ICondition>> CONDITION_CODEC = new RegistryBuilder<>(Keys.CONDITION_CODEC).create();
     public static final Registry<MapCodec<? extends IEntityInfo>> ENTITY_INFO_CODEC = new RegistryBuilder<>(Keys.ENTITY_INFO_CODEC).create();
@@ -41,12 +44,13 @@ public class HDMRegistries {
     public static final Registry<MapCodec<? extends ISpawnAlgorithm>> SPAWN_ALGORITHM_CODEC = new RegistryBuilder<>(Keys.SPAWN_ALGORITHM_CODEC).create();
 
     public static final class Keys {
+        public static final ResourceKey<Registry<TriggerType<?>>> TRIGGER_TYPE = HeavenDestinyMoment.asResourceKey("trigger_type");
         public static final ResourceKey<Registry<MomentType<?>>> MOMENT_TYPE = HeavenDestinyMoment.asResourceKey("moment_type");
         public static final ResourceKey<Registry<MapCodec<? extends ITracker>>> TRACKER_CODEC = HeavenDestinyMoment.asResourceKey("tracker");
 
         public static final ResourceKey<Registry<MapCodec<? extends IBarRenderType>>> BAR_RENDER_TYPE_CODEC = HeavenDestinyMoment.asResourceKey("bar_render_type_codec");
         public static final ResourceKey<Registry<MapCodec<? extends Area>>> AREA_CODEC = HeavenDestinyMoment.asResourceKey("area_codec");
-        public static final ResourceKey<Registry<MapCodec<? extends Moment<?>>>> MOMENT_CODEC = HeavenDestinyMoment.asResourceKey("moment_codec");
+        public static final ResourceKey<Registry<MapCodec<? extends Moment>>> MOMENT_CODEC = HeavenDestinyMoment.asResourceKey("moment_codec");
         public static final ResourceKey<Registry<MapCodec<? extends IAmount>>> AMOUNT_CODEC = HeavenDestinyMoment.asResourceKey("amount_codec");
         public static final ResourceKey<Registry<MapCodec<? extends ICondition>>> CONDITION_CODEC = HeavenDestinyMoment.asResourceKey("condition_codec");
         public static final ResourceKey<Registry<MapCodec<? extends IEntityInfo>>> ENTITY_INFO_CODEC = HeavenDestinyMoment.asResourceKey("entity_info_codec");
@@ -56,14 +60,15 @@ public class HDMRegistries {
         public static final ResourceKey<Registry<MapCodec<? extends ISpawnAlgorithm>>> SPAWN_ALGORITHM_CODEC = HeavenDestinyMoment.asResourceKey("spawn_algorithm_codec");
 
 
-        public static final ResourceKey<Registry<Moment<?>>> MOMENT = HeavenDestinyMoment.asResourceKey("moment");
+        public static final ResourceKey<Registry<Moment>> MOMENT = HeavenDestinyMoment.asResourceKey("moment");
 
     }
 
     public static final class Suppliers {
+        public static final Supplier<Registry<TriggerType<?>>> TRIGGER_TYPE = supplyRegistry(Keys.TRIGGER_TYPE);
         public static final Supplier<Registry<MapCodec<? extends IBarRenderType>>> BAR_RENDER_TYPE_CODEC = supplyRegistry(Keys.BAR_RENDER_TYPE_CODEC);
         public static final Supplier<Registry<MapCodec<? extends Area>>> AREA_CODEC = supplyRegistry(Keys.AREA_CODEC);
-        public static final Supplier<Registry<MapCodec<? extends Moment<?>>>> MOMENT_CODEC = supplyRegistry(Keys.MOMENT_CODEC);
+        public static final Supplier<Registry<MapCodec<? extends Moment>>> MOMENT_CODEC = supplyRegistry(Keys.MOMENT_CODEC);
         public static final Supplier<Registry<MapCodec<? extends IAmount>>> AMOUNT_CODEC = supplyRegistry(Keys.AMOUNT_CODEC);
         public static final Supplier<Registry<MapCodec<? extends ICondition>>> CONDITION_CODEC = supplyRegistry(Keys.CONDITION_CODEC);
         public static final Supplier<Registry<MapCodec<? extends IEntityInfo>>> ENTITY_INFO_CODEC = supplyRegistry(Keys.ENTITY_INFO_CODEC);
@@ -76,6 +81,8 @@ public class HDMRegistries {
 
 
     public static void registerRegistries(NewRegistryEvent event) {
+        event.register(TRIGGER_TYPE);
+        event.register(MOMENT);
         event.register(MOMENT_TYPE);
         event.register(TRACKER_CODEC);
 
@@ -89,11 +96,6 @@ public class HDMRegistries {
         event.register(ATTACHABLE_CODEC);
         event.register(EQUIPPABLE_SLOT_CODEC);
         event.register(SPAWN_ALGORITHM_CODEC);
-    }
-
-
-    public static void registerDataPackRegistries(DataPackRegistryEvent.NewRegistry event) {
-        event.dataPackRegistry(Keys.MOMENT, Moment.CODEC, Moment.CODEC);
     }
 
     static <T> Supplier<T> supplyRegistry(ResourceKey<T> key) {

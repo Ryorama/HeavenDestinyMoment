@@ -23,7 +23,7 @@ public class XpReward extends Reward {
     }
 
     @Override
-    public void defaultRewards(MomentInstance<?> moment, Player player) {
+    public void defaultRewards(MomentInstance moment, Player player) {
         player.giveExperiencePoints(xp);
     }
 

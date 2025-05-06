@@ -13,7 +13,7 @@ import java.util.function.Function;
 public interface ICondition {
     Codec<ICondition> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.CONDITION_CODEC.get().byNameCodec()).dispatch(ICondition::codec, Function.identity());
 
-    boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
+    boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
 
     MapCodec<? extends ICondition> codec();
 }

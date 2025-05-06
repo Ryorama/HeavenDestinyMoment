@@ -9,11 +9,10 @@ import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
@@ -39,9 +38,9 @@ import java.util.Optional;
 public class NaturalSpawnerMixin {
     @Inject(method = "mobsAt", at = @At("RETURN"), cancellable = true)
     private static void mobsAt(ServerLevel serverLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, MobCategory mobCategory, BlockPos pos, Holder<Biome> biomeHolder, CallbackInfoReturnable<WeightedRandomList<MobSpawnSettings.SpawnerData>> cir) {
-        MomentManager momentManager = MomentManager.of(serverLevel);
-        for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-            instance.moment()
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
+        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            Optional.of(instance.getMoment())
                     .filter(moment -> moment.isInArea(serverLevel, pos))
                     .flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
@@ -59,7 +58,7 @@ public class NaturalSpawnerMixin {
         if (level.isClientSide) {
             return;
         }
-        MomentManager momentManager = MomentManager.of(level);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
         Biome.BiomeBuilder fakeBiome = new Biome.BiomeBuilder()
                 .hasPrecipitation(false)
                 .temperature(0.5F)
@@ -73,8 +72,8 @@ public class NaturalSpawnerMixin {
                         .build()
                 );
 
-        for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-            instance.moment()
+        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            Optional.of(instance.getMoment())
                     .filter(moment -> moment.isInArea((ServerLevel) level, pos))
                     .flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
@@ -130,9 +129,9 @@ public class NaturalSpawnerMixin {
 
     @Inject(method = "isRightDistanceToPlayerAndSpawnPoint", at = @At("RETURN"), cancellable = true)
     private static void isRightDistanceToPlayerAndSpawnPoint(ServerLevel serverLevel, ChunkAccess chunk, BlockPos.MutableBlockPos pos, double distance, CallbackInfoReturnable<Boolean> cir) {
-        MomentManager momentManager = MomentManager.of(serverLevel);
-        for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-            instance.moment()
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
+        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            Optional.of(instance.getMoment())
                     .filter(moment -> moment.isInArea(serverLevel, pos))
                     .flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
@@ -205,8 +204,8 @@ public class NaturalSpawnerMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)
     private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
         if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData) {
-            MomentManager momentManager = MomentManager.of(serverLevel.getLevel());
-            for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
+            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel.getLevel());
+            for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
                 if (instance.canSpawnEntity(serverLevel, mob, pos)) {
                     instance.addEnemy(mob);
                 } else {

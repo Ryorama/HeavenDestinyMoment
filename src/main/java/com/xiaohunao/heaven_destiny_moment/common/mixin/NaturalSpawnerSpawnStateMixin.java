@@ -4,7 +4,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.*;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobCategory;
@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
 
 @Mixin(NaturalSpawner.SpawnState.class)
 public class NaturalSpawnerSpawnStateMixin {
@@ -37,9 +39,9 @@ public class NaturalSpawnerSpawnStateMixin {
         ServerLevel level = localMobCapCalculator.chunkMap.level;
         int maxInstancesPerChunk = mobCategory.getMaxInstancesPerChunk();
         int currentCount = this.mobCategoryCounts.getInt(mobCategory);
-        MomentManager momentManager = MomentManager.of(level);
-        for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-            instance.moment()
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            Optional.of(instance.getMoment())
                     .flatMap(Moment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .flatMap(EntitySpawnSettings::biomeEntitySpawnSettings)

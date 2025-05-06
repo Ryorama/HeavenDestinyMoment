@@ -5,7 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -23,9 +23,9 @@ public class RemoveCommand {
     private static int execute(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
         var source = ctx.getSource();
-        var manager = MomentManager.of(source.getLevel());
+        var manager = MomentInstanceManager.of(source.getLevel());
         
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         manager.removeMomentInstance(instance, true);
         
         source.sendSuccess(() -> Component.translatable("commands.moment.remove.success", 

@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -32,12 +32,12 @@ public class MomentCommand {
     // UUID建议提供者
     static final SuggestionProvider<CommandSourceStack> SUGGEST_MOMENT_UUID = (context, builder) -> {
         var source = context.getSource();
-        var manager = MomentManager.of(source.getLevel());
+        var manager = MomentInstanceManager.of(source.getLevel());
         var registry = source.getLevel().registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
         
-        manager.getMomentInstances().forEach(moment -> {
-            String uuid = moment.getID().toString();
-            String name = registry.getKey(moment.moment().get()).toLanguageKey();
+        manager.getMomentInstances().forEach(momentInstance -> {
+            String uuid = momentInstance.getID().toString();
+            String name = momentInstance.getMomentResource().toLanguageKey();
             builder.suggest(uuid, Component.translatable(name));
         });
         
@@ -56,7 +56,7 @@ public class MomentCommand {
         dispatcher.register(builder);
     }
 
-    static MomentInstance<?> getMomentInstance(CommandContext<CommandSourceStack> ctx, String uuidStr) throws CommandSyntaxException {
+    static MomentInstance getMomentInstance(CommandContext<CommandSourceStack> ctx, String uuidStr) throws CommandSyntaxException {
         UUID uuid;
         try {
             uuid = UUID.fromString(uuidStr);
@@ -65,18 +65,17 @@ public class MomentCommand {
         }
 
         var source = ctx.getSource();
-        var manager = MomentManager.of(source.getLevel());
+        var manager = MomentInstanceManager.of(source.getLevel());
         
-        MomentInstance<?> instance = manager.getMomentInstance(uuid);
+        MomentInstance instance = manager.getMomentInstance(uuid);
         if (instance == null) {
             throw ERROR_MOMENT_NOT_FOUND.create();
         }
         return instance;
     }
 
-    static Component formatMomentInfo(MomentInstance<?> instance, ServerLevel level) {
-        var registry = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-        String momentName = registry.getKey(instance.moment().get()).toLanguageKey();
+    static Component formatMomentInfo(MomentInstance instance, ServerLevel level) {
+        String momentName = instance.getMomentResource().toLanguageKey();
         
         return Component.literal("- ")
                 .append(Component.translatable(momentName))

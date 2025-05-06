@@ -5,7 +5,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.ClientMoonSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.utils.ColorUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -26,10 +26,10 @@ public abstract class LevelRendererMixin {
 
     @ModifyConstant(method = "renderSky", constant = @Constant(floatValue = 20.0F))
     private float renderSky(float originalSize) {
-        MomentManager momentManager = MomentManager.of(level);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
-        Float moonSize = momentManager.getClientMomentInstance()
-                .flatMap(MomentInstance::moment)
+        Float moonSize = momentInstanceManager.getClientMomentInstance()
+                .map(MomentInstance::getMoment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonSize)
@@ -42,10 +42,10 @@ public abstract class LevelRendererMixin {
     }
     @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 1))
     private void renderSky(int moonTextureId, ResourceLocation originaResourceLocation) {
-        MomentManager momentManager = MomentManager.of(level);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
-        ResourceLocation moonTexture = momentManager.getClientMomentInstance()
-                .flatMap(MomentInstance::moment)
+        ResourceLocation moonTexture = momentInstanceManager.getClientMomentInstance()
+                .map(MomentInstance::getMoment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonTexture)
@@ -56,13 +56,15 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getMoonPhase()I"))
     private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) {
-        MomentManager momentManager = MomentManager.of(level);
-        Integer moonColor = momentManager.getClientMomentInstance()
-                .flatMap(MomentInstance::moment)
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+
+        Integer moonColor = momentInstanceManager.getClientMomentInstance()
+                .map(MomentInstance::getMoment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonColor)
                 .orElse(null);
+
 
         if (moonColor != null){
             Vector3f color = ColorUtils.colorToVector3f(moonColor);

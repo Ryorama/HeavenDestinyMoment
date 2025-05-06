@@ -19,7 +19,7 @@ public record AutoProbabilityCondition(int probability) implements ICondition {
 
     static Random random = new Random();
     @Override
-    public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return random.nextInt(probability) == 0;
     }
 

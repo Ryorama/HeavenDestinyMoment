@@ -35,7 +35,7 @@ public class AttributeReward extends Reward {
     }
 
     @Override
-    public void defaultRewards(MomentInstance<?> momentInstance, Player player) {
+    public void defaultRewards(MomentInstance momentInstance, Player player) {
         attributes.getRandomWeighted().forEach(reward -> {
             AttributeModifier attributeModifier = reward.attributeModifier();
             AttributeInstance instance = player.getAttribute(reward.attribute());

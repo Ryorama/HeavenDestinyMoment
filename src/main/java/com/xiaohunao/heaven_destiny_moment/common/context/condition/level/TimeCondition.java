@@ -62,7 +62,7 @@ public record TimeCondition(Optional<Long> min, Optional<Long> max) implements I
     }
 
     @Override
-    public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         Level level = instance.getLevel();
         return this.matches(level.getDayTime() % 24000);
     }

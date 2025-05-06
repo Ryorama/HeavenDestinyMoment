@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public record MomentData(Optional<List<IReward>> rewards, Optional<ConditionGroup> conditionGroup,
+public record MomentData(Optional<List<IReward>> rewards, Optional<StateSettingsGroup> stateSettingsGroup,
                          Optional<EntitySpawnSettings> entitySpawnSettings) {
 
     public static final Codec<MomentData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.list(IReward.CODEC).optionalFieldOf("rewards").forGetter(MomentData::rewards),
-            ConditionGroup.CODEC.optionalFieldOf("conditionGroup").forGetter(MomentData::conditionGroup),
+            StateSettingsGroup.CODEC.optionalFieldOf("state_settings_group").forGetter(MomentData::stateSettingsGroup),
             EntitySpawnSettings.CODEC.optionalFieldOf("entity_spawn_settings").forGetter(MomentData::entitySpawnSettings)
 
     ).apply(instance, MomentData::new));
@@ -25,12 +25,12 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<ConditionGrou
 
     public static class Builder {
         private List<IReward> rewards;
-        private ConditionGroup conditionGroup;
+        private StateSettingsGroup stateSettingsGroup;
         private EntitySpawnSettings entitySpawnSettings;
 
 
         public MomentData build() {
-            return new MomentData(Optional.ofNullable(rewards),Optional.ofNullable(conditionGroup),Optional.ofNullable(entitySpawnSettings));
+            return new MomentData(Optional.ofNullable(rewards),Optional.ofNullable(stateSettingsGroup),Optional.ofNullable(entitySpawnSettings));
         }
 
         public Builder addReward(IReward... reward) {
@@ -41,8 +41,9 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<ConditionGrou
             return this;
         }
 
-        public Builder conditionGroup(Function<ConditionGroup.Builder,ConditionGroup.Builder> conditionGroup) {
-            this.conditionGroup = conditionGroup.apply(new ConditionGroup.Builder()).build();
+
+        public Builder stateSettingsGroup(Function<StateSettingsGroup.Builder,StateSettingsGroup.Builder> stateSettingsGroup){
+            this.stateSettingsGroup = stateSettingsGroup.apply(new StateSettingsGroup.Builder()).build();
             return this;
         }
 

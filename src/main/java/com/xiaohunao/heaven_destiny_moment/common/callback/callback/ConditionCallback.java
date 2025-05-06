@@ -8,5 +8,5 @@ import org.jetbrains.annotations.Nullable;
 
 @FunctionalInterface
 public interface ConditionCallback extends CallbackSerializable {
-    boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
+    boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
 }

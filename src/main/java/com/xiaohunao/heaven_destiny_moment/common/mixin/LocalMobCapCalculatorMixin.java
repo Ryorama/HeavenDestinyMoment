@@ -4,7 +4,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.*;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.server.level.ChunkMap;
@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Mixin(LocalMobCapCalculator.class)
 public abstract class LocalMobCapCalculatorMixin {
@@ -35,7 +36,7 @@ public abstract class LocalMobCapCalculatorMixin {
     @Inject(method = "canSpawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/LocalMobCapCalculator$MobCounts;canSpawn(Lnet/minecraft/world/entity/MobCategory;)Z"), cancellable = true)
     private void canSpawn(MobCategory category, ChunkPos pos, CallbackInfoReturnable<Boolean> cir) {
         List<ServerPlayer> serverPlayers = this.playersNearChunk.computeIfAbsent(pos.toLong(), (p_186511_) -> this.chunkMap.getPlayersCloseForSpawning(pos));
-        MomentManager momentManager = MomentManager.of(chunkMap.level);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(chunkMap.level);
 
         for(ServerPlayer serverplayer : serverPlayers) {
             LocalMobCapCalculator.MobCounts localmobcapcalculator$mobcounts = this.playerMobCounts.get(serverplayer);
@@ -43,8 +44,8 @@ public abstract class LocalMobCapCalculatorMixin {
                 return;
             }
 
-            for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-                Boolean aBoolean = instance.moment()
+            for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+                Boolean aBoolean = Optional.of(instance.getMoment())
                         .filter(moment -> moment.isInArea((ServerLevel) serverplayer.level(), serverplayer.blockPosition()))
                         .flatMap(Moment::momentData)
                         .flatMap(MomentData::entitySpawnSettings)

@@ -28,7 +28,7 @@ public class ItemReward extends Reward {
     }
 
     @Override
-    public void defaultRewards(MomentInstance<?> moment, Player player) {
+    public void defaultRewards(MomentInstance moment, Player player) {
         items.getRandomWeighted().forEach(item -> {
             player.getInventory().add(item);
         });

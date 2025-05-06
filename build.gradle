@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.78'
+    id 'net.neoforged.moddev' version '2.0.86'
 }
 
 version = mod_version
@@ -118,14 +118,10 @@ repositories {
 
 
 dependencies {
-    compileOnly "dev.latvian.mods:kubejs-neoforge:$kubejs_version"
-    if (false) {
-        runtimeOnly "dev.latvian.mods:rhino:$rhino_version"
-        runtimeOnly "dev.latvian.mods:kubejs-neoforge:$kubejs_version"
-        runtimeOnly "dev.architectury:architectury-neoforge:$architectury_version"
-    }
-
     compileOnly "curse.maven:champions-unofficial-1074990:6086086"
+
+    implementation jarJar(project(":XHN-Lib"))
+
 //    runtimeOnly "curse.maven:champions-unofficial-1074990:6086086"
 
 

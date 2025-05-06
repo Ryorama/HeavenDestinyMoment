@@ -5,7 +5,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -19,6 +19,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Optional;
+
 import static net.minecraft.world.entity.Mob.checkMobSpawnRules;
 
 @Mixin(Slime.class)
@@ -27,9 +29,9 @@ public class SlimeMixin {
     @Inject(method = "checkSlimeSpawnRules", at = @At("HEAD"), cancellable = true)
     private static void checkSlimeSpawnRules(EntityType<Slime> entityType, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random, CallbackInfoReturnable<Boolean> cir) {
         if (level instanceof ServerLevel serverLevel) {
-            MomentManager momentManager = MomentManager.of(serverLevel);
-            for (MomentInstance<?> instance : momentManager.getMomentInstances()) {
-                instance.moment()
+            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
+            for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+                Optional.of(instance.getMoment())
                         .filter(moment -> moment.isInArea(serverLevel, pos))
                         .flatMap(Moment::momentData)
                         .flatMap(MomentData::entitySpawnSettings)

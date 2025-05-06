@@ -28,7 +28,7 @@ public record OpenAreaSpawnAlgorithm(int maxTry, int range, int verticalSearchRa
 
 
     @Override
-    public Vec3 spawn(MomentInstance<?> momentInstance, Entity entity) {
+    public Vec3 spawn(MomentInstance momentInstance, Entity entity) {
         Level level = momentInstance.getLevel();
         Vec3 pos = momentInstance.getRandomSpawnPos();
         AABB entityBoundingBox = entity.getBoundingBox();

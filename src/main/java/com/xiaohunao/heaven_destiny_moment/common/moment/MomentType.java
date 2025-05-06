@@ -6,7 +6,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class MomentType<T extends MomentInstance<?>> {
+public class MomentType<T extends MomentInstance> {
     private final MomentSupplier<T> factory;
 
     public MomentType(MomentSupplier<T> factory) {
@@ -14,12 +14,12 @@ public class MomentType<T extends MomentInstance<?>> {
     }
 
     @Nullable
-    public T create(UUID uuid, Level level, ResourceKey<Moment<?>> moment) {
+    public T create(UUID uuid, Level level, Moment moment) {
         return factory.create(uuid, level, moment);
     }
 
 
-    public static final class Builder<T extends MomentInstance<?>> {
+    public static final class Builder<T extends MomentInstance> {
         private final MomentSupplier<T> factory;
         public Builder(MomentSupplier<T> factory) {
             this.factory = factory;
@@ -32,6 +32,6 @@ public class MomentType<T extends MomentInstance<?>> {
 
     @FunctionalInterface
     public interface MomentSupplier<T> {
-        T create(UUID uuid, Level level, ResourceKey<Moment<?>> moment);
+        T create(UUID uuid, Level level, Moment moment);
     }
 }

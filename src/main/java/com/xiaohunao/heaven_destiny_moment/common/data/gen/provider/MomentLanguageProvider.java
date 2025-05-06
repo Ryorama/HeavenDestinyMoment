@@ -6,6 +6,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
@@ -41,35 +42,25 @@ public abstract class MomentLanguageProvider extends LanguageProvider {
         this.translationData = new TreeMap<>();
     }
 
-    protected HolderLookup.RegistryLookup<Moment<?>> getMomentRegistry() {
-        try {
-            return lookupProvider.get().lookupOrThrow(HDMRegistries.Keys.MOMENT);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Failed to get moment registry", e);
-        }
-    }
 
-
-    public void addMomentDefaultBarName(ResourceKey<Moment<?>> key, String en, String zh) {
-        String translationKey = HeavenDestinyMoment.asDescriptionId("bar." + key.location().toLanguageKey());
+    public void addMomentDefaultBarName(FlexibleHolder<Moment, ?> holder, String en, String zh) {
+        String translationKey = HeavenDestinyMoment.asDescriptionId("bar." + holder.getKey().location().toLanguageKey());
         addTranslation(translationKey, en, zh);
     }
 
 
-    public void addMomentTooltip(ResourceKey<Moment<?>> key, Map<MomentState, String> en, Map<MomentState, String> zh) {
+    public void addMomentTooltip(FlexibleHolder<Moment, ?> holder, Map<MomentState, String> en, Map<MomentState, String> zh) {
         try {
-            Moment<?> moment = getMomentRegistry()
-                    .getOrThrow(key)
-                    .value();
+            Moment moment = holder.get();
 
             moment.tipSettings()
                     .flatMap(TipSettings::texts)
                     .ifPresentOrElse(
                             texts -> processTooltipTexts(texts, en, zh),
-                            () -> System.out.println("No tip settings found for moment: " + key.location())
+                            () -> System.out.println("No tip settings found for moment: " + holder.getKey().location())
                     );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to process tooltip for moment: " + key.location(), e);
+            throw new RuntimeException("Failed to process tooltip for moment: " + holder.getKey().location(), e);
         }
     }
 

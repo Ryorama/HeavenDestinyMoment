@@ -8,5 +8,5 @@ import net.minecraft.world.entity.player.Player;
 public interface RewardCallback extends CallbackSerializable {
     RewardCallback EMPTY = (instance, player) -> {};
 
-    void createReward(MomentInstance<?> instance, Player player);
+    void createReward(MomentInstance instance, Player player);
 }

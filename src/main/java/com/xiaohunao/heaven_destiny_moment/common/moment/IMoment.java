@@ -13,9 +13,9 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public interface IMoment {
-    Codec<Moment<?>> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.MOMENT_CODEC.get().byNameCodec()).dispatch(Moment::codec, Function.identity());
+    Codec<Moment> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.MOMENT_CODEC.get().byNameCodec()).dispatch(Moment::codec, Function.identity());
 
-    MapCodec<? extends Moment<?>> codec();
+    MapCodec<? extends Moment> codec();
 
     Optional<IBarRenderType> barRenderType();
 //

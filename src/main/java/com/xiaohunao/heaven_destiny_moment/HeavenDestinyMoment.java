@@ -38,7 +38,6 @@ public class HeavenDestinyMoment {
         LoadedCompat.register(modEventBus);
 
         modEventBus.addListener(HDMRegistries::registerRegistries);
-        modEventBus.addListener(HDMRegistries::registerDataPackRegistries);
         modEventBus.addListener(this::onFMLCommonSetup);
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
     }

@@ -66,7 +66,7 @@ public class QueryCommand {
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_ENEMIES = (context, builder) -> {
         try {
             String uuidStr = StringArgumentType.getString(context, "uuid");
-            MomentInstance<?> instance = MomentCommand.getMomentInstance(context, uuidStr);
+            MomentInstance instance = MomentCommand.getMomentInstance(context, uuidStr);
             ServerLevel level = context.getSource().getLevel();
             
             instance.getEnemies().forEach(uuid -> {
@@ -86,10 +86,8 @@ public class QueryCommand {
     private static int execute(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
-        var registry = source.getLevel().registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-        
-        String momentName = registry.getKey(instance.moment().get()).toLanguageKey();
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        String momentName = instance.getMomentResource().toLanguageKey();
         source.sendSuccess(() -> Component.translatable("commands.moment.query.info", 
                 Component.translatable(momentName),
                 Component.literal(instance.getID().toString()).withStyle(ChatFormatting.GRAY)), 
@@ -101,7 +99,7 @@ public class QueryCommand {
     private static int queryField(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         String fieldName = StringArgumentType.getString(ctx, "fieldName");
         
         try {
@@ -178,7 +176,7 @@ public class QueryCommand {
     private static int listEnemies(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         ServerLevel level = source.getLevel();
 
         if (instance.getEnemies().isEmpty()) {
@@ -216,7 +214,7 @@ public class QueryCommand {
     private static int killAllEnemies(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         ServerLevel level = source.getLevel();
 
         if (instance.getEnemies().isEmpty()) {
@@ -236,7 +234,7 @@ public class QueryCommand {
     private static int killEnemy(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
         String uuidStr = StringArgumentType.getString(ctx, "uuid");
-        MomentInstance<?> instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         ServerLevel level = source.getLevel();
 
         String enemyUuidStr = StringArgumentType.getString(ctx, "enemyUUID");

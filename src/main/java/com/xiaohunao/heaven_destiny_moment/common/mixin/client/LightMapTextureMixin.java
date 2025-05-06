@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.utils.ColorUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
@@ -18,10 +18,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LightMapTextureMixin {
     @Inject(method = "updateLightTexture", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LightTexture;blockLightRedFlicker:F"))
     private void updateLightTexture(float p_109882_, CallbackInfo ci, @Local ClientLevel clientlevel, @Local Vector3f vector3f) {
-        MomentManager momentManager = MomentManager.of(clientlevel);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(clientlevel);
 
-        momentManager.getClientMomentInstance()
-                .flatMap(MomentInstance::moment)
+        momentInstanceManager.getClientMomentInstance()
+                .map(MomentInstance::getMoment)
                 .flatMap(Moment::clientSettings)
                 .flatMap(ClientSettings::environmentColor)
                 .ifPresent(color -> {

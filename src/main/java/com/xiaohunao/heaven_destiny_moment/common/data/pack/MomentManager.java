@@ -16,7 +16,7 @@ import java.util.Map;
 public class MomentManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new Gson();
 
-    private static BiMap<ResourceLocation, Moment<?>> allMoments = HashBiMap.create();
+    private static BiMap<ResourceLocation, Moment> allMoments = HashBiMap.create();
 
 
     public MomentManager() {

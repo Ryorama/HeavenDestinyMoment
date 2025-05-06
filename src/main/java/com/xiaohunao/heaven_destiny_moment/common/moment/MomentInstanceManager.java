@@ -3,16 +3,19 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
+import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
+import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -26,19 +29,19 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public class MomentManager {
+public class MomentInstanceManager {
     private final Level level;
 
-    private final ConcurrentHashMap<UUID, MomentInstance<?>> runMoments = new ConcurrentHashMap<>();
-    private final HashMultimap<ResourceKey<Moment<?>>,MomentInstance<?>> momentMap = HashMultimap.create();
-    private final Multimap<UUID, MomentInstance<?>> playerMoments = HashMultimap.create();
+    private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
+    private final HashMultimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
 
-    public MomentManager(Level level) {
+    public MomentInstanceManager(Level level) {
         this.level = level;
     }
 
-    public static MomentManager of(Level level) {
+    public static MomentInstanceManager of(Level level) {
         return ((MomentManagerMixed) level).heaven_destiny_moment$getMomentManager();
     }
 
@@ -69,15 +72,15 @@ public class MomentManager {
         }
     }
 
-    public MomentInstance<?> getMomentInstance(UUID uuid) {
+    public MomentInstance getMomentInstance(UUID uuid) {
         return runMoments.get(uuid);
     }
 
-    public Set<MomentInstance<?>> getMomentInstances(ResourceKey<Moment<?>> key) {
-        return momentMap.get(key);
+    public Set<MomentInstance> getMomentInstances(ResourceLocation location) {
+        return momentMap.get(location);
     }
 
-    public Collection<MomentInstance<?>> getMomentInstances() {
+    public Collection<MomentInstance> getMomentInstances() {
         return runMoments.values();
     }
 
@@ -96,9 +99,9 @@ public class MomentManager {
         });
     }
 
-    public void addMomentInstance(MomentInstance<?> instance, boolean isSync) {
+    public void addMomentInstance(MomentInstance instance, boolean isSync) {
         runMoments.put(instance.getID(), instance);
-        momentMap.put(instance.getResourceKey(), instance);
+        momentMap.put(instance.getMomentResource(), instance);
 
         instance.setInitialized(true);
 
@@ -114,9 +117,9 @@ public class MomentManager {
         }
     }
 
-    public void removeMomentInstance(MomentInstance<?> instance, boolean isSync) {
+    public void removeMomentInstance(MomentInstance instance, boolean isSync) {
         runMoments.remove(instance.getID());
-        momentMap.remove(instance.getResourceKey(), instance);
+        momentMap.remove(instance.getMomentResource(), instance);
 
         instance.getPlayers().forEach(player -> {
             removePlayerToMoment(player, instance);
@@ -131,45 +134,39 @@ public class MomentManager {
         }
     }
 
-    public Optional<MomentInstance<?>> createMomentInstance(ResourceKey<Moment<?>> momentKey, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return createMomentInstance(momentKey, pos, serverPlayer, null);
+    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        return createMomentInstance(moment, pos, serverPlayer, null);
     }
 
-    public Optional<MomentInstance<?>> createMomentInstance(ResourceKey<Moment<?>> momentKey, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,@Nullable Consumer<MomentInstance<?>> modifier) {
-        return Optional.of(level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT))
-                .map(registry -> registry.get(momentKey))
-                .map(moment -> moment.newMomentInstance(level, momentKey))
-                .map(instance -> {
-                    Optional.ofNullable(modifier).ifPresent(consumer -> consumer.accept(instance));
-                    return instance;
-                })
-                .map(instance -> {
-                    instance.updatePlayers();
+    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier) {
+        MomentInstance instance = moment.newMomentInstance(level, moment);
 
-                    boolean conditionMatch = instance.moment()
-                            .flatMap(Moment::momentData)
-                            .flatMap(MomentData::conditionGroup)
-                            .map( conditionGroup-> conditionGroup.matchCreate(instance, pos, serverPlayer))
-                            .orElse(true);
+        Optional.ofNullable(modifier).ifPresent(consumer -> consumer.accept(instance));
 
-                    boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
 
-                    if (canCreate && conditionMatch) {
-                        instance.init();
-                        instance.registerTracker();
-                        addMomentInstance(instance, true);
-                        return instance;
-                    }
-                    return null;
-                });
+        instance.updatePlayers();
+        Boolean conditionMatch = moment.momentData
+                .flatMap(MomentData::stateSettingsGroup)
+                .map(stateSettingsGroup -> stateSettingsGroup.matchCreate(instance, pos, serverPlayer))
+                .orElse(true);
+
+        boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
+
+        if (canCreate && conditionMatch) {
+            instance.init();
+            instance.registerTracker();
+            addMomentInstance(instance, true);
+            return instance;
+        }
+        return null;
     }
 
 
-    public boolean hasMoment(ResourceKey<Moment<?>> key) {
+    public boolean hasMoment(ResourceKey<Moment> key) {
         return momentMap.containsKey(key);
     }
 
-    public boolean addPlayerToInstance(Player player, MomentInstance<?> instance) {
+    public boolean addPlayerToInstance(Player player, MomentInstance instance) {
         if (player == null || instance == null) {
             return false;
         }
@@ -182,7 +179,7 @@ public class MomentManager {
         }
 
         boolean canAddPlayer = true;
-        for (MomentInstance<?> existingInstance : playerMoments.get(uuid)) {
+        for (MomentInstance existingInstance : playerMoments.get(uuid)) {
             if (existingInstance.getID().equals(instance.getID())) {
                 break;
             }
@@ -202,7 +199,7 @@ public class MomentManager {
         return false;
     }
 
-    private void addPlayerAndSync(Player player, MomentInstance<?> instance){
+    private void addPlayerAndSync(Player player, MomentInstance instance){
         if (!instance.isInitialized()){
             return;
         }
@@ -222,7 +219,7 @@ public class MomentManager {
 
     }
 
-    public boolean removePlayerToMoment(Player player, MomentInstance<?> instance) {
+    public boolean removePlayerToMoment(Player player, MomentInstance instance) {
         if (player == null || instance == null) {
             return false;
         }
@@ -234,7 +231,7 @@ public class MomentManager {
         return playerMoments.remove(uuid, instance);
     }
 
-    public Optional<MomentInstance<?>> getClientMomentInstance() {
+    public Optional<MomentInstance> getClientMomentInstance() {
         if (!level.isClientSide){
             return Optional.empty();
 
@@ -243,7 +240,7 @@ public class MomentManager {
         return Optional.ofNullable(((ClientMomentInstanceMixed) level).heaven_destiny_moment$getClientMomentInstance());
     }
 
-    public void setClientMomentInstance(MomentInstance<?> momentInstance) {
+    public void setClientMomentInstance(MomentInstance momentInstance) {
         if (!level.isClientSide){
             return;
         }
@@ -251,7 +248,7 @@ public class MomentManager {
         ((ClientMomentInstanceMixed) level).heaven_destiny_moment$setClientMomentInstance(momentInstance);
     }
 
-    public Collection<MomentInstance<?>> getPlayerMoments(ServerPlayer player) {
+    public Collection<MomentInstance> getPlayerMoments(ServerPlayer player) {
         return playerMoments.get(player.getUUID());
     }
 }

@@ -39,7 +39,7 @@ public record ConditionGroup(
     public static final GameRules.Key<GameRules.BooleanValue> RULE_MOMENT_DEBUG =
             GameRules.register("momentDebug", GameRules.Category.MISC, GameRules.BooleanValue.create(false));
 
-    public boolean matchCreate(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matchCreate(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return create.map(pair -> {
             List<ICondition> conditions = pair.getSecond().stream()
                     .filter(condition -> !(condition instanceof AutoProbabilityCondition))
@@ -55,7 +55,7 @@ public record ConditionGroup(
                 if (!matches) {
                     allMatch = false;
                     if (debugEnabled) {
-                        LOGGER.info("Condition Failed: {} For Event: {}", condition.getClass().getSimpleName(), instance.getResourceKey());
+                        LOGGER.info("Condition Failed: {} For Event: {}", condition.getClass().getSimpleName(), instance.getMomentResource());
                     }
                 }
             }

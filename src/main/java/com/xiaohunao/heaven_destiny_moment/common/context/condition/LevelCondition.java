@@ -22,13 +22,13 @@ public record LevelCondition(Optional<DifficultyCondition> difficulty, Optional<
             Codec.INT.listOf().optionalFieldOf("validMoonPhases").forGetter(LevelCondition::validMoonPhases)
     ).apply(instance, LevelCondition::new));
     @Override
-    public boolean matches(MomentInstance<?> instance,@Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance,@Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return matchesCondition(difficulty,instance, pos, serverPlayer) &&
                 matchesCondition(time,instance, pos, serverPlayer) &&
                 matchesValidMoonPhases(instance.getLevel());
     }
 
-    private boolean matchesCondition(Optional<? extends ICondition> condition, MomentInstance<?> instance, BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    private boolean matchesCondition(Optional<? extends ICondition> condition, MomentInstance instance, BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return condition.map(cond -> cond.matches(instance, pos, serverPlayer)).orElse(true);
     }
     private boolean matchesValidMoonPhases(Level level) {

@@ -1,7 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.attachment;
 
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -49,11 +49,11 @@ public class MomentEntityAttachment implements INBTSerializable<CompoundTag> {
         return momentUid;
     }
 
-    public Optional<MomentInstance<?>> getMomentInstance(Entity entity) {
-        MomentManager momentManager = MomentManager.of(entity.level());
+    public Optional<MomentInstance> getMomentInstance(Entity entity) {
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(entity.level());
         if(momentUid == null){
             return Optional.empty();
         }
-        return Optional.ofNullable(momentManager.getMomentInstance(momentUid));
+        return Optional.ofNullable(momentInstanceManager.getMomentInstance(momentUid));
     }
 }

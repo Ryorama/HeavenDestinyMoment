@@ -36,14 +36,14 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHolder {
+public abstract class MomentInstance extends AttachmentHolder {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    protected final MomentManager momentManager;
+    protected final MomentInstanceManager momentInstanceManager;
     protected final Level level;
     protected final MomentType<?> type;
-    protected final ResourceKey<Moment<?>> momentKey;
     protected final UUID uuid;
+    protected final Moment moment;
 
 
     private boolean initialized = false;
@@ -58,38 +58,31 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     protected CompoundTag persistentData = new CompoundTag();
     protected final EnemiesManager enemiesManager = new EnemiesManager();
 
-    protected MomentInstance(MomentType<?> type, Level level, ResourceKey<Moment<?>> momentKey) {
+    protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
         this.uuid = UUID.randomUUID();
         this.type = type;
         this.level = level;
-        this.momentKey = momentKey;
-        this.momentManager = null;
+        this.moment = moment;
+        this.momentInstanceManager = null;
     }
 
-    protected MomentInstance(MomentType<?> type, UUID uuid, Level level, ResourceKey<Moment<?>> momentKey) {
+    protected MomentInstance(MomentType<?> type, UUID uuid, Level level, Moment moment) {
         this.uuid = uuid;
         this.type = type;
         this.level = level;
-        this.momentKey = momentKey;
-        this.momentManager = null;
+        this.moment = moment;
+        this.momentInstanceManager = null;
     }
 
-    protected MomentManager getMomentManager() {
-        if (this.momentManager == null) {
-            return MomentManager.of(level);
+    protected MomentInstanceManager getMomentManager() {
+        if (this.momentInstanceManager == null) {
+            return MomentInstanceManager.of(level);
         }
-        return this.momentManager;
+        return this.momentInstanceManager;
     }
 
-
-    public boolean is(ResourceKey<Moment<?>> key) {
-        return momentKey == key;
-    }
-
-    public Optional<T> moment() {
-        Registry<Moment<?>> registry = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-        Moment<?> moment = registry.get(momentKey);
-        return (Optional<T>) Optional.ofNullable(moment);
+    public Moment getMoment() {
+        return moment;
     }
 
     public void init() {
@@ -98,8 +91,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     public void initMomentBar() {
-        moment().flatMap(Moment::barRenderType).ifPresent(type ->
-                this.bar = new MomentBar(uuid, type));
+        moment.barRenderType.ifPresent(iBarRenderType -> this.bar = new MomentBar(uuid, iBarRenderType));
 
         if (!level.isClientSide && this.bar != null) {
             PacketDistributor.sendToPlayersInDimension((ServerLevel) level, MomentBarSyncPayload.addPlayer(this.bar));
@@ -131,7 +123,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     @Nullable
-    public static MomentInstance<?> loadStatic(Level level, CompoundTag compoundTag) {
+    public static MomentInstance loadStatic(Level level, CompoundTag compoundTag) {
         String id = compoundTag.getString("id");
         ResourceLocation resourcelocation = ResourceLocation.tryParse(id);
         if (resourcelocation == null) {
@@ -142,7 +134,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
                 try {
                     Tag tag = compoundTag.get("moment");
                     return momentType.create(compoundTag.getUUID("uuid"), level,
-                            ResourceKey.codec(HDMRegistries.Keys.MOMENT).decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()
+                            Moment.CODEC.decode(NbtOps.INSTANCE,tag).getOrThrow().getFirst()
                     );
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to create MomentInstance {}", id, throwable);
@@ -234,7 +226,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     private void serializeMetaData(CompoundTag compoundTag) {
         compoundTag.putUUID("uuid", uuid);
         compoundTag.putString("id", MomentInstance.getRegistryName(type).toString());
-        compoundTag.put("moment", ResourceKey.codec(HDMRegistries.Keys.MOMENT).encodeStart(NbtOps.INSTANCE, momentKey).getOrThrow());
+        compoundTag.put("moment", ResourceKey.codec(HDMRegistries.Keys.MOMENT).encodeStart(NbtOps.INSTANCE, HDMRegistries.MOMENT.getResourceKey(moment).get()).getOrThrow());
     }
 
     public CompoundTag getPersistentData() {
@@ -261,20 +253,20 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
         updatePlayers();
         updatePlayerIsInArea();
-        updateConditionGroup();
+//        updateConditionGroup();
         updateMomentState();
 
     }
 
-    private void updateConditionGroup() {
-        moment().flatMap(Moment::momentData)
-                .flatMap(MomentData::conditionGroup)
-                .ifPresent(conditionGroup -> {
-                    checkConditionsForEachPlayer(conditionGroup.victory(), MomentState.VICTORY);
-                    checkConditionsForEachPlayer(conditionGroup.end(), MomentState.END);
-                    checkConditionsForEachPlayer(conditionGroup.lose(), MomentState.LOSE);
-                });
-    }
+//    private void updateConditionGroup() {
+//        moment().flatMap(Moment::momentData)
+//                .flatMap(MomentData::conditionGroup)
+//                .ifPresent(conditionGroup -> {
+//                    checkConditionsForEachPlayer(conditionGroup.victory(), MomentState.VICTORY);
+//                    checkConditionsForEachPlayer(conditionGroup.end(), MomentState.END);
+//                    checkConditionsForEachPlayer(conditionGroup.lose(), MomentState.LOSE);
+//                });
+//    }
 
     private void checkConditionsForEachPlayer(Optional<List<ICondition>> conditionsOptional, MomentState state) {
         if (conditionsOptional.isEmpty()) return;
@@ -347,8 +339,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     protected void victory() {
-        moment().flatMap(Moment::momentData)
-                .flatMap(MomentData::rewards)
+        moment.momentData.flatMap(MomentData::rewards)
                 .ifPresent(rewards ->
                     players.forEach(player ->
                             rewards.forEach(reward ->
@@ -371,7 +362,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     public MomentEvent setState(MomentState state) {
         this.state = state;
-        moment().flatMap(Moment::tipSettings).ifPresent(tip -> tip.playTooltip(this));
+        moment.tipSettings.ifPresent(tip -> tip.playTooltip(this));
         return NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, state));
     }
 
@@ -426,16 +417,15 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     private void updatePlayerIsInArea() {
         if (level.isClientSide) return;
 
-        players.stream().filter(Objects::nonNull).forEach(player ->
-                moment().ifPresent(moment -> {
-                    boolean inArea = moment.isInArea((ServerLevel) level, player.blockPosition());
-                    boolean uuidContains = inAreaPlayers.contains(player.getUUID());
-                    if (inArea && !uuidContains) {
-                        onPlayerEnterArea((ServerPlayer) player);
-                    } else if (!inArea && uuidContains) {
-                        onPlayerExitArea((ServerPlayer) player);
-                    }
-                }));
+        players.stream().filter(Objects::nonNull).forEach(player -> {
+            boolean inArea = moment.isInArea((ServerLevel) level, player.blockPosition());
+            boolean uuidContains = inAreaPlayers.contains(player.getUUID());
+            if (inArea && !uuidContains) {
+                onPlayerEnterArea((ServerPlayer) player);
+            } else if (!inArea && uuidContains) {
+                onPlayerExitArea((ServerPlayer) player);
+            }
+        });
     }
 
     private void onPlayerExitArea(ServerPlayer player) {
@@ -475,7 +465,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
 
     }
 
-    public boolean canCreate(Map<UUID, MomentInstance<?>> runMoments, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
+    public boolean canCreate(Map<UUID, MomentInstance> runMoments, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
         return true;
     }
 
@@ -489,22 +479,22 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
     }
 
     public boolean isClientOnlyMoment() {
-        return moment().map(Moment::isClientMomentInstanceOccupied).orElse(false);
+        return moment.isClientMomentInstanceOccupied();
     }
 
     public void registerTracker(){
-        moment().flatMap(Moment::trackers).ifPresent(trackers -> trackers.forEach(ITracker::register));
+        moment.trackers.ifPresent(trackers -> trackers.forEach(ITracker::register));
     }
 
     public void unregisterTracker(){
-        moment().flatMap(Moment::trackers).ifPresent(trackers -> trackers.forEach(ITracker::unregister));
+        moment.trackers.ifPresent(trackers -> trackers.forEach(ITracker::unregister));
     }
 
     public boolean isInitialized() {
         return initialized;
     }
 
-    public MomentInstance<T> setInitialized(boolean initialized) {
+    public MomentInstance setInitialized(boolean initialized) {
         this.initialized = initialized;
         return this;
     }
@@ -517,13 +507,8 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         entity.setData(HDMAttachments.MOMENT_ENTITY, entity.getData(HDMAttachments.MOMENT_ENTITY).setUid(this.uuid));
     }
 
-    public ResourceKey<Moment<?>> getResourceKey() {
-        return momentKey;
-    }
-
     public void setSpawnPos(Entity entity) {
-        ISpawnAlgorithm spawnAlgorithm = moment()
-                .flatMap(Moment::momentData)
+        ISpawnAlgorithm spawnAlgorithm = moment.momentData
                 .flatMap(MomentData::entitySpawnSettings)
                 .flatMap(EntitySpawnSettings::spawnAlgorithm)
                 .orElse(OpenAreaSpawnAlgorithm.DEFAULT);
@@ -567,4 +552,7 @@ public abstract class MomentInstance<T extends Moment<?>> extends AttachmentHold
         return enemiesManager.getEnemies();
     }
 
+    public ResourceLocation getMomentResource() {
+        return HDMRegistries.MOMENT.getKey(moment);
+    }
 }

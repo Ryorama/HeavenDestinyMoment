@@ -2,7 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.network;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -29,14 +29,14 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment,boolean i
         context.enqueueWork(() -> {
             if (context.player().isLocalPlayer()) {
                 Level level = context.player().level();
-                MomentManager momentManager = MomentManager.of(level);
-                MomentInstance<?> momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
+                MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+                MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
 
                 if (!isRemove){
-                    momentManager.setClientMomentInstance(momentInstance);
+                    momentInstanceManager.setClientMomentInstance(momentInstance);
                 }else {
                     if (momentInstance.isClientOnlyMoment()) {
-                        momentManager.setClientMomentInstance(null);
+                        momentInstanceManager.setClientMomentInstance(null);
                     }
                 }
             }

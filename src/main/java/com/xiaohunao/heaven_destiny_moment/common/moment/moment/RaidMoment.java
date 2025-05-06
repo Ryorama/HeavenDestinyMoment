@@ -13,15 +13,13 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.RaidInstance;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
 
-public class RaidMoment<T extends RaidMoment<?>> extends Moment<T> {
-    public static final MapCodec<RaidMoment<?>> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+public class RaidMoment extends Moment {
+    public static final MapCodec<RaidMoment> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             IBarRenderType.CODEC.optionalFieldOf("bar_render_type").forGetter(Moment::barRenderType),
             Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
             MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
@@ -31,7 +29,7 @@ public class RaidMoment<T extends RaidMoment<?>> extends Moment<T> {
             Codec.INT.optionalFieldOf("readyTime",100).forGetter(RaidMoment::readyTime)
     ).apply(instance, RaidMoment::new));
 
-    private final int readyTime;
+    protected final int readyTime;
 
     public RaidMoment() {
         super();
@@ -45,9 +43,10 @@ public class RaidMoment<T extends RaidMoment<?>> extends Moment<T> {
         this.readyTime = readyTime;
     }
 
+
     @Override
-    public MomentInstance<T> newMomentInstance(Level level, ResourceKey<Moment<?>> momentResourceKey) {
-        return new RaidInstance(level,momentResourceKey);
+    public MomentInstance newMomentInstance(Level level, Moment moment) {
+        return new RaidInstance(level,moment);
     }
 
     public int readyTime() {
@@ -55,7 +54,7 @@ public class RaidMoment<T extends RaidMoment<?>> extends Moment<T> {
     }
 
     @Override
-    public MapCodec<? extends Moment<?>> codec() {
+    public MapCodec<? extends Moment> codec() {
         return HDMMomentRegister.RAID_MOMENT.get();
     }
 }

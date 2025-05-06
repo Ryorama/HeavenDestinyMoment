@@ -13,7 +13,7 @@ import java.util.function.Function;
 public interface ISpawnAlgorithm {
     Codec<ISpawnAlgorithm> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.SPAWN_ALGORITHM_CODEC.get().byNameCodec()).dispatch(ISpawnAlgorithm::codec, Function.identity());
 
-    Vec3 spawn(MomentInstance<?> momentInstance, Entity entity);
+    Vec3 spawn(MomentInstance momentInstance, Entity entity);
 
     MapCodec<? extends ISpawnAlgorithm> codec();
 }

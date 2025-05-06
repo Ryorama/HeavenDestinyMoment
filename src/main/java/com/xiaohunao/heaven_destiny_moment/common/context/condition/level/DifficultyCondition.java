@@ -24,7 +24,7 @@ public record DifficultyCondition(List<Difficulty> difficulty) implements ICondi
             Difficulty.CODEC.listOf().fieldOf("difficulty").forGetter(DifficultyCondition::difficulty)
     ).apply(instance, DifficultyCondition::new));
     @Override
-    public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         MinecraftServer server = instance.getLevel().getServer();
         if (server != null){
             return difficulty.contains(server.getWorldData().getDifficulty());

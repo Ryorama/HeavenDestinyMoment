@@ -25,7 +25,7 @@ public class EffectReward extends Reward {
     }
 
     @Override
-    public void defaultRewards(MomentInstance<?> momentInstance, Player player) {
+    public void defaultRewards(MomentInstance momentInstance, Player player) {
         effectInstances.getRandomWeighted().forEach(player::addEffect);
     }
 

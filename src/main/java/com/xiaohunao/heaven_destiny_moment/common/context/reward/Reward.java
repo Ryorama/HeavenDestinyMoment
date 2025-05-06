@@ -11,7 +11,7 @@ public abstract class Reward implements IReward{
     protected Optional<RewardCallback> rewardCallback;
 
     @Override
-    public void createReward(MomentInstance<?> momentInstance, Player player) {
+    public void createReward(MomentInstance momentInstance, Player player) {
         rewardCallback.ifPresentOrElse(
                 callback -> callback.createReward(momentInstance, player),
                 () -> defaultRewards(momentInstance, player)
@@ -19,7 +19,7 @@ public abstract class Reward implements IReward{
     }
 
 
-    public abstract void defaultRewards(MomentInstance<?> momentInstance, Player player);
+    public abstract void defaultRewards(MomentInstance momentInstance, Player player);
 
     public Optional<CallbackSerializable> getRewardCallback() {
         if (rewardCallback.isEmpty()){

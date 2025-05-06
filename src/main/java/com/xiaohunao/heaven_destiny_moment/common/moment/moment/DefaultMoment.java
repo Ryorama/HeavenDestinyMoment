@@ -13,14 +13,13 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.DefaultInstance;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Optional;
 
-public class DefaultMoment extends Moment<Moment<?>> {
-    public static final MapCodec<Moment<Moment<?>>> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+public class DefaultMoment extends Moment {
+    public static final MapCodec<Moment> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             IBarRenderType.CODEC.optionalFieldOf("bar_render_type").forGetter(Moment::barRenderType),
             Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
             MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
@@ -40,13 +39,13 @@ public class DefaultMoment extends Moment<Moment<?>> {
     }
 
     @Override
-    public MomentInstance<DefaultMoment> newMomentInstance(Level level, ResourceKey<Moment<?>> momentResourceKey) {
+    public MomentInstance newMomentInstance(Level level, Moment momentResourceKey) {
         return new DefaultInstance(level,momentResourceKey);
     }
 
 
     @Override
-    public MapCodec<? extends Moment<?>> codec() {
+    public MapCodec<? extends Moment> codec() {
         return HDMMomentRegister.DEFAULT_MOMENT.get();
     }
 }

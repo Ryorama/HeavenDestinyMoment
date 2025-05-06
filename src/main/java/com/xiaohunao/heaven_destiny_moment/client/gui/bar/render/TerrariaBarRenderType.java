@@ -15,7 +15,7 @@ public class TerrariaBarRenderType implements IBarRenderType {
     }
 
     @Override
-    public void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance<?> momentInstance, int index) {
+    public void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance momentInstance, int index) {
 //        Minecraft minecraft = Minecraft.getInstance();
 //        int guiWidth = guiGraphics.guiWidth();
 //        int guiHeight = guiGraphics.guiHeight();

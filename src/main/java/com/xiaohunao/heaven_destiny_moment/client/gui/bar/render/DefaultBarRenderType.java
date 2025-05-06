@@ -63,7 +63,7 @@ public class DefaultBarRenderType implements IBarRenderType {
     }
 
     @Override
-    public void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance<?> momentInstance, int index) {
+    public void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance momentInstance, int index) {
         if (maxBars == -1) {
             maxBars = calculateMaxBars();
         }
@@ -78,10 +78,10 @@ public class DefaultBarRenderType implements IBarRenderType {
         int x = (screenWidth - BAR_WIDTH) / 2;
         int y = 12 + (index * (BAR_HEIGHT + SPACING + TEXT_OFFSET));
 
-        if (momentInstance.moment().isPresent() && minecraft.level != null){
-            ResourceLocation momentKey = minecraft.level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT).getKey(momentInstance.moment().get());
-            if (momentKey != null) {
-                Component name = Component.translatable(HeavenDestinyMoment.asDescriptionId("bar." + momentKey.toLanguageKey()));
+        if (minecraft.level != null){
+            ResourceLocation momentResource = momentInstance.getMomentResource();
+            if (momentResource != null) {
+                Component name = Component.translatable(HeavenDestinyMoment.asDescriptionId("bar." + momentResource.toLanguageKey()));
                 int textWidth = minecraft.font.width(name);
                 int textX = (screenWidth - textWidth) / 2;
                 int textY = y - TEXT_OFFSET;

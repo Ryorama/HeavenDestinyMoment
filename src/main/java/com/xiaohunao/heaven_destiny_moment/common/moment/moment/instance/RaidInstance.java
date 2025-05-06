@@ -29,29 +29,30 @@ import net.minecraft.world.scores.PlayerTeam;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
+public class RaidInstance extends MomentInstance {
     protected Vec3 originalPos;
     protected int currentWave = -1;
     private int totalWaves;
     protected int totalEnemy;
     private int readyTime;
 
-    public RaidInstance(Level level, ResourceKey<Moment<?>> momentKey) {
-        super(HDMMomentRegister.RAID.get(), level, momentKey);
+    public RaidInstance(Level level, Moment moment) {
+        super(HDMMomentRegister.RAID.get(), level, moment);
     }
 
 
-    public RaidInstance(UUID uuid, Level level, ResourceKey<Moment<?>> momentResourceKey) {
-        super(HDMMomentRegister.RAID.get(), uuid, level, momentResourceKey);
+    public RaidInstance(UUID uuid, Level level, Moment moment) {
+        super(HDMMomentRegister.RAID.get(), uuid, level, moment);
     }
 
-    public RaidInstance(MomentType<?> type, Level level, ResourceKey<Moment<?>> momentKey) {
-        super(type, level, momentKey);
+    public RaidInstance(MomentType<?> type, Level level, Moment moment) {
+        super(type, level, moment);
     }
 
-    public RaidInstance(MomentType<?> type, UUID uuid, Level level, ResourceKey<Moment<?>> momentKey) {
-        super(type, uuid, level, momentKey);
+    public RaidInstance(MomentType<?> type, UUID uuid, Level level, Moment moment) {
+        super(type, uuid, level, moment);
     }
+
 
     @Override
     public void initSpawnPosList() {
@@ -64,14 +65,14 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
     public void init() {
         super.init();
 
-        moment().ifPresent(raidMoment -> {
-            this.readyTime = raidMoment.readyTime();
-            this.totalWaves = raidMoment.momentData()
-                    .flatMap(MomentData::entitySpawnSettings)
-                    .flatMap(EntitySpawnSettings::entitySpawnList)
-                    .map(List::size)
-                    .orElse(0);
-        });
+        RaidMoment raidMoment = (RaidMoment) moment;
+        this.readyTime = raidMoment.readyTime();
+
+        this.totalWaves = moment.momentData
+                .flatMap(MomentData::entitySpawnSettings)
+                .flatMap(EntitySpawnSettings::entitySpawnList)
+                .map(List::size)
+                .orElse(0);
     }
 
 
@@ -88,8 +89,9 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
             setState(MomentState.END);
             return;
         }
-        
-        int readyTime = moment().map(RaidMoment::readyTime).orElse(100);
+
+        RaidMoment raidMoment = (RaidMoment) moment;
+        int readyTime = raidMoment.readyTime();
         if (this.readyTime <= 0) {
             setState(MomentState.START);
         }
@@ -151,7 +153,7 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
         }
         ServerLevel serverLevel = (ServerLevel) level;
         if (enemiesManager.isEmpty() && state == MomentState.ONGOING){
-            moment().flatMap(Moment::momentData)
+            moment.momentData
                     .flatMap(MomentData::entitySpawnSettings)
                     .map(entitySpawnSettings -> entitySpawnSettings.spawnList(level, currentWave))
                     .ifPresent(entities -> entities.forEach(entity -> {
@@ -160,6 +162,7 @@ public class RaidInstance<T extends RaidMoment<?>> extends MomentInstance<T> {
                         spawnEntity(entity);
                         totalEnemy++;
                     }));
+
         }
 
         Set<UUID> toRemove = Sets.newHashSet();

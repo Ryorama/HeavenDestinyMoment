@@ -14,5 +14,5 @@ public interface IBarRenderType {
 
     MapCodec<? extends IBarRenderType> codec();
 
-    void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance<?> momentInstance, int index);
+    void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance momentInstance, int index);
 }

@@ -4,7 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -24,18 +24,18 @@ public class ListCommand {
 
     private static int listAll(CommandContext<CommandSourceStack> ctx) {
         var source = ctx.getSource();
-        var manager = MomentManager.of(source.getLevel());
+        var manager = MomentInstanceManager.of(source.getLevel());
         return list(ctx, manager.getMomentInstances(), null);
     }
 
     private static int listPlayer(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         var source = ctx.getSource();
-        var manager = MomentManager.of(source.getLevel());
+        var manager = MomentInstanceManager.of(source.getLevel());
         var player = EntityArgument.getPlayer(ctx, "player");
         return list(ctx, manager.getPlayerMoments(player), player);
     }
 
-    private static int list(CommandContext<CommandSourceStack> ctx, Collection<MomentInstance<?>> moments, @Nullable ServerPlayer player) {
+    private static int list(CommandContext<CommandSourceStack> ctx, Collection<MomentInstance> moments, @Nullable ServerPlayer player) {
         var source = ctx.getSource();
         ServerLevel level = source.getLevel();
         

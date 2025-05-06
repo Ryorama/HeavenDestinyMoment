@@ -47,7 +47,7 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
     ).apply(instance, PlayerCondition::new));
 
     @Override
-    public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return type.matches(instance, pos, serverPlayer, (momentInstance, pos1, serverPlayer1) -> checkPlayer(serverPlayer1));
     }
 
@@ -206,20 +206,20 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
     public enum Type implements StringRepresentable {
         SINGLE {
             @Override
-            public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance<?>, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
+            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
                 return function.apply(instance, pos, serverPlayer);
             }
         },
         GLOBAL {
             @Override
-            public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance<?>, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
+            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
                 return !instance.getLevel().isClientSide && instance.getPlayers().stream()
                         .allMatch(player -> function.apply(instance, pos, (ServerPlayer) player));
             }
         },
         ANY {
             @Override
-            public boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance<?>, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
+            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function) {
                 return !instance.getLevel().isClientSide && instance.getPlayers().stream()
                         .anyMatch(player -> function.apply(instance, pos, (ServerPlayer) player));
             }
@@ -233,6 +233,6 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
             return name().toLowerCase(Locale.ROOT);
         }
 
-        public abstract boolean matches(MomentInstance<?> instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance<?>, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function);
+        public abstract boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, TriFunction<MomentInstance, @Nullable BlockPos, @Nullable ServerPlayer, Boolean> function);
     }
 }
