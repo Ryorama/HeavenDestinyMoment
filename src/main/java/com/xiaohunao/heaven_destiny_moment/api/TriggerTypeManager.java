@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
+import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
@@ -37,32 +38,30 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
         return INSTANCE;
     }
 
-    public <T extends ITrigger> void trigger(TriggerType<T> triggerType, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public static  <T extends ITrigger> void trigger(TriggerType<T> triggerType, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         Collection<Moment> moments = TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType);
 
         moments.forEach(moment -> {
-            moment.momentData().flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup -> {
-                stateSettingsGroup.creates().ifPresent(creates -> {
-                    MomentInstanceManager.of(level).createMomentInstance(moment, pos, serverPlayer);
-                });
+            moment.momentData().flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::creates).ifPresent(creates -> {
+                MomentInstanceManager.of(level).createMomentInstance(moment, pos, serverPlayer);
             });
         });
 
         listen.forEach(momentInstance -> {
-            momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup -> {
-                stateSettingsGroup.states().ifPresent(statemultimap -> {
-                    statemultimap.asMap().forEach(((state, conditionalTriggers) -> {
-                        boolean match = conditionalTriggers.stream().flatMap(conditionalTrigger -> conditionalTrigger.conditions().stream())
-                                .allMatch(condition -> condition.matches(momentInstance,pos,serverPlayer));
-                        if (match){
-                            momentInstance.setState(state);
-                        }
-                    }));
-                });
+            momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::states).ifPresent(statemultimap -> {
+                statemultimap.asMap().forEach(((state, conditionalTriggers) -> {
+                    boolean triggerMatch = conditionalTriggers.stream().allMatch(conditionalTrigger -> conditionalTrigger.trigger().canTrigger(momentInstance, pos, serverPlayer));
+
+                    boolean conditionalMatch = conditionalTriggers.stream().flatMap(conditionalTrigger -> conditionalTrigger.conditions().stream())
+                            .allMatch(condition -> condition.matches(momentInstance, pos, serverPlayer));
+
+                    if (triggerMatch && conditionalMatch) {
+                        momentInstance.setState(state);
+                    }
+                }));
             });
         });
 
 
     }
-
 }

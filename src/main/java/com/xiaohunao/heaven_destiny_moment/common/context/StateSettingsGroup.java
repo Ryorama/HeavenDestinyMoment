@@ -28,6 +28,7 @@ public record StateSettingsGroup(Optional<List<ConditionalTrigger>> creates, Opt
     public boolean matchCreate(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return creates.stream()
                 .flatMap(Collection::stream)
+                .filter(conditionalTrigger -> conditionalTrigger.trigger().canTrigger(instance,pos,serverPlayer))
                 .flatMap(conditionalTrigger -> conditionalTrigger.conditions().stream())
                 .allMatch(condition -> condition.matches(instance,pos,serverPlayer));
     }
