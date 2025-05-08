@@ -15,6 +15,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 
 public class HDMRegistries {
     public static final Registry<TriggerType<?>> TRIGGER_TYPE = new RegistryBuilder<>(Keys.TRIGGER_TYPE).create();
+    public static final Registry<ITrigger> TRIGGER = new RegistryBuilder<>(Keys.TRIGGER).create();
     public static final Registry<Moment> MOMENT = new RegistryBuilder<>(Keys.MOMENT).create();
     public static final Registry<MomentType<?>> MOMENT_TYPE = new RegistryBuilder<>(Keys.MOMENT_TYPE).create();
 
@@ -44,6 +46,7 @@ public class HDMRegistries {
     public static final Registry<MapCodec<? extends ISpawnAlgorithm>> SPAWN_ALGORITHM_CODEC = new RegistryBuilder<>(Keys.SPAWN_ALGORITHM_CODEC).create();
 
     public static final class Keys {
+        public static final ResourceKey<Registry<ITrigger>> TRIGGER = HeavenDestinyMoment.asResourceKey("trigger");
         public static final ResourceKey<Registry<TriggerType<?>>> TRIGGER_TYPE = HeavenDestinyMoment.asResourceKey("trigger_type");
         public static final ResourceKey<Registry<MomentType<?>>> MOMENT_TYPE = HeavenDestinyMoment.asResourceKey("moment_type");
         public static final ResourceKey<Registry<MapCodec<? extends ITracker>>> TRACKER_CODEC = HeavenDestinyMoment.asResourceKey("tracker");
@@ -81,6 +84,7 @@ public class HDMRegistries {
 
 
     public static void registerRegistries(NewRegistryEvent event) {
+        event.register(TRIGGER);
         event.register(TRIGGER_TYPE);
         event.register(MOMENT);
         event.register(MOMENT_TYPE);

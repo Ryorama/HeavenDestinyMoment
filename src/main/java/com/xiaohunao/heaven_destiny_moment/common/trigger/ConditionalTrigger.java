@@ -11,4 +11,12 @@ public record ConditionalTrigger(ITrigger trigger, List<ICondition> conditions) 
             ITrigger.CODEC.fieldOf("trigger").forGetter(ConditionalTrigger::trigger),
             ICondition.CODEC.listOf().fieldOf("conditions").forGetter(ConditionalTrigger::conditions)
     ).apply(instance, ConditionalTrigger::new));
+
+    public static ConditionalTrigger of(ITrigger trigger, ICondition... conditions) {
+        return new ConditionalTrigger(trigger, List.of(conditions));
+    }
+
+    public static ConditionalTrigger of(ITrigger trigger){
+        return new ConditionalTrigger(trigger, List.of());
+    }
 }

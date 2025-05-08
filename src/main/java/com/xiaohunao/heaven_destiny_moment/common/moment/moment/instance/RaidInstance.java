@@ -6,6 +6,7 @@ import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentTypes;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.EntityManagerAccessor;
 import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
@@ -37,12 +38,12 @@ public class RaidInstance extends MomentInstance {
     private int readyTime;
 
     public RaidInstance(Level level, Moment moment) {
-        super(HDMMomentRegister.RAID.get(), level, moment);
+        super(HDMMomentTypes.RAID.get(), level, moment);
     }
 
 
     public RaidInstance(UUID uuid, Level level, Moment moment) {
-        super(HDMMomentRegister.RAID.get(), uuid, level, moment);
+        super(HDMMomentTypes.RAID.get(), uuid, level, moment);
     }
 
     public RaidInstance(MomentType<?> type, Level level, Moment moment) {

@@ -4,10 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.logging.LogUtils;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.commands.MomentCommand;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
+import com.xiaohunao.heaven_destiny_moment.common.init.*;
 import com.xiaohunao.heaven_destiny_moment.compat.LoadedCompat;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
@@ -32,6 +29,9 @@ public class HeavenDestinyMoment {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public HeavenDestinyMoment(IEventBus modEventBus, ModContainer modContainer) {
+        HDMTriggerTypes.TRIGGER_TYPE.register(modEventBus);
+        HDMMomentTypes.MOMENT_TYPE.register(modEventBus);
+
         HDMMomentRegister.register(modEventBus);
         HDMContextRegister.register(modEventBus);
         HDMAttachments.TYPES.register(modEventBus);

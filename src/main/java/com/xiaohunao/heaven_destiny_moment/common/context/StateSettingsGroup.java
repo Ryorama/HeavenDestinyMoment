@@ -5,9 +5,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,11 +28,34 @@ public record StateSettingsGroup(Optional<List<ConditionalTrigger>> creates, Opt
 
 
     public boolean matchCreate(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return creates.stream()
-                .flatMap(Collection::stream)
-                .filter(conditionalTrigger -> conditionalTrigger.trigger().canTrigger(instance,pos,serverPlayer))
-                .flatMap(conditionalTrigger -> conditionalTrigger.conditions().stream())
-                .allMatch(condition -> condition.matches(instance,pos,serverPlayer));
+        if (creates.isEmpty()) {
+            return true;
+        }
+
+        List<ConditionalTrigger> triggerList = creates.get();
+        if (triggerList.isEmpty()) {
+            return true;
+        }
+
+        boolean foundTrigger = false;
+        boolean allConditionsMatch = false;
+
+        for (ConditionalTrigger conditionalTrigger : triggerList) {
+            if (conditionalTrigger.trigger().canTrigger(instance, pos, serverPlayer)) {
+                foundTrigger = true;
+
+                for (ICondition condition : conditionalTrigger.conditions()) {
+                    if (condition.matches(instance, pos, serverPlayer)) {
+                        allConditionsMatch = true;
+                    }else {
+                        allConditionsMatch = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return foundTrigger && allConditionsMatch;
     }
 
 
@@ -52,11 +77,36 @@ public record StateSettingsGroup(Optional<List<ConditionalTrigger>> creates, Opt
             return this;
         }
 
-        public Builder state(MomentState state, ConditionalTrigger hook) {
-            if (state != null && hook != null) {
-                autoStates.put(state, hook);
+        public Builder create(ITrigger trigger, ICondition... conditions) {
+            if (trigger != null && conditions != null) {
+                autoCreates.add(ConditionalTrigger.of(trigger, conditions));
             }
             return this;
         }
+
+
+        public Builder state(MomentState state, ConditionalTrigger... hook) {
+            if (state != null && hook != null) {
+                for (ConditionalTrigger conditionalTrigger : hook) {
+                    autoStates.put(state, conditionalTrigger);
+                }
+            }
+            return this;
+        }
+
+        public Builder state(MomentState state, ITrigger trigger, ICondition... conditions) {
+            if (state != null && trigger != null && conditions != null) {
+                autoStates.put(state, ConditionalTrigger.of(trigger, conditions));
+            }
+            return this;
+        }
+
+        public Builder state(MomentState state, ITrigger trigger) {
+            if (state != null && trigger != null) {
+                autoStates.put(state, ConditionalTrigger.of(trigger));
+            }
+            return this;
+        }
+
     }
 }

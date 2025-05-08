@@ -134,7 +134,7 @@ public abstract class MomentInstance extends AttachmentHolder {
                 try {
                     Tag tag = compoundTag.get("moment");
                     return momentType.create(compoundTag.getUUID("uuid"), level,
-                            Moment.CODEC.decode(NbtOps.INSTANCE,tag).getOrThrow().getFirst()
+                            HDMRegistries.MOMENT.byNameCodec().decode(NbtOps.INSTANCE,tag).getOrThrow().getFirst()
                     );
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to create MomentInstance {}", id, throwable);

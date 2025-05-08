@@ -19,8 +19,12 @@ public class RandomLevelTickTrigger implements ISerializableTrigger {
 
    private final float Probability;
 
-    public RandomLevelTickTrigger(float probability) {
+    private RandomLevelTickTrigger(float probability) {
         Probability = probability;
+    }
+
+    public static RandomLevelTickTrigger of(float probability) {
+        return new RandomLevelTickTrigger(probability);
     }
 
     public float getProbability() {

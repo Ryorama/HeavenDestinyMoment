@@ -13,7 +13,13 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public interface IMoment {
-    Codec<Moment> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.MOMENT_CODEC.get().byNameCodec()).dispatch(Moment::codec, Function.identity());
+    Codec<Moment> CODEC = HDMRegistries.MOMENT_CODEC.byNameCodec().dispatch(new Function<Moment, MapCodec<? extends Moment>>() {
+        @Override
+        public MapCodec<? extends Moment> apply(Moment moment) {
+            return moment.codec();
+        }
+    }, Function.identity());
+
 
     MapCodec<? extends Moment> codec();
 

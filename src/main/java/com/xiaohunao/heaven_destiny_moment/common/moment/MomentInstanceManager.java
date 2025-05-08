@@ -148,7 +148,7 @@ public class MomentInstanceManager {
         Boolean conditionMatch = moment.momentData
                 .flatMap(MomentData::stateSettingsGroup)
                 .map(stateSettingsGroup -> stateSettingsGroup.matchCreate(instance, pos, serverPlayer))
-                .orElse(true);
+                .orElse(false);
 
         boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
 
