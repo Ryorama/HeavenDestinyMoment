@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.event.MomentEvent;
@@ -16,7 +17,6 @@ import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorith
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -458,7 +458,9 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void addKillCount(LivingEntity livingEntity) {
-        this.setData(HDMAttachments.MOMENT_KILL_ENTITY, getData(HDMAttachments.MOMENT_KILL_ENTITY).addKillCount(livingEntity));
+        EntityTypeScoreTable entityTypeScoreTable = moment.momentData.flatMap(MomentData::entityTypeScoreTable).orElse(new EntityTypeScoreTable.Builder().build());
+        Integer score = entityTypeScoreTable.get(livingEntity.getType());
+        this.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).addKill(livingEntity,score));
     }
 
     public void livingDeath(LivingEntity entity) {
