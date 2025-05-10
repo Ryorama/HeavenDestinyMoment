@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
     private static final TriggerTypeManager INSTANCE = new TriggerTypeManager();
@@ -32,8 +33,6 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
 
     public static final Multimap<TriggerType<?>,Moment> TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
     public static final BiMap<TriggerType<?>,Class<? extends ITrigger>> TRIGGER_TYPE_TRIGGER_CLASS_BIMAP = HashBiMap.create();
-
-    private static final List<MomentInstance> listen = Lists.newArrayList();
 
     private TriggerTypeManager() {
         super(FOLDER, HDMRegistries.TRIGGER_TYPE, DynamicSerializerType.of(TriggerType.CODEC));
@@ -55,16 +54,17 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
         });
     }
 
-    public static  <T extends ITrigger> void trigger(TriggerType<?> triggerType, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public static <T extends ITrigger> void trigger(TriggerType<?> triggerType, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         Collection<Moment> moments = TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType);
+        MomentInstanceManager instanceManager = MomentInstanceManager.of(level);
 
         moments.forEach(moment -> {
             moment.momentData().flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::creates).ifPresent(creates -> {
-                MomentInstanceManager.of(level).createMomentInstance(moment, pos, serverPlayer);
+                instanceManager.createMomentInstance(moment, pos, serverPlayer);
             });
         });
 
-        listen.forEach(momentInstance -> {
+        for (MomentInstance momentInstance : instanceManager.getMomentInstances()) {
             momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::states).ifPresent(statemultimap -> {
                 statemultimap.asMap().forEach(((state, conditionalTriggers) -> {
                     boolean triggerMatch = conditionalTriggers.stream().allMatch(conditionalTrigger -> conditionalTrigger.trigger().canTrigger(momentInstance, pos, serverPlayer));
@@ -77,8 +77,7 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
                     }
                 }));
             });
-        });
-
-
+        }
     }
+
 }

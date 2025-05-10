@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
@@ -84,6 +85,7 @@ public class MomentInstanceManager {
         return runMoments.values();
     }
 
+
     public void tick() {
 //        if (level.getServer() != null && level.getServer().getPlayerCount() == 0){
 //            return;
@@ -102,7 +104,6 @@ public class MomentInstanceManager {
     public void addMomentInstance(MomentInstance instance, boolean isSync) {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getMomentResource(), instance);
-
         instance.setInitialized(true);
 
         instance.getPlayers().forEach(player -> {
