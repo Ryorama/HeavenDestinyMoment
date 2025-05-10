@@ -162,7 +162,7 @@ public class MomentInstanceManager {
     }
 
 
-    public boolean hasMoment(ResourceKey<Moment> key) {
+    public boolean hasMoment(ResourceLocation key) {
         return momentMap.containsKey(key);
     }
 
