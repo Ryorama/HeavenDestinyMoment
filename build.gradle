@@ -91,6 +91,9 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 
 repositories {
+    flatDir {
+        dir 'libs'
+    }
     mavenLocal()
 
     maven {
@@ -120,7 +123,8 @@ repositories {
 dependencies {
     compileOnly "curse.maven:champions-unofficial-1074990:6086086"
 
-    implementation jarJar(project(":XHN-Lib"))
+    //    implementation jarJar(project(":XHN-Lib"))
+    implementation(jarJar(group: 'com.xiaohunao', name: 'xhn_lib', version: '1.21.1-0.0.1'))
 
 //    runtimeOnly "curse.maven:champions-unofficial-1074990:6086086"
 
