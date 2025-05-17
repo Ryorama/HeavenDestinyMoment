@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -105,11 +106,11 @@ public class EnemiesManager {
         }
     }
 
-    public void killAllEnemies(ServerLevel level) {
+    public void killAllEnemies(ServerLevel serverLevel) {
         Set<UUID> toRemove = Sets.newHashSet();
 
         enemies.forEach(uuid -> {
-            Entity entity = level.getEntity(uuid);
+            Entity entity = serverLevel.getEntity(uuid);
             if (entity != null) {
                 entity.kill();
                 toRemove.add(uuid);
@@ -119,6 +120,15 @@ public class EnemiesManager {
         toRemove.forEach(uuid -> {
             enemies.remove(uuid);
             enemiesStorage.remove(uuid);
+        });
+    }
+
+    public void clearAllEnemiesFlags(ServerLevel serverLevel) {
+        enemies.forEach(uuid -> {
+            Entity entity = serverLevel.getEntity(uuid);
+            if (entity != null) {
+                entity.setData(HDMAttachments.MOMENT_ENTITY, entity.getData(HDMAttachments.MOMENT_ENTITY).setUid(null));
+            }
         });
     }
 }

@@ -3,25 +3,34 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
+import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
+import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.event.MomentEvent;
 import com.xiaohunao.heaven_destiny_moment.common.event.PlayerMomentAreaEvent;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
+import com.xiaohunao.heaven_destiny_moment.common.network.KillEntityRecorderSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillAnyEntityTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -57,6 +66,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
     protected final EnemiesManager enemiesManager = new EnemiesManager();
+    protected Map<MomentState,KillEntityCondition.RequiredKill> tryModifyStateRequiredKill = new HashMap<>();
 
     protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
         this.uuid = UUID.randomUUID();
@@ -88,6 +98,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     public void init() {
         initMomentBar();
         initSpawnPosList();
+        initTryModifyStateRequiredKill();
     }
 
     public void initMomentBar() {
@@ -102,6 +113,22 @@ public abstract class MomentInstance extends AttachmentHolder {
     public void initSpawnPosList() {
 
     }
+
+    public void initTryModifyStateRequiredKill(){
+        for (MomentState value : MomentState.values()) {
+            moment.momentData.flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup -> {
+                stateSettingsGroup.states().forEach((state, conditionalTrigger) ->{
+                    conditionalTrigger.conditions().forEach(condition -> {
+                        if (condition instanceof KillEntityCondition killEntityCondition) {
+                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                            tryModifyStateRequiredKill.put(value,killRecord);
+                        }
+                    });
+                });
+            });
+        }
+    }
+
 
     public Vec3 getRandomSpawnPos() {
         if (spawnPosList.isEmpty()) {
@@ -181,6 +208,12 @@ public abstract class MomentInstance extends AttachmentHolder {
         ListTag spawnPosListTag = new ListTag();
         spawnPosList.forEach(vec3 -> spawnPosListTag.add(Vec3.CODEC.encodeStart(NbtOps.INSTANCE, vec3).getOrThrow()));
         compoundTag.put("spawnPosList", spawnPosListTag);
+
+        if (tryModifyStateRequiredKill != null) {
+            Codec.unboundedMap(MomentState.CODEC,KillEntityCondition.RequiredKill.CODEC).encodeStart(NbtOps.INSTANCE, tryModifyStateRequiredKill).result().ifPresent(tryModifyStateRequiredKillTag -> compoundTag.put("tryModifyStateRequiredKill", tryModifyStateRequiredKillTag));
+        }
+
+
         return compoundTag;
     }
 
@@ -220,6 +253,14 @@ public abstract class MomentInstance extends AttachmentHolder {
 
         ListTag spawnPosListTag = compoundTag.getList("spawnPosList", Tag.TAG_LIST);
         spawnPosListTag.forEach(tag -> spawnPosList.add(Vec3.CODEC.decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()));
+
+        if (compoundTag.contains("tryModifyStateRequiredKill")) {
+            this.tryModifyStateRequiredKill.clear();
+            Map<MomentState, KillEntityCondition.RequiredKill> decodedMap = Codec.unboundedMap(MomentState.CODEC, KillEntityCondition.RequiredKill.CODEC)
+                    .decode(NbtOps.INSTANCE, compoundTag.get("tryModifyStateRequiredKill"))
+                    .getOrThrow().getFirst();
+            this.tryModifyStateRequiredKill.putAll(decodedMap);
+        }
     }
 
 
@@ -253,35 +294,11 @@ public abstract class MomentInstance extends AttachmentHolder {
 
         updatePlayers();
         updatePlayerIsInArea();
-//        updateConditionGroup();
         updateMomentState();
 
     }
 
-//    private void updateConditionGroup() {
-//        moment().flatMap(Moment::momentData)
-//                .flatMap(MomentData::conditionGroup)
-//                .ifPresent(conditionGroup -> {
-//                    checkConditionsForEachPlayer(conditionGroup.victory(), MomentState.VICTORY);
-//                    checkConditionsForEachPlayer(conditionGroup.end(), MomentState.END);
-//                    checkConditionsForEachPlayer(conditionGroup.lose(), MomentState.LOSE);
-//                });
-//    }
 
-    private void checkConditionsForEachPlayer(Optional<List<ICondition>> conditionsOptional, MomentState state) {
-        if (conditionsOptional.isEmpty()) return;
-
-        List<ICondition> conditions = conditionsOptional.get();
-        players.forEach(player -> {
-            if (player instanceof ServerPlayer serverPlayer) {
-                BlockPos blockPos = player.blockPosition();
-                boolean allConditionsMatch = conditions.stream().allMatch(condition -> condition.matches(this, blockPos, serverPlayer));
-                if (allConditionsMatch) {
-                    setState(state);
-                }
-            }
-        });
-    }
 
     private void updateMomentState() {
         if (tick == 0L) {
@@ -457,13 +474,25 @@ public abstract class MomentInstance extends AttachmentHolder {
     public void finalizeSpawn(Entity entity) {
     }
 
-    public void addKillCount(LivingEntity livingEntity) {
+    public void addKillCount(LivingEntity livingEntity, DamageSource source) {
         EntityTypeScoreTable entityTypeScoreTable = moment.momentData.flatMap(MomentData::entityTypeScoreTable).orElse(new EntityTypeScoreTable.Builder().build());
         Integer score = entityTypeScoreTable.get(livingEntity.getType());
-        this.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).addKill(livingEntity,score));
+        KillEntityRecorderAttachment recorderAttachment = getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).addKill(livingEntity, source, score);
+        this.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, recorderAttachment);
+        if (!level.isClientSide){
+            ServerLevel serverLevel = (ServerLevel) level;
+            ServerPlayer serverPlayer = null;
+            if (source.getEntity() instanceof ServerPlayer) {
+                serverPlayer = (ServerPlayer) source.getEntity();
+            }
+
+            PacketDistributor.sendToPlayersInDimension(serverLevel,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), serverPlayer.level(), KillAnyEntityTrigger::canTrigger,serverPlayer.blockPosition(), serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ENTITY_MOMENT.get(), serverPlayer.level(), trigger -> trigger.canTrigger(livingEntity.getType()),serverPlayer.blockPosition(), serverPlayer);
+        }
     }
 
-    public void livingDeath(LivingEntity entity) {
+    public void livingDeath(LivingEntity entity,DamageSource source) {
 
     }
 
@@ -528,6 +557,10 @@ public abstract class MomentInstance extends AttachmentHolder {
         enemiesManager.killAllEnemies(level);
     }
 
+    public void clearAllEnemiesFlags(ServerLevel level){
+        enemiesManager.clearAllEnemiesFlags(level);
+    }
+
     public void addEnemy(Entity entity) {
         enemiesManager.addEnemy(entity);
         setEntityTagMark(entity);
@@ -556,5 +589,13 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     public ResourceLocation getMomentResource() {
         return HDMRegistries.MOMENT.getKey(moment);
+    }
+
+    public void setVictoryRequiredKill(MomentState tryModifyState, KillEntityCondition.RequiredKill requiredKill) {
+        this.tryModifyStateRequiredKill.put(tryModifyState, requiredKill);
+    }
+
+    public KillEntityCondition.RequiredKill getVictoryRequiredKill(MomentState state) {
+        return this.tryModifyStateRequiredKill.get(state);
     }
 }

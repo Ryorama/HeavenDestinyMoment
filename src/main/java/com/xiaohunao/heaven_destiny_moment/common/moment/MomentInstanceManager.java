@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
+import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
@@ -11,12 +12,15 @@ import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -126,6 +130,18 @@ public class MomentInstanceManager {
             removePlayerToMoment(player, instance);
         });
 
+        if (!level.isClientSide){
+            ServerLevel serverLevel = (ServerLevel) level;
+            instance.getMoment().momentData.flatMap(MomentData::entitySpawnSettings).ifPresent(entitySpawnSettings -> {
+                instance.clearAllEnemiesFlags(serverLevel);
+                if (entitySpawnSettings.isAfterEndClearMonster()){
+                    instance.killAllEnemies(serverLevel);
+                }
+            });
+        }
+
+
+
         if (isSync && !level.isClientSide) {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),true));
             PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBTWithoutEnemiesManager(), true));
@@ -146,10 +162,14 @@ public class MomentInstanceManager {
 
 
         instance.updatePlayers();
-        Boolean conditionMatch = moment.momentData
+        boolean conditionMatch = moment.momentData
                 .flatMap(MomentData::stateSettingsGroup)
-                .map(stateSettingsGroup -> stateSettingsGroup.matchCreate(instance, pos, serverPlayer))
-                .orElse(false);
+                .map(StateSettingsGroup::states)
+                .map(state -> state.get(MomentState.CREATE))
+                .stream()
+                .map(ConditionalTrigger::conditions)
+                .flatMap(Collection::stream)
+                .allMatch(condition -> condition.matches(instance, MomentState.CREATE,pos, serverPlayer));
 
         boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
 

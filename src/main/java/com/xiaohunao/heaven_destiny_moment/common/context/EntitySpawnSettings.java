@@ -19,7 +19,7 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> entitySpawnList, Optional<BiomeEntitySpawnSettings> biomeEntitySpawnSettings, Optional<MobSpawnRule> rule, Optional<ISpawnAlgorithm> spawnAlgorithm) {
+public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> entitySpawnList, Optional<BiomeEntitySpawnSettings> biomeEntitySpawnSettings, Optional<MobSpawnRule> rule, Optional<ISpawnAlgorithm> spawnAlgorithm,Boolean isAfterEndClearMonster) {
     private static final Random RANDOM = new Random();
 
     public static final Codec<EntitySpawnSettings> CODEC = RecordCodecBuilder.create(builder ->
@@ -27,7 +27,8 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     Codec.list(Weighted.codec(Codec.list(IEntityInfo.CODEC))).optionalFieldOf("entity_spawn_list").forGetter(EntitySpawnSettings::entitySpawnList),
                     BiomeEntitySpawnSettings.CODEC.optionalFieldOf("biome_entity_Spawn_settings").forGetter(EntitySpawnSettings::biomeEntitySpawnSettings),
                     MobSpawnRule.CODEC.optionalFieldOf("spawn_rule").forGetter(EntitySpawnSettings::rule),
-                    ISpawnAlgorithm.CODEC.optionalFieldOf("spawn_algorithm").forGetter(EntitySpawnSettings::spawnAlgorithm)
+                    ISpawnAlgorithm.CODEC.optionalFieldOf("spawn_algorithm").forGetter(EntitySpawnSettings::spawnAlgorithm),
+                    Codec.BOOL.optionalFieldOf("isAfterEndClearMonster",false).forGetter(EntitySpawnSettings::isAfterEndClearMonster)
             ).apply(builder, EntitySpawnSettings::new)
     );
 
@@ -129,6 +130,7 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
         private BiomeEntitySpawnSettings biomeEntitySpawnSettings;
         private MobSpawnRule rule;
         private ISpawnAlgorithm spawnAlgorithm = OpenAreaSpawnAlgorithm.DEFAULT;
+        private boolean isAfterEndClearMonster = false;
 
         public Builder biomeEntitySpawnSettings(Function<BiomeEntitySpawnSettings.Builder,BiomeEntitySpawnSettings.Builder> biomeEntitySpawnSettings) {
             this.biomeEntitySpawnSettings = biomeEntitySpawnSettings.apply(new BiomeEntitySpawnSettings.Builder()).build();
@@ -161,9 +163,20 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
             return this;
         }
 
+        public Builder afterEndClearMonster(){
+            this.isAfterEndClearMonster = true;
+            return this;
+        }
+
 
         public EntitySpawnSettings build() {
-            return new EntitySpawnSettings(Optional.ofNullable(entitySpawnList),Optional.ofNullable(biomeEntitySpawnSettings),Optional.ofNullable(rule),Optional.ofNullable(spawnAlgorithm));
+            return new EntitySpawnSettings(
+                    Optional.ofNullable(entitySpawnList),
+                    Optional.ofNullable(biomeEntitySpawnSettings),
+                    Optional.ofNullable(rule),
+                    Optional.ofNullable(spawnAlgorithm),
+                    isAfterEndClearMonster
+            );
         }
     }
 

@@ -6,6 +6,8 @@ import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import com.xiaohunao.xhn_lib.api.data.loader.SimpleDynamicLoader;
 import com.xiaohunao.xhn_lib.common.serialization.DynamicSerializerType;
@@ -36,22 +38,14 @@ public class MomentManager extends SimpleDynamicLoader<Moment> {
 
         HDMRegistries.MOMENT.stream().forEach(moment -> {
             moment.momentData().flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup ->{
-                stateSettingsGroup.creates().map(List::stream).ifPresent(stream -> {
-                    stream.forEach(creates -> {
-                        TriggerType<?> triggerType = TriggerTypeManager.TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.inverse().get(creates.trigger().getClass());
-                        TriggerTypeManager.TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
-                    });
+                stateSettingsGroup.states().forEach((state, conditionalTriggers) -> {
+                    TriggerType<?> triggerType = TriggerTypeManager.TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.inverse().get(conditionalTriggers.trigger().getClass());
+                    if (state == MomentState.CREATE){
+                        TriggerTypeManager.CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
+                        return;
+                    }
+                    TriggerTypeManager.STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
                 });
-
-                stateSettingsGroup.states()
-                        .map(Multimap::asMap).ifPresent(map -> {
-                            map.forEach((state, conditionalTriggers) -> {
-                                conditionalTriggers.forEach(conditionalTrigger -> {
-                                    TriggerType<?> triggerType = TriggerTypeManager.TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.inverse().get(conditionalTrigger.trigger().getClass());
-                                    TriggerTypeManager.TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
-                                });
-                            });
-                        });
             });
         });
     }

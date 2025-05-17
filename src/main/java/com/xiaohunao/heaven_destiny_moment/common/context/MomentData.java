@@ -18,7 +18,7 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<StateSettings
             Codec.list(IReward.CODEC).optionalFieldOf("rewards").forGetter(MomentData::rewards),
             StateSettingsGroup.CODEC.optionalFieldOf("state_settings_group").forGetter(MomentData::stateSettingsGroup),
             EntitySpawnSettings.CODEC.optionalFieldOf("entity_spawn_settings").forGetter(MomentData::entitySpawnSettings),
-            EntityTypeScoreTable.CODEC.optionalFieldOf("entit_type_score_table").forGetter(MomentData::entityTypeScoreTable)
+            EntityTypeScoreTable.CODEC.optionalFieldOf("entity_type_score_table").forGetter(MomentData::entityTypeScoreTable)
 
     ).apply(instance, MomentData::new));
     public static final MomentData EMPTY = new MomentData(Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty());

@@ -31,8 +31,7 @@ public class RandomLevelTickTrigger implements ISerializableTrigger {
         return Probability;
     }
 
-    @Override
-    public boolean canTrigger(MomentInstance momentInstance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return momentInstance.getLevel().getRandom().nextFloat() > Probability;
+    public boolean canTrigger(Level level) {
+        return level.getRandom().nextFloat() > Probability;
     }
 }

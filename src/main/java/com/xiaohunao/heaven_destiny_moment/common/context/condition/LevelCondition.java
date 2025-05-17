@@ -5,8 +5,10 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.DifficultyCondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.TimeCondition;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -22,14 +24,14 @@ public record LevelCondition(Optional<DifficultyCondition> difficulty, Optional<
             Codec.INT.listOf().optionalFieldOf("validMoonPhases").forGetter(LevelCondition::validMoonPhases)
     ).apply(instance, LevelCondition::new));
     @Override
-    public boolean matches(MomentInstance instance,@Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return matchesCondition(difficulty,instance, pos, serverPlayer) &&
-                matchesCondition(time,instance, pos, serverPlayer) &&
+    public boolean matches(MomentInstance instance,@Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        return matchesCondition(difficulty,instance,tryModifyState, pos, serverPlayer) &&
+                matchesCondition(time,instance,tryModifyState, pos, serverPlayer) &&
                 matchesValidMoonPhases(instance.getLevel());
     }
 
-    private boolean matchesCondition(Optional<? extends ICondition> condition, MomentInstance instance, BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return condition.map(cond -> cond.matches(instance, pos, serverPlayer)).orElse(true);
+    private boolean matchesCondition(Optional<? extends ICondition> condition, MomentInstance instance,@Nullable MomentState tryModifyState, BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        return condition.map(cond -> cond.matches(instance,tryModifyState, pos, serverPlayer)).orElse(true);
     }
     private boolean matchesValidMoonPhases(Level level) {
         return validMoonPhases.map(s -> s.contains(level.getMoonPhase())).orElse(true);
@@ -37,7 +39,7 @@ public record LevelCondition(Optional<DifficultyCondition> difficulty, Optional<
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMContextRegister.LEVEL.get();
+        return HDMConditions.LEVEL.get();
     }
 
     public static class Builder {

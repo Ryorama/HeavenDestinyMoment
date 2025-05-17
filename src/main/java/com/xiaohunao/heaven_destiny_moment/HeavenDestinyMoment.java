@@ -31,10 +31,14 @@ public class HeavenDestinyMoment {
     public HeavenDestinyMoment(IEventBus modEventBus, ModContainer modContainer) {
         HDMTriggerTypes.TRIGGER_TYPE.register(modEventBus);
         HDMMomentTypes.MOMENT_TYPE.register(modEventBus);
+        HDMBarRenderTypes.BAR_RENDER_TYPE.register(modEventBus);
+        HDMScalingFunctions.PLAYER_COUNT_SCALING.register(modEventBus);
+        HDMScalingFunctions.DIFFICULTY_SCALING.register(modEventBus);
+        HDMConditions.CONDITION_CODEC.register(modEventBus);
+        HDMAttachments.ATTACHMENT_TYPES.register(modEventBus);
 
         HDMMomentRegister.register(modEventBus);
         HDMContextRegister.register(modEventBus);
-        HDMAttachments.TYPES.register(modEventBus);
         LoadedCompat.register(modEventBus);
 
         modEventBus.addListener(HDMRegistries::registerRegistries);

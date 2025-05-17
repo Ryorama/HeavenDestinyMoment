@@ -4,8 +4,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -44,7 +46,7 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
     ).apply(instance, LocationCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         if (pos != null && instance.getLevel() instanceof ServerLevel serverLevel){
            return matches(serverLevel,pos);
         }
@@ -116,7 +118,7 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMContextRegister.LOCATION_CONDITION.get();
+        return HDMConditions.LOCATION_CONDITION.get();
     }
 
     public static class Builder {

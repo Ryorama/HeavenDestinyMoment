@@ -4,11 +4,14 @@ import com.google.common.collect.*;
 import com.google.gson.JsonElement;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import com.xiaohunao.xhn_lib.api.data.loader.SimpleDynamicLoader;
@@ -31,7 +34,8 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
     private static final TriggerTypeManager INSTANCE = new TriggerTypeManager();
     private static final String FOLDER = "heaven_destiny_moment/trigger_type";
 
-    public static final Multimap<TriggerType<?>,Moment> TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
+    public static final Multimap<TriggerType<?>,Moment> CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
+    public static final Multimap<TriggerType<?>,Moment> STATE_TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
     public static final BiMap<TriggerType<?>,Class<? extends ITrigger>> TRIGGER_TYPE_TRIGGER_CLASS_BIMAP = HashBiMap.create();
 
     private TriggerTypeManager() {
@@ -45,7 +49,8 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
 
     @Override
     protected void apply(@NotNull Map<ResourceLocation, JsonElement> resources, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler) {
-        TRIGGER_TYPE_MOMENT_MULTIMAP.clear();
+        STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.clear();
+        CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.clear();
         TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.clear();
         super.apply(resources, resourceManager, profiler);
 
@@ -54,30 +59,55 @@ public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
         });
     }
 
-    public static <T extends ITrigger> void trigger(TriggerType<?> triggerType, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        Collection<Moment> moments = TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType);
+    public static <T extends ITrigger> void trigger(TriggerType<T> triggerType, Level level, ICanTrigger<T> iCanTrigger, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer){
         MomentInstanceManager instanceManager = MomentInstanceManager.of(level);
-
-        moments.forEach(moment -> {
-            moment.momentData().flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::creates).ifPresent(creates -> {
-                instanceManager.createMomentInstance(moment, pos, serverPlayer);
+        CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType).forEach(moment -> {
+            moment.momentData().flatMap(MomentData::stateSettingsGroup).map(StateSettingsGroup::states).map(state -> state.get(MomentState.CREATE)).ifPresent(create -> {
+                if (iCanTrigger.canTrigger((T) create.trigger())) {
+                    instanceManager.createMomentInstance(moment, pos, serverPlayer);
+                }
             });
         });
 
         for (MomentInstance momentInstance : instanceManager.getMomentInstances()) {
-            momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).flatMap(StateSettingsGroup::states).ifPresent(statemultimap -> {
-                statemultimap.asMap().forEach(((state, conditionalTriggers) -> {
-                    boolean triggerMatch = conditionalTriggers.stream().allMatch(conditionalTrigger -> conditionalTrigger.trigger().canTrigger(momentInstance, pos, serverPlayer));
+            STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType).forEach(moment -> {
+                if (moment == momentInstance.getMoment()) {
+                    momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).map(StateSettingsGroup::states).ifPresent(statemultimap -> {
+                        statemultimap.forEach(((state, conditionalTriggers) -> {
+                            if (state == MomentState.CREATE){
+                                return;
+                            }
 
-                    boolean conditionalMatch = conditionalTriggers.stream().flatMap(conditionalTrigger -> conditionalTrigger.conditions().stream())
-                            .allMatch(condition -> condition.matches(momentInstance, pos, serverPlayer));
+                            boolean canTrigger = true;
+                            boolean hasCondition = true;
 
-                    if (triggerMatch && conditionalMatch) {
-                        momentInstance.setState(state);
-                    }
-                }));
+                            if (!iCanTrigger.canTrigger((T) conditionalTriggers.trigger())){
+                                canTrigger = false;
+
+                            }
+
+                            for (ICondition condition : conditionalTriggers.conditions()) {
+                                if (!condition.matches(momentInstance, state, pos, serverPlayer)) {
+                                    hasCondition = false;
+                                    break;
+                                }
+                            }
+
+                            if (canTrigger && hasCondition) {
+                                momentInstance.setState(state);
+                            }
+
+                        }));
+                    });
+                }
             });
         }
+
+    }
+
+    @FunctionalInterface
+    public interface ICanTrigger<T extends ITrigger> {
+        boolean canTrigger(T trigger);
     }
 
 }

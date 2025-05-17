@@ -10,8 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public class LevelTickTrigger implements ITrigger {
     public static final LevelTickTrigger INSTANCE = new LevelTickTrigger();
 
-    @Override
-    public boolean canTrigger(MomentInstance momentInstance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean canTrigger() {
         return true;
     }
 }

@@ -1,9 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.init;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
-import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
+import com.xiaohunao.heaven_destiny_moment.common.network.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -19,5 +17,7 @@ public class HDMNetworkRegister {
         registrar.playToClient(MomentManagerSyncPayload.TYPE, MomentManagerSyncPayload.STREAM_CODEC, MomentManagerSyncPayload::handle);
         registrar.playToClient(MomentBarSyncPayload.TYPE, MomentBarSyncPayload.STREAM_CODEC, MomentBarSyncPayload::handle);
         registrar.playToClient(ClientOnlyMomentSyncPayload.TYPE, ClientOnlyMomentSyncPayload.STREAM_CODEC, ClientOnlyMomentSyncPayload::handle);
+        registrar.playToClient(KillRequiredSyncPayload.TYPE, KillRequiredSyncPayload.STREAM_CODEC, KillRequiredSyncPayload::handle);
+        registrar.playToClient(KillEntityRecorderSyncPayload.TYPE, KillEntityRecorderSyncPayload.STREAM_CODEC, KillEntityRecorderSyncPayload::handle);
     }
 }

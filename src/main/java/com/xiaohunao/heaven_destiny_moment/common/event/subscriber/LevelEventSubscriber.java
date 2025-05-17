@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -55,9 +56,10 @@ public class LevelEventSubscriber {
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
+        DamageSource source = event.getSource();
         entity.getData(HDMAttachments.MOMENT_ENTITY).getMomentInstance(entity).ifPresent(instance -> {
-            instance.addKillCount(entity);
-            instance.livingDeath(entity);
+            instance.addKillCount(entity,source);
+            instance.livingDeath(entity,source);
         });
     }
 

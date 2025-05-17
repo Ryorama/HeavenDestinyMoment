@@ -17,8 +17,8 @@ import java.util.UUID;
 public class MomentBarOverlay implements LayeredDraw.Layer {
     public static final Map<UUID, MomentBar> barMap = Maps.newLinkedHashMap();
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("textures/gui/demo_background.png");
-    private static final ResourceLocation GUI_BARS_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/bars.png");
+    public static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("textures/gui/demo_background.png");
+    public static final ResourceLocation GUI_BARS_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/bars.png");
 
     @Override
     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {

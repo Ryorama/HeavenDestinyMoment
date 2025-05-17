@@ -58,11 +58,6 @@ public class DefaultBarRenderType implements IBarRenderType {
     }
 
     @Override
-    public MapCodec<? extends IBarRenderType> codec() {
-        return HDMContextRegister.DEFAULT_BAR_RENDER_TYPE.get();
-    }
-
-    @Override
     public void renderBar(GuiGraphics guiGraphics, MomentBar bar, MomentInstance momentInstance, int index) {
         if (maxBars == -1) {
             maxBars = calculateMaxBars();
@@ -89,7 +84,7 @@ public class DefaultBarRenderType implements IBarRenderType {
             }
         }
 
-        drawBar(guiGraphics, x, y, bar, color);
+        draw182WidthBar(guiGraphics,bar, x, y,color,this.overlay);
     }
 
     private int calculateMaxBars() {
@@ -104,35 +99,49 @@ public class DefaultBarRenderType implements IBarRenderType {
         return Math.max(1, maxHeight / barTotalHeight);
     }
 
-
-    private void drawBar(GuiGraphics guiGraphics, int x, int y, MomentBar bar, BossEvent.BossBarColor color) {
-        drawBar(guiGraphics, x, y, bar, BAR_WIDTH, color,
+    public static void drawCustomWidthBar(GuiGraphics guiGraphics,MomentBar bar, int x, int y,int width, int height, BossEvent.BossBarColor color,BossEvent.BossBarOverlay overlay) {
+        drawBar(guiGraphics, bar, x, y,width, width, height,color, overlay,
                 BossHealthOverlay.BAR_BACKGROUND_SPRITES,
                 BossHealthOverlay.OVERLAY_BACKGROUND_SPRITES);
 
-        int progress = Mth.lerpDiscrete(bar.getProgress(), 0, BAR_WIDTH);
+        int progress = Mth.lerpDiscrete(bar.getProgress(), 0, width);
         if (progress > 0) {
-            drawBar(guiGraphics, x, y, bar, progress, color,
+            drawBar(guiGraphics, bar, x, y, progress, width, height, color, overlay,
                     BossHealthOverlay.BAR_PROGRESS_SPRITES,
                     BossHealthOverlay.OVERLAY_PROGRESS_SPRITES);
         }
     }
 
-    private void drawBar(GuiGraphics guiGraphics, int x, int y, MomentBar bar, int progress,
-                         BossEvent.BossBarColor color, ResourceLocation[] barSprites,
-                         ResourceLocation[] overlaySprites) {
-        RenderSystem.enableBlend();
+    //渲染默认182
+    public static void draw182WidthBar(GuiGraphics guiGraphics,MomentBar bar, int x, int y, BossEvent.BossBarColor color,BossEvent.BossBarOverlay overlay) {
+        drawBar(guiGraphics, bar, x, y,BAR_WIDTH, BAR_WIDTH, BAR_HEIGHT,color, overlay,
+                BossHealthOverlay.BAR_BACKGROUND_SPRITES,
+                BossHealthOverlay.OVERLAY_BACKGROUND_SPRITES);
 
-        guiGraphics.blitSprite(barSprites[color.ordinal()], BAR_WIDTH, BAR_HEIGHT,
-                0, 0, x, y, progress, BAR_HEIGHT);
-
-        if (this.overlay != BossEvent.BossBarOverlay.PROGRESS) {
-            guiGraphics.blitSprite(overlaySprites[overlay.ordinal() - 1], BAR_WIDTH, BAR_HEIGHT,
-                    0, 0, x, y, progress, BAR_HEIGHT);
+        int progress = Mth.lerpDiscrete(bar.getProgress(), 0, BAR_WIDTH);
+        if (progress > 0) {
+            drawBar(guiGraphics, bar, x, y, progress, BAR_WIDTH, BAR_HEIGHT, color, overlay,
+                    BossHealthOverlay.BAR_PROGRESS_SPRITES,
+                    BossHealthOverlay.OVERLAY_PROGRESS_SPRITES);
         }
+    }
 
+
+    //渲染自定义
+    public static void drawBar(GuiGraphics guiGraphics, MomentBar bar, int x, int y, int progress, int barWidth, int barHeight,
+                                BossEvent.BossBarColor color,BossEvent.BossBarOverlay overlay,
+                                ResourceLocation[] barSprites, ResourceLocation[] overlaySprites) {
+
+        RenderSystem.enableBlend();
+        guiGraphics.blitSprite(barSprites[color.ordinal()], barWidth, barHeight,
+                0, 0, x, y, progress, barHeight);
+        if (overlay != BossEvent.BossBarOverlay.PROGRESS) {
+            guiGraphics.blitSprite(overlaySprites[overlay.ordinal() - 1], barWidth, barHeight,
+                    0, 0, x, y, progress, barHeight);
+        }
         RenderSystem.disableBlend();
     }
+
 
     public BossEvent.BossBarOverlay getOverlay() {
         return this.overlay;

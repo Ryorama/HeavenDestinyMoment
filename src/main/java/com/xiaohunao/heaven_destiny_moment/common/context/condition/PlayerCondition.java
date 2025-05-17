@@ -6,8 +6,10 @@ import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.advancements.AdvancementHolder;
@@ -47,7 +49,7 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
     ).apply(instance, PlayerCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         return type.matches(instance, pos, serverPlayer, (momentInstance, pos1, serverPlayer1) -> checkPlayer(serverPlayer1));
     }
 
@@ -62,7 +64,7 @@ public record PlayerCondition(Type type, Optional<MinMaxBounds.Ints> level, Opti
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMContextRegister.PLAYER.get();
+        return HDMConditions.PLAYER.get();
     }
 
     private boolean matchesLevel(ServerPlayer serverplayer) {

@@ -7,12 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 public enum MomentState implements StringRepresentable {
-    READY("ready", 0),
-    START("start", 1),
-    ONGOING("ongoing", 2),
-    VICTORY("victory", 3),
-    LOSE("lose", 4),
-    END("end", 5);
+    CREATE("create", 0),
+    READY("ready", 1),
+    START("start", 2),
+    ONGOING("ongoing", 3),
+    VICTORY("victory", 4),
+    LOSE("lose", 5),
+    END("end", 6);
     public static final Codec<MomentState> CODEC = StringRepresentable.fromEnum(MomentState::values);
     private final String name;
     private final int index;

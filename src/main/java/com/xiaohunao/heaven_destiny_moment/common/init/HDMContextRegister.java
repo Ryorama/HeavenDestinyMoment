@@ -30,15 +30,15 @@ import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnA
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.MobTeamTracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
+import com.xiaohunao.xhn_lib.api.register.FlexibleRegister;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class HDMContextRegister {
-    public static final DeferredRegister<MapCodec<? extends IBarRenderType>> BAR_RENDER_TYPE_CODEC = DeferredRegister.create(HDMRegistries.Keys.BAR_RENDER_TYPE_CODEC, HeavenDestinyMoment.MODID);
+
     public static final DeferredRegister<MapCodec<? extends Area>> AREA_CODEC = DeferredRegister.create(HDMRegistries.Keys.AREA_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends IAmount>> AMOUNT_CODEC = DeferredRegister.create(HDMRegistries.Keys.AMOUNT_CODEC, HeavenDestinyMoment.MODID);
-    public static final DeferredRegister<MapCodec<? extends ICondition>> CONDITION_CODEC = DeferredRegister.create(HDMRegistries.Keys.CONDITION_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends IEntityInfo>> ENTITY_INFO_CODEC = DeferredRegister.create(HDMRegistries.Keys.ENTITY_INFO_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends IReward>> REWARD_CODEC = DeferredRegister.create(HDMRegistries.Keys.REWARD_CODEC, HeavenDestinyMoment.MODID);
     public static final DeferredRegister<MapCodec<? extends IEquippableSlot>> EQUIPPABLE_SLOT_CODEC = DeferredRegister.create(HDMRegistries.Keys.EQUIPPABLE_SLOT_CODEC, HeavenDestinyMoment.MODID);
@@ -47,23 +47,11 @@ public class HDMContextRegister {
     public static final DeferredRegister<MapCodec<? extends ITracker>> TRACKER_CODEC = DeferredRegister.create(HDMRegistries.Keys.TRACKER_CODEC, HeavenDestinyMoment.MODID);
 
 
-    public static final DeferredHolder<MapCodec<? extends IBarRenderType>, MapCodec<? extends IBarRenderType>> DEFAULT_BAR_RENDER_TYPE = BAR_RENDER_TYPE_CODEC.register("default", () -> DefaultBarRenderType.CODEC);
-    public static final DeferredHolder<MapCodec<? extends IBarRenderType>, MapCodec<? extends IBarRenderType>> TERRA_BAR_RENDER_TYPE = BAR_RENDER_TYPE_CODEC.register("terrar", () -> TerrariaBarRenderType.CODEC);
-
-
     public static final DeferredHolder<MapCodec<? extends Area>, MapCodec<? extends Area>> LOCATION_AREA = AREA_CODEC.register("location", () -> LocationArea.CODEC);
 
 
     public static final DeferredHolder<MapCodec<? extends IAmount>, MapCodec<? extends IAmount>> INTEGER_AMOUNT = AMOUNT_CODEC.register("integer", () -> IntegerAmount.CODEC);
     public static final DeferredHolder<MapCodec<? extends IAmount>, MapCodec<? extends IAmount>> RANDOM_AMOUNT = AMOUNT_CODEC.register("random", () -> RandomAmount.CODEC);
-
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> TIME_CONDITION = CONDITION_CODEC.register("time", () -> TimeCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> LOCATION_CONDITION = CONDITION_CODEC.register("location", () -> LocationCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> WORLD_UNIQUE_MOMENT = CONDITION_CODEC.register("world_unique_moment", () -> WorldUniqueMomentCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> AUTO_PROBABILITY = CONDITION_CODEC.register("auto_probability", () -> AutoProbabilityCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> PLAYER = CONDITION_CODEC.register("player", () -> PlayerCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> DIFFICULTY = CONDITION_CODEC.register("difficulty", () -> DifficultyCondition.CODEC);
-    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> LEVEL = CONDITION_CODEC.register("level", () -> LevelCondition.CODEC);
 
     public static final DeferredHolder<MapCodec<? extends IEntityInfo>, MapCodec<? extends IEntityInfo>> ENTITY_INFO = ENTITY_INFO_CODEC.register("entity_info", () -> EntityInfo.CODEC);
     public static final DeferredHolder<MapCodec<? extends IEntityInfo>, MapCodec<? extends IEntityInfo>> SLIME_INFO = ENTITY_INFO_CODEC.register("slime_info", () -> SlimeInfo.CODEC);
@@ -92,9 +80,7 @@ public class HDMContextRegister {
 
 
     public static void register(IEventBus modEventBus) {
-        BAR_RENDER_TYPE_CODEC.register(modEventBus);
         AMOUNT_CODEC.register(modEventBus);
-        CONDITION_CODEC.register(modEventBus);
         ENTITY_INFO_CODEC.register(modEventBus);
         REWARD_CODEC.register(modEventBus);
         AREA_CODEC.register(modEventBus);

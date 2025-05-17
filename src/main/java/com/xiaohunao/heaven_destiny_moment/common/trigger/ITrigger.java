@@ -50,5 +50,5 @@ public interface ITrigger {
     );
 
 
-    boolean canTrigger(MomentInstance momentInstance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
+//    boolean canTrigger(MomentInstance momentInstance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
 }

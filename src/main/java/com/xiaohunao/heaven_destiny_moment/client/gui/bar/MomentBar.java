@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.render.IBarRenderType;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.BossEvent;
@@ -17,9 +18,10 @@ import java.util.function.Function;
 public class MomentBar {
     public static final Codec<MomentBar> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             UUIDUtil.CODEC.fieldOf("uuid").forGetter(MomentBar::getID),
-            IBarRenderType.CODEC.fieldOf("type").forGetter(MomentBar::getType),
+            HDMRegistries.BAR_RENDER_TYPE.byNameCodec().fieldOf("type").forGetter(MomentBar::getType),
             Codec.FLOAT.fieldOf("progress").forGetter(MomentBar::getProgress),
             Codec.STRING.xmap(BossEvent.BossBarColor::valueOf, BossEvent.BossBarColor::name).fieldOf("color").forGetter(MomentBar::getColor)
+
     ).apply(inst, MomentBar::new));
 
 
