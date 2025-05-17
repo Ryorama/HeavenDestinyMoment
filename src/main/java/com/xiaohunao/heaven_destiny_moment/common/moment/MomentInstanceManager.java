@@ -2,23 +2,17 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
-import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
-import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,10 +21,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -94,15 +85,16 @@ public class MomentInstanceManager {
 //        if (level.getServer() != null && level.getServer().getPlayerCount() == 0){
 //            return;
 //        }
-
-        runMoments.values().forEach(instance -> {
+        if (runMoments.isEmpty()) return;
+        for (Map.Entry<UUID, MomentInstance> entry : runMoments.entrySet()) {
+            MomentInstance instance = entry.getValue();
             if (instance.state == MomentState.END) {
                 instance.end();
                 instance.unregisterTracker();
                 removeMomentInstance(instance, true);
             }
             instance.baseTick();
-        });
+        }
     }
 
     public void addMomentInstance(MomentInstance instance, boolean isSync) {

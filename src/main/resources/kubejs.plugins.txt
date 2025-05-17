@@ -1,1 +1,0 @@
-com.xiaohunao.heaven_destiny_moment.compat.kubejs.HDMKubeJSPlugin
