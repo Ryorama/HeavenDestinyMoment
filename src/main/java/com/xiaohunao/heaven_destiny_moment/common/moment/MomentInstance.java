@@ -10,7 +10,6 @@ import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderA
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
-import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.event.MomentEvent;
 import com.xiaohunao.heaven_destiny_moment.common.event.PlayerMomentAreaEvent;
@@ -22,7 +21,6 @@ import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillAnyEntityTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
@@ -479,16 +477,13 @@ public abstract class MomentInstance extends AttachmentHolder {
         Integer score = entityTypeScoreTable.get(livingEntity.getType());
         KillEntityRecorderAttachment recorderAttachment = getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).addKill(livingEntity, source, score);
         this.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, recorderAttachment);
-        if (!level.isClientSide){
-            ServerLevel serverLevel = (ServerLevel) level;
-            ServerPlayer serverPlayer = null;
-            if (source.getEntity() instanceof ServerPlayer) {
-                serverPlayer = (ServerPlayer) source.getEntity();
-            }
+        if (level instanceof ServerLevel serverLevel){
+            ServerPlayer serverPlayer = source.getEntity() instanceof ServerPlayer player ? player : null;
+            BlockPos pos = serverPlayer == null ? null : serverPlayer.blockPosition();
 
             PacketDistributor.sendToPlayersInDimension(serverLevel,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), serverPlayer.level(), KillAnyEntityTrigger::canTrigger,serverPlayer.blockPosition(), serverPlayer);
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ENTITY_MOMENT.get(), serverPlayer.level(), trigger -> trigger.canTrigger(livingEntity.getType()),serverPlayer.blockPosition(), serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), level, KillAnyEntityTrigger::canTrigger, pos, serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ENTITY_MOMENT.get(), level, trigger -> trigger.canTrigger(livingEntity.getType()),pos, serverPlayer);
         }
     }
 
