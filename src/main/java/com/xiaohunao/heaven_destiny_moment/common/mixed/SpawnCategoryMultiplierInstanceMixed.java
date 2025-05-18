@@ -4,5 +4,5 @@ import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplie
 import net.minecraft.world.entity.MobCategory;
 
 public interface SpawnCategoryMultiplierInstanceMixed {
-    SpawnCategoryMultiplierInstance getMobCategoryMultiplierInstance(MobCategory mobCategory);
+    SpawnCategoryMultiplierInstance hdm$getMobCategoryMultiplierInstance(MobCategory mobCategory);
 }

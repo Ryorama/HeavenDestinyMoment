@@ -48,7 +48,7 @@ public class NaturalSpawnerSpawnStateMixin {
                     .flatMap(BiomeEntitySpawnSettings::spawnCategoryMultiplier)
                     .ifPresent(multiplierMap -> {
                         SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) level;
-                        SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.getMobCategoryMultiplierInstance(mobCategory);
+                        SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(mobCategory);
 
                         SpawnCategoryMultiplierModifier multiplierModifier = multiplierMap.get(mobCategory);
                         if (multiplierModifier != null){

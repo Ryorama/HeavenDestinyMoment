@@ -56,7 +56,7 @@ public abstract class LocalMobCapCalculatorMixin {
                             final int currentCount = counts.getOrDefault(category, 0);
 
                             SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) chunkMap.level;
-                            SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.getMobCategoryMultiplierInstance(category);
+                            SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(category);
                             SpawnCategoryMultiplierModifier multiplierModifier = multiplierMap.get(category);
                             if (multiplierModifier != null){
                                 multiplierInstance.addModifier(multiplierModifier);

@@ -1,33 +1,30 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentTypes;
-import com.xiaohunao.heaven_destiny_moment.common.mixed.EntityManagerAccessor;
-import com.xiaohunao.heaven_destiny_moment.common.moment.*;
+import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentType;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
-import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.*;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.ServerScoreboard;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.PlayerTeam;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 public class RaidInstance extends MomentInstance {
@@ -170,8 +167,7 @@ public class RaidInstance extends MomentInstance {
         getEnemies().forEach(uid -> {
             Entity entity = serverLevel.getEntity(uid);
             updateBarProgress(getEnemyCount() / (float) totalEnemy);
-            EntityManagerAccessor managerAccessor = (EntityManagerAccessor) serverLevel;
-            if (entity == null && !managerAccessor.getEntityManager().isLoaded(uid)){
+            if (entity == null && !serverLevel.entityManager.isLoaded(uid)){
                 toRemove.add(uid);
             }
 
