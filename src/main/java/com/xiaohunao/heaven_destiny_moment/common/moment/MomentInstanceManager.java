@@ -9,7 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ConditionalTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -159,7 +159,7 @@ public class MomentInstanceManager {
                 .map(StateSettingsGroup::states)
                 .map(state -> state.get(MomentState.CREATE))
                 .stream()
-                .map(ConditionalTrigger::conditions)
+                .map(TriggerContext::conditions)
                 .flatMap(Collection::stream)
                 .allMatch(condition -> condition.matches(instance, MomentState.CREATE,pos, serverPlayer));
 
