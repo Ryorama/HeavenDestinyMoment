@@ -30,6 +30,7 @@ public class CommonTriggerSubscriber {
         for (ServerPlayer serverPlayer : serverLevel.players()) {
             TriggerTypeManager.trigger(HDMTriggerTypes.RANDOM_LEVEL_TICK.get(), level, trigger -> trigger.canTrigger(level), serverPlayer.blockPosition(), serverPlayer);
             TriggerTypeManager.trigger(HDMTriggerTypes.LEVEL_TICK.get(), level, LevelTickTrigger::canTrigger, serverPlayer.blockPosition(), serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.TIME_PROBABILITY.get(), level, trigger -> trigger.canTrigger(level), serverPlayer.blockPosition(), serverPlayer);
         }
     }
 

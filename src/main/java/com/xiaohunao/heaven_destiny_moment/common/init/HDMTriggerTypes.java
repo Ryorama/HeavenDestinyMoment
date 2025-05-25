@@ -21,6 +21,8 @@ public class HDMTriggerTypes {
 
 
     public static final FlexibleHolder<TriggerType<?>,TriggerType<RandomLevelTickTrigger>> RANDOM_LEVEL_TICK = registerSerializable("random_level_tick",RandomLevelTickTrigger.class,RandomLevelTickTrigger.CODEC);
+    public static final FlexibleHolder<TriggerType<?>,TriggerType<TimeProbabilityTrigger>> TIME_PROBABILITY = registerSerializable("time_probability_trigger",TimeProbabilityTrigger.class,TimeProbabilityTrigger.CODEC);
+
     public static final FlexibleHolder<TriggerType<?>,TriggerType<BlockBreakTrigger>> BLOCK_BREAK = registerSerializable("block_break",BlockBreakTrigger.class,BlockBreakTrigger.CODEC);
     public static final FlexibleHolder<TriggerType<?>,TriggerType<KillEntityTrigger.Moment>> KILL_ENTITY_MOMENT = registerSerializable("kill_entity_moment",KillEntityTrigger.Moment.class,KillEntityTrigger.Moment.CODEC);
     public static final FlexibleHolder<TriggerType<?>,TriggerType<KillEntityTrigger.Common>> KILL_ENTITY_COMMON = registerSerializable("kill_entity_common",KillEntityTrigger.Common.class,KillEntityTrigger.Common.CODEC);
