@@ -21,6 +21,10 @@ public record BlockBreakTrigger(Block block) implements ISerializableTrigger {
             ).apply(instance, BlockBreakTrigger::new)
     );
 
+    public static BlockBreakTrigger of(Block block) {
+        return new BlockBreakTrigger(block);
+    }
+
     public boolean canTrigger(Level level, BlockPos pos) {
         if (pos == null) return false;
         return level.getBlockState(pos).getBlock() == block;
