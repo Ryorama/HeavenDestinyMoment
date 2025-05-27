@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.logging.LogUtils;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.commands.MomentCommand;
 import com.xiaohunao.heaven_destiny_moment.common.init.*;
@@ -16,17 +15,17 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Mod(HeavenDestinyMoment.MODID)
 public class HeavenDestinyMoment {
     public static final String MODID = "heaven_destiny_moment";
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LoggerFactory.getLogger("HeavenDestinyMoment");
 
     public HeavenDestinyMoment(IEventBus modEventBus, ModContainer modContainer) {
         HDMTriggerTypes.TRIGGER_TYPE.register(modEventBus);
