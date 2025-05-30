@@ -55,8 +55,9 @@ public class LevelEventSubscriber {
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
-        LivingEntity entity = event.getEntity();
         DamageSource source = event.getSource();
+        if (source == null) return;
+        LivingEntity entity = event.getEntity();
         entity.getData(HDMAttachments.MOMENT_ENTITY).getMomentInstance(entity).ifPresent(instance -> {
             instance.addKillCount(entity,source);
             instance.livingDeath(entity,source);
