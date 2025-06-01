@@ -12,9 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class EnemiesManager {
     private final Set<UUID> enemies = Sets.newHashSet();
@@ -107,20 +105,22 @@ public class EnemiesManager {
     }
 
     public void killAllEnemies(ServerLevel serverLevel) {
+        List<UUID> enemiesCopy = new ArrayList<>(enemies);
+
         Set<UUID> toRemove = Sets.newHashSet();
 
-        enemies.forEach(uuid -> {
-            Entity entity = serverLevel.getEntity(uuid);
+        for (UUID enemy : enemiesCopy) {
+            Entity entity = serverLevel.getEntity(enemy);
             if (entity != null) {
                 entity.kill();
-                toRemove.add(uuid);
+                toRemove.add(enemy);
             }
-        });
+        }
 
-        toRemove.forEach(uuid -> {
+        for (UUID uuid : toRemove) {
             enemies.remove(uuid);
             enemiesStorage.remove(uuid);
-        });
+        }
     }
 
     public void clearAllEnemiesFlags(ServerLevel serverLevel) {
