@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.function.Function;
 
 public interface IEquippableSlot {
-    Codec<IEquippableSlot> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.EQUIPPABLE_SLOT_CODEC.get().byNameCodec()).dispatch(IEquippableSlot::codec, Function.identity());
+    Codec<IEquippableSlot> CODEC = Codec.lazyInitialized(HDMRegistries.EQUIPPABLE_SLOT_CODEC::byNameCodec).dispatch(IEquippableSlot::codec, Function.identity());
 
     MapCodec<? extends IEquippableSlot> codec();
 

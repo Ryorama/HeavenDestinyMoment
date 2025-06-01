@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.function.Function;
 
 public interface IReward {
-    Codec<IReward> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.REWARD_CODEC.get().byNameCodec()).dispatch(IReward::codec, Function.identity());
+    Codec<IReward> CODEC = Codec.lazyInitialized(HDMRegistries.REWARD_CODEC::byNameCodec).dispatch(IReward::codec, Function.identity());
 
     MapCodec<? extends IReward> codec();
 

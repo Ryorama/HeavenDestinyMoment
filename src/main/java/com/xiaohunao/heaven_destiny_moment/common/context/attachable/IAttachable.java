@@ -8,7 +8,7 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.function.Function;
 
 public interface IAttachable {
-    Codec<IAttachable> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.ATTACHABLE_CODEC.get().byNameCodec()).dispatch(IAttachable::codec, Function.identity());
+    Codec<IAttachable> CODEC = Codec.lazyInitialized(HDMRegistries.ATTACHABLE_CODEC::byNameCodec).dispatch(IAttachable::codec, Function.identity());
 
     void attachToEntity(LivingEntity livingEntity);
 

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface IEntityInfo {
-    Codec<IEntityInfo> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.ENTITY_INFO_CODEC.get().byNameCodec()).dispatch(IEntityInfo::codec, Function.identity());
+    Codec<IEntityInfo> CODEC = Codec.lazyInitialized(HDMRegistries.ENTITY_INFO_CODEC::byNameCodec).dispatch(IEntityInfo::codec, Function.identity());
 
     MapCodec<? extends IEntityInfo> codec();
 

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.function.Function;
 
 public interface ITracker {
-    Codec<ITracker> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.TRACKER_CODEC.get().byNameCodec()).dispatch(ITracker::codec, Function.identity());
+    Codec<ITracker> CODEC = Codec.lazyInitialized(HDMRegistries.TRACKER_CODEC::byNameCodec).dispatch(ITracker::codec, Function.identity());
 
     void register();
 

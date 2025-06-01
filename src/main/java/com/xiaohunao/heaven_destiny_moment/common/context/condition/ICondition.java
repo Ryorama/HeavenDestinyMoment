@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public interface ICondition {
-    Codec<ICondition> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.CONDITION_CODEC.get().byNameCodec()).dispatch(ICondition::codec, Function.identity());
+    Codec<ICondition> CODEC = Codec.lazyInitialized(HDMRegistries.CONDITION_CODEC::byNameCodec).dispatch(ICondition::codec, Function.identity());
 
     boolean matches(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer);
 

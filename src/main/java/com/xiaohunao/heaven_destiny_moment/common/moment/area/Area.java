@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import java.util.function.Function;
 
 public interface Area {
-    Codec<Area> CODEC = Codec.lazyInitialized(() -> HDMRegistries.Suppliers.AREA_CODEC.get().byNameCodec()).dispatch(Area::codec, Function.identity());
+    Codec<Area> CODEC = Codec.lazyInitialized(HDMRegistries.AREA_CODEC::byNameCodec).dispatch(Area::codec, Function.identity());
 
     MapCodec<? extends Area> codec();
 
