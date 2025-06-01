@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public record MomentData(Optional<List<IReward>> rewards, Optional<StateSettingsGroup> stateSettingsGroup,
+public record MomentData(Optional<List<IReward>> rewards, Optional<AutoActuatorGroupSettings> autoActuatorGroupSettings,
                          Optional<EntitySpawnSettings> entitySpawnSettings,Optional<EntityTypeScoreTable> entityTypeScoreTable) {
 
     public static final Codec<MomentData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.list(IReward.CODEC).optionalFieldOf("rewards").forGetter(MomentData::rewards),
-            StateSettingsGroup.CODEC.optionalFieldOf("state_settings_group").forGetter(MomentData::stateSettingsGroup),
+            AutoActuatorGroupSettings.CODEC.optionalFieldOf("state_settings_group").forGetter(MomentData::autoActuatorGroupSettings),
             EntitySpawnSettings.CODEC.optionalFieldOf("entity_spawn_settings").forGetter(MomentData::entitySpawnSettings),
             EntityTypeScoreTable.CODEC.optionalFieldOf("entity_type_score_table").forGetter(MomentData::entityTypeScoreTable)
 
@@ -26,13 +26,13 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<StateSettings
 
     public static class Builder {
         private List<IReward> rewards;
-        private StateSettingsGroup stateSettingsGroup;
+        private AutoActuatorGroupSettings autoActuatorGroupSettings;
         private EntitySpawnSettings entitySpawnSettings;
         private EntityTypeScoreTable entityTypeScoreTable;
 
 
         public MomentData build() {
-            return new MomentData(Optional.ofNullable(rewards),Optional.ofNullable(stateSettingsGroup),Optional.ofNullable(entitySpawnSettings),Optional.ofNullable(entityTypeScoreTable));
+            return new MomentData(Optional.ofNullable(rewards),Optional.ofNullable(autoActuatorGroupSettings),Optional.ofNullable(entitySpawnSettings),Optional.ofNullable(entityTypeScoreTable));
         }
 
         public Builder addReward(IReward... reward) {
@@ -44,8 +44,8 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<StateSettings
         }
 
 
-        public Builder stateSettingsGroup(Function<StateSettingsGroup.Builder,StateSettingsGroup.Builder> stateSettingsGroup){
-            this.stateSettingsGroup = stateSettingsGroup.apply(new StateSettingsGroup.Builder()).build();
+        public Builder autoActuatorGroupSettings(Function<AutoActuatorGroupSettings.Builder, AutoActuatorGroupSettings.Builder> autoActuatorGroupSettings){
+            this.autoActuatorGroupSettings = autoActuatorGroupSettings.apply(new AutoActuatorGroupSettings.Builder()).build();
             return this;
         }
 

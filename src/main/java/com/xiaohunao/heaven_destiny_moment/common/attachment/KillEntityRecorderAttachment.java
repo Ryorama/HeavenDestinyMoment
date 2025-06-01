@@ -15,17 +15,9 @@ import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * 天命时刻 - 击杀实体记录附件
- * <p>
- * 这个附件记录玩家击杀实体的详细信息，包括：
- * - 按实体类型记录击杀数量和分数
- * - 记录击杀时间和连击信息
- * - 支持时间窗口查询
- * - 支持实体标签统计
- * </p>
- */
+
 public final class KillEntityRecorderAttachment {
     public static final Codec<KillEntityRecorderAttachment> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             KillRecord.CODEC.listOf().fieldOf("killRecords").forGetter(KillEntityRecorderAttachment::getKillRecords),
@@ -50,7 +42,7 @@ public final class KillEntityRecorderAttachment {
     }
 
     public static KillEntityRecorderAttachment create(){
-        return new KillEntityRecorderAttachment(Lists.newArrayList(), 0, 0, new HashMap<>(), new HashMap<>());
+        return new KillEntityRecorderAttachment(new CopyOnWriteArrayList<>(), 0, 0, new HashMap<>(), new HashMap<>());
     }
 
 
