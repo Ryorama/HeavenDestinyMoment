@@ -4,13 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.TimeCondition;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ISerializableTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 import java.util.Random;
 
-public record TimeProbabilityTrigger(TimeCondition timeCondition, float probability) implements ISerializableTrigger {
+public record TimeProbabilityTrigger(TimeCondition timeCondition, float probability) implements ITrigger {
     public static final MapCodec<TimeProbabilityTrigger> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             TimeCondition.CODEC.fieldOf("time_condition").forGetter(TimeProbabilityTrigger::timeCondition),
             Codec.FLOAT.fieldOf("probability").forGetter(TimeProbabilityTrigger::probability)
@@ -28,7 +28,8 @@ public record TimeProbabilityTrigger(TimeCondition timeCondition, float probabil
         if (!timeMatches) {
             return false;
         }
-        return random.nextFloat() < probability;
+        float nextFloat = random.nextFloat();
+        return nextFloat < probability;
     }
 
     public static TimeProbabilityTrigger exactly(long value, float probability) {

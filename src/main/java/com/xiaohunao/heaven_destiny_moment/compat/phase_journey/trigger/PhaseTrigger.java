@@ -1,13 +1,11 @@
 package com.xiaohunao.heaven_destiny_moment.compat.phase_journey.trigger;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ISerializableTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.resources.ResourceLocation;
 
-public abstract class PhaseTrigger implements ISerializableTrigger {
+public abstract class PhaseTrigger implements ITrigger {
     private ResourceLocation phase;
     public PhaseTrigger(ResourceLocation phase){
         this.phase = phase;
@@ -25,7 +23,7 @@ public abstract class PhaseTrigger implements ISerializableTrigger {
         return new Remove(phase);
     }
 
-    public static class Add extends PhaseTrigger {
+    public static class Add extends PhaseTrigger implements ITrigger {
         public static final MapCodec<Add> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 ResourceLocation.CODEC.fieldOf("phase").forGetter(Add::getPhase)
         ).apply(instance, Add::new));
@@ -34,7 +32,7 @@ public abstract class PhaseTrigger implements ISerializableTrigger {
             super(phase);
         }
     }
-    public static class Remove extends PhaseTrigger{
+    public static class Remove extends PhaseTrigger implements ITrigger {
         public static final MapCodec<Remove> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 ResourceLocation.CODEC.fieldOf("phase").forGetter(Remove::getPhase)
         ).apply(instance, Remove::new));

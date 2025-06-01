@@ -1,15 +1,13 @@
 package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ISerializableTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 
-public abstract class KillEntityTrigger implements ISerializableTrigger {
+public abstract class KillEntityTrigger implements ITrigger {
     private final EntityType<?> entityType;
 
     public KillEntityTrigger(EntityType<?> entityType) {
