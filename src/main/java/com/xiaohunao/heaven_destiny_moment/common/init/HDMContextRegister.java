@@ -27,6 +27,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.LocationArea;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
+import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.RandomPlayerPosImitationVanillaNaturalSpawner;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.MobTeamTracker;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.Tracker;
@@ -73,6 +74,7 @@ public class HDMContextRegister {
 
 
     public static final DeferredHolder<MapCodec<? extends ISpawnAlgorithm>, MapCodec<? extends ISpawnAlgorithm>> OPEN_AREA_SPAWN_ALGORITHM = SPAWN_ALGORITHM_CODEC.register("open_area", () -> OpenAreaSpawnAlgorithm.CODEC);
+    public static final DeferredHolder<MapCodec<? extends ISpawnAlgorithm>, MapCodec<? extends ISpawnAlgorithm>> RANDOM_PLAYER_POS_IMITATION_VANILLA_NATURAL_SPAWNER = SPAWN_ALGORITHM_CODEC.register("random_player_pos_imitation_vanilla_natural_spawner", () -> RandomPlayerPosImitationVanillaNaturalSpawner.CODEC);
 
 
     public static final DeferredHolder<MapCodec<? extends ITracker>, MapCodec<? extends ITracker>> DEFAULT_TRACKER = TRACKER_CODEC.register("tracker", () -> Tracker.CODEC);
