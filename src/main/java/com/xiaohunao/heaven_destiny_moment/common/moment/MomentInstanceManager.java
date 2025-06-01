@@ -2,8 +2,11 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
-import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
+import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
@@ -24,12 +27,16 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class MomentInstanceManager {
+    private static final TriggerTypeManager triggerTypeManager = TriggerTypeManager.getInstance();
+
     private final Level level;
 
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
     private final HashMultimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
 
@@ -76,6 +83,10 @@ public class MomentInstanceManager {
         return momentMap.get(location);
     }
 
+    public Collection<MomentInstance> getMomentInstances(Moment moment) {
+        return momentInstanceMap.get(moment);
+    }
+
     public Collection<MomentInstance> getMomentInstances() {
         return runMoments.values();
     }
@@ -97,11 +108,25 @@ public class MomentInstanceManager {
         }
     }
 
+    public void addActuatorRemainingUses(MomentInstance instance){
+        instance.getMoment().momentData().flatMap(MomentData::autoActuatorGroupSettings).map(AutoActuatorGroupSettings::autoActuators).ifPresent(map -> {
+            map.forEach((triggerContext, actuatorContext) -> {
+                triggerTypeManager.addActuatorRemainingUses(instance.getID(),actuatorContext, actuatorContext.count());
+            });
+        });
+    }
+
+    public void removeActuatorRemainingUses(MomentInstance instance){
+        triggerTypeManager.removeActuatorRemainingUses(instance.getID());
+    }
+
+
     public void addMomentInstance(MomentInstance instance, boolean isSync) {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getMomentResource(), instance);
+        momentInstanceMap.put(instance.getMoment(), instance);
+        addActuatorRemainingUses(instance);
         instance.setInitialized(true);
-
         instance.getPlayers().forEach(player -> {
             addPlayerAndSync(player, instance);
         });
@@ -117,7 +142,8 @@ public class MomentInstanceManager {
     public void removeMomentInstance(MomentInstance instance, boolean isSync) {
         runMoments.remove(instance.getID());
         momentMap.remove(instance.getMomentResource(), instance);
-
+        momentInstanceMap.remove(instance.getMoment(), instance);
+        removeActuatorRemainingUses(instance);
         instance.getPlayers().forEach(player -> {
             removePlayerToMoment(player, instance);
         });
@@ -154,14 +180,19 @@ public class MomentInstanceManager {
 
 
         instance.updatePlayers();
-        boolean conditionMatch = moment.momentData
-                .flatMap(MomentData::stateSettingsGroup)
-                .map(StateSettingsGroup::states)
-                .map(state -> state.get(MomentState.CREATE))
-                .stream()
-                .map(TriggerContext::conditions)
-                .flatMap(Collection::stream)
-                .allMatch(condition -> condition.matches(instance, MomentState.CREATE,pos, serverPlayer));
+        boolean conditionMatch = moment.momentData().flatMap(MomentData::autoActuatorGroupSettings)
+                .map(AutoActuatorGroupSettings::autoActuators)
+                .map(map -> {
+                    boolean match = true;
+                    for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
+                        TriggerContext triggerContext = entry.getKey();
+                        ActuatorContext actuatorContext = entry.getValue();
+                        if (actuatorContext.actuator() instanceof StateSettingActuator(MomentState state) && state == MomentState.CREATE) {
+                            match = triggerContext.conditions().stream().allMatch(condition -> condition.matches(instance, MomentState.CREATE, pos, serverPlayer));
+                        }
+                    }
+                    return match;
+                }).orElse(true);
 
         boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
 
@@ -173,7 +204,6 @@ public class MomentInstanceManager {
         }
         return null;
     }
-
 
     public boolean hasMoment(ResourceLocation key) {
         return momentMap.containsKey(key);
@@ -264,4 +294,5 @@ public class MomentInstanceManager {
     public Collection<MomentInstance> getPlayerMoments(ServerPlayer player) {
         return playerMoments.get(player.getUUID());
     }
+
 }

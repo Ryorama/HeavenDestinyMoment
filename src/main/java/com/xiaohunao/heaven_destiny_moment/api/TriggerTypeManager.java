@@ -1,12 +1,11 @@
 package com.xiaohunao.heaven_destiny_moment.api;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import com.google.gson.JsonElement;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
-import com.xiaohunao.heaven_destiny_moment.common.context.StateSettingsGroup;
+import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
@@ -28,86 +27,97 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 
-public class TriggerTypeManager extends SimpleDynamicLoader<TriggerType<?>> {
+public class TriggerTypeManager{
     private static final TriggerTypeManager INSTANCE = new TriggerTypeManager();
-    private static final String FOLDER = "heaven_destiny_moment/trigger_type";
+    public final Multimap<TriggerType<?>,Moment> registeredMomentsPerTrigger  = HashMultimap.create();
+    private final Map<UUID,Map<ActuatorContext,Integer>> actuatorRemainingUses  = Maps.newHashMap();
 
-    public static final Multimap<TriggerType<?>,Moment> CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
-    public static final Multimap<TriggerType<?>,Moment> STATE_TRIGGER_TYPE_MOMENT_MULTIMAP = HashMultimap.create();
-    public static final BiMap<TriggerType<?>,Class<? extends ITrigger>> TRIGGER_TYPE_TRIGGER_CLASS_BIMAP = HashBiMap.create();
+    private TriggerTypeManager(){}
 
-    private TriggerTypeManager() {
-        super(FOLDER, HDMRegistries.TRIGGER_TYPE, DynamicSerializerType.of(TriggerType.CODEC));
-    }
+    public static <T extends ITrigger> void trigger(TriggerType<T> triggerType, Level level, ICanTrigger<T> iCanTrigger, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+        TriggerTypeManager triggerTypeManager = TriggerTypeManager.getInstance();
+        Collection<Moment> moments = triggerTypeManager.get(triggerType);
 
-    public static TriggerTypeManager getInstance(){
-        return INSTANCE;
-    }
+        moments.forEach(moment -> {
+            moment.momentData().flatMap(MomentData::autoActuatorGroupSettings)
+                    .map(AutoActuatorGroupSettings::autoActuators)
+                    .ifPresent(map -> {
+                        map.forEach((triggerContext, actuatorContext) -> {
+                            ITrigger rawTrigger = triggerContext.trigger();
 
+                            if (!triggerType.clazz().isInstance(rawTrigger)) {
+                                return;
+                            }
 
-    @Override
-    protected void apply(@NotNull Map<ResourceLocation, JsonElement> resources, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler) {
-        STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.clear();
-        CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.clear();
-        TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.clear();
-        super.apply(resources, resourceManager, profiler);
+                            T typedTrigger = triggerType.clazz().cast(rawTrigger); // 安全转换
 
-        HDMRegistries.TRIGGER_TYPE.stream().forEach(triggerType -> {
-            TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.put(triggerType, triggerType.getTriggerClass());
+                            if (actuatorContext.actuator() instanceof StateSettingActuator stateActuator) {
+                                if (stateActuator.state() == MomentState.CREATE) {
+                                    if (iCanTrigger.canTrigger(typedTrigger)) {
+                                        momentInstanceManager.createMomentInstance(moment, pos, serverPlayer);
+                                    }
+                                }
+                            }
+
+                            momentInstanceManager.getMomentInstances(moment).forEach(momentInstance -> {
+                                boolean allMatch = triggerContext.conditions().stream().allMatch(condition -> {
+                                    MomentState state = actuatorContext.actuator() instanceof StateSettingActuator(MomentState state1) ? state1 : null;
+                                    return condition.matches(momentInstance, state, pos, serverPlayer);
+                                });
+
+                                boolean canTrigger = iCanTrigger.canTrigger(typedTrigger);
+
+                                if (allMatch && canTrigger) {
+                                    Integer remainingUses = triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).get(actuatorContext);
+
+                                    if (remainingUses != null) {
+                                        actuatorContext.actuator().execute(momentInstance);
+
+                                        // 只有当不是无限使用(-1)时才更新计数
+                                        if (remainingUses != -1) {
+                                            if (remainingUses == 1) {
+                                                triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).remove(actuatorContext);
+                                            } else {
+                                                triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).put(actuatorContext, remainingUses - 1);
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    });
         });
     }
 
-    public static <T extends ITrigger> void trigger(TriggerType<T> triggerType, Level level, ICanTrigger<T> iCanTrigger, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer){
-        MomentInstanceManager instanceManager = MomentInstanceManager.of(level);
+    private <T extends ITrigger> Collection<Moment> get(TriggerType<T> triggerType) {
+        return registeredMomentsPerTrigger.get(triggerType);
+    }
 
-        Collection<Moment> moments = CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType);
-        if (!moments.isEmpty()) {
-            for (Moment moment : moments) {
-                moment.momentData().flatMap(MomentData::stateSettingsGroup).map(StateSettingsGroup::states).map(state -> state.get(MomentState.CREATE)).ifPresent(create -> {
-                    if (iCanTrigger.canTrigger((T) create.trigger())) {
-                        instanceManager.createMomentInstance(moment, pos, serverPlayer);
-                    }
-                });
-            }
-        }
+    public static TriggerTypeManager getInstance() {
+        return INSTANCE;
+    }
 
-        Collection<MomentInstance> momentInstances = instanceManager.getMomentInstances();
-        if (!momentInstances.isEmpty()) {
-            for (MomentInstance momentInstance : momentInstances) {
-                STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.get(triggerType).forEach(moment -> {
-                    if (moment == momentInstance.getMoment()) {
-                        momentInstance.getMoment().momentData.flatMap(MomentData::stateSettingsGroup).map(StateSettingsGroup::states).ifPresent(statemultimap -> {
-                            statemultimap.forEach(((state, conditionalTriggers) -> {
-                                if (state == MomentState.CREATE) {
-                                    return;
-                                }
+    public void clear() {
+        registeredMomentsPerTrigger.clear();
+    }
 
-                                boolean canTrigger = true;
-                                boolean hasCondition = true;
+    public void add(TriggerType<?> triggerType, Moment moment) {
+        registeredMomentsPerTrigger.put(triggerType, moment);
+    }
 
-                                if (!iCanTrigger.canTrigger((T) conditionalTriggers.trigger())) {
-                                    canTrigger = false;
+    public void addActuatorRemainingUses(UUID uuid,ActuatorContext actuatorContext, int remainingUses) {
+        this.actuatorRemainingUses.computeIfAbsent(uuid, k -> Maps.newHashMap()).put(actuatorContext, remainingUses);
+    }
 
-                                }
+    public void removeActuatorRemainingUses(UUID uuid,ActuatorContext actuatorContext) {
+        this.actuatorRemainingUses.get(uuid).remove(actuatorContext);
+    }
 
-                                for (ICondition condition : conditionalTriggers.conditions()) {
-                                    if (!condition.matches(momentInstance, state, pos, serverPlayer)) {
-                                        hasCondition = false;
-                                        break;
-                                    }
-                                }
-
-                                if (canTrigger && hasCondition) {
-                                    momentInstance.setState(state);
-                                }
-
-                            }));
-                        });
-                    }
-                });
-            }
-        }
+    public void removeActuatorRemainingUses(UUID uuid) {
+        this.actuatorRemainingUses.remove(uuid);
     }
 
     @FunctionalInterface

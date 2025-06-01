@@ -1,11 +1,18 @@
 package com.xiaohunao.heaven_destiny_moment.api;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
+import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import com.xiaohunao.xhn_lib.api.data.loader.SimpleDynamicLoader;
 import com.xiaohunao.xhn_lib.common.serialization.DynamicSerializerType;
@@ -32,15 +39,21 @@ public class MomentManager extends SimpleDynamicLoader<Moment> {
     protected void apply(@NotNull Map<ResourceLocation, JsonElement> resources, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler) {
         super.apply(resources, resourceManager, profiler);
 
+        TriggerTypeManager triggerTypeManager = TriggerTypeManager.getInstance();
+        triggerTypeManager.clear();
+
+        Map<Class<? extends ITrigger>,TriggerType<?>> triggerTypeMomentMap = Maps.newHashMap();
+        for (TriggerType<?> triggerType : HDMRegistries.TRIGGER_TYPE) {
+            triggerTypeMomentMap.put(triggerType.clazz(), triggerType);
+        }
+
         HDMRegistries.MOMENT.stream().forEach(moment -> {
-            moment.momentData().flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup ->{
-                stateSettingsGroup.states().forEach((state, triggersContext) -> {
-                    TriggerType<?> triggerType = TriggerTypeManager.TRIGGER_TYPE_TRIGGER_CLASS_BIMAP.inverse().get(triggersContext.trigger().getClass());
-                    if (state == MomentState.CREATE){
-                        TriggerTypeManager.CREATE_TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
-                        return;
+            moment.momentData().flatMap(MomentData::autoActuatorGroupSettings).map(AutoActuatorGroupSettings::autoActuators).ifPresent(map -> {
+                map.forEach((triggerContext, actuatorContext) -> {
+                    TriggerType<?> triggerType = triggerTypeMomentMap.get(triggerContext.trigger().getClass());
+                    if (triggerType != null) {
+                        triggerTypeManager.add(triggerType, moment);
                     }
-                    TriggerTypeManager.STATE_TRIGGER_TYPE_MOMENT_MULTIMAP.put(triggerType, moment);
                 });
             });
         });
