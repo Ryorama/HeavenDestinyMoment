@@ -42,7 +42,7 @@ public class CommonTriggerSubscriber {
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity victim = event.getEntity();
-        if (event.isCanceled() || victim.level().isClientSide) return;
+        if (victim.level().isClientSide) return;
         ServerPlayer serverPlayer = event.getSource() == null ? null : event.getSource().getEntity() instanceof ServerPlayer player ? player : null;
 
         TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_COMMON.get(), victim.level(), KillAnyEntityTrigger::canTrigger, victim.blockPosition(), serverPlayer);
