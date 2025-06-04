@@ -4,15 +4,18 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -183,15 +186,26 @@ public class MomentInstanceManager {
         boolean conditionMatch = moment.momentData().flatMap(MomentData::autoActuatorGroupSettings)
                 .map(AutoActuatorGroupSettings::autoActuators)
                 .map(map -> {
-                    boolean match = true;
                     for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
                         TriggerContext triggerContext = entry.getKey();
                         ActuatorContext actuatorContext = entry.getValue();
-                        if (actuatorContext.actuator() instanceof StateSettingActuator(MomentState state) && state == MomentState.CREATE) {
-                            match = triggerContext.conditions().stream().allMatch(condition -> condition.matches(instance, MomentState.CREATE, pos, serverPlayer));
+                        if (triggerContext.trigger() instanceof ConditionalTrigger(List<ICondition> conditions)) {
+                            for (ICondition condition : conditions) {
+                                if (!condition.matches(instance, pos, serverPlayer)) {
+                                    return false;
+                                }
+                            }
+                        }
+
+                        if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
+                            for (ICondition condition : triggerContext.conditions()) {
+                                if (!condition.matches(instance, pos, serverPlayer)) {
+                                    return false;
+                                }
+                            }
                         }
                     }
-                    return match;
+                    return true;
                 }).orElse(true);
 
         boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);

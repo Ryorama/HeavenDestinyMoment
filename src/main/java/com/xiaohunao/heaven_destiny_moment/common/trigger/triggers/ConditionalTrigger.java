@@ -19,7 +19,7 @@ public record ConditionalTrigger(List<ICondition> conditions) implements ITrigge
 
     public boolean canTrigger(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         for (ICondition condition : conditions) {
-            if (!condition.matches(instance, tryModifyState, pos, serverPlayer)) {
+            if (!condition.matches(instance, pos, serverPlayer)) {
                 return false;
             }
         }

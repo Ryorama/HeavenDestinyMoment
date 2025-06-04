@@ -7,20 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 public enum MomentState implements StringRepresentable {
-    CREATE("create", 0),
-    READY("ready", 1),
-    START("start", 2),
-    ONGOING("ongoing", 3),
-    VICTORY("victory", 4),
-    LOSE("lose", 5),
-    END("end", 6);
+    READY("ready"),
+    START("start"),
+    ONGOING("ongoing"),
+    VICTORY("victory"),
+    LOSE("lose"),
+    END("end");
     public static final Codec<MomentState> CODEC = StringRepresentable.fromEnum(MomentState::values);
     private final String name;
-    private final int index;
 
-    MomentState(String name, int index) {
+
+    MomentState(String name) {
         this.name = name;
-        this.index = index;
     }
 
     public static MomentState wrap(Object object) {
@@ -43,5 +41,9 @@ public enum MomentState implements StringRepresentable {
     @NotNull
     public String getSerializedName() {
         return name().toLowerCase(Locale.ROOT);
+    }
+
+    public String getName() {
+        return name;
     }
 }

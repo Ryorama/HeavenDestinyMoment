@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.init;
 
 import com.mojang.serialization.MapCodec;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.SimpleEntitySpawnActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
@@ -14,4 +15,5 @@ public class HDMActuators {
 
     public static final FlexibleHolder<MapCodec<? extends IActuator>, MapCodec<? extends IActuator>> SIMPLE_ENTITY_SPAWN_ACTUATOR = ACTUATOR_CODEC.registerStatic("simple_entity_spawn", () -> SimpleEntitySpawnActuator.CODEC);
     public static final FlexibleHolder<MapCodec<? extends IActuator>, MapCodec<? extends IActuator>> STATE_SETTING_ACTUATOR = ACTUATOR_CODEC.registerStatic("state_setting", () -> StateSettingActuator.CODEC);
+    public static final FlexibleHolder<MapCodec<? extends IActuator>, MapCodec<? extends IActuator>> CREATE_MOMENT_INSTANCE_ACTUATOR = ACTUATOR_CODEC.registerStatic("create_moment_instance", () -> CreateMomentInstanceActuator.CODEC);
 }

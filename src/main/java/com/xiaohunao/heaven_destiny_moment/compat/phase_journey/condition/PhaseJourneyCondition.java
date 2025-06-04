@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.compat.phase_journey.init.HDMConditions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +29,7 @@ public record PhaseJourneyCondition(Type type,ResourceLocation phase) implements
 
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         AttachmentHolder holder = switch (type) {
             case MOMENT -> instance;
             case PLAYER -> serverPlayer;

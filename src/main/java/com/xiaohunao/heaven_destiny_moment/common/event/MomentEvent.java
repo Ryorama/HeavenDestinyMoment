@@ -66,7 +66,6 @@ public abstract class MomentEvent extends Event {
 
     public static MomentEvent getEventToPost(MomentInstance momentInstance, MomentState state) {
         return switch (state) {
-            case CREATE -> new Create(momentInstance);
             case READY -> new Ready(momentInstance);
             case START -> new Start(momentInstance);
             case ONGOING -> new OnGoing(momentInstance);

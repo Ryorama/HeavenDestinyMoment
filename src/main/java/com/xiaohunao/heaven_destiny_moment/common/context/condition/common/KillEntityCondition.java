@@ -8,7 +8,6 @@ import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderA
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,7 +42,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
     ).apply(instance, KillEntityCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         KillEntityRecorderAttachment killEntityRecorderAttachment = null;
         if (killType == KillEntityRecorderAttachment.KillType.MOMENT){
             killEntityRecorderAttachment = instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER);
@@ -103,8 +102,9 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
         }
 
         if (killType == KillEntityRecorderAttachment.KillType.MOMENT){
-            instance.setVictoryRequiredKill(tryModifyState, requiredKill);
-            PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(instance.getID(),tryModifyState,requiredKill));
+            //TODO: requiredKill
+//            instance.setVictoryRequiredKill(requiredKill);
+//            PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(instance.getID(),requiredKill));
         }
 
         // 所有条件都满足

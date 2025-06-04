@@ -7,6 +7,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
@@ -47,6 +48,22 @@ public record AutoActuatorGroupSettings(Map<TriggerContext,ActuatorContext> auto
         public AutoActuatorGroupSettings build() {
             return new AutoActuatorGroupSettings(autoActuators);
         }
+
+        public Builder create(ITrigger trigger, ICondition... conditions) {
+            autoActuators.put(TriggerContext.of(trigger, conditions), ActuatorContext.of(new CreateMomentInstanceActuator(),1));
+            return this;
+        }
+
+        public Builder create(ITrigger trigger) {
+            autoActuators.put(TriggerContext.of(trigger), ActuatorContext.of(new CreateMomentInstanceActuator(),1));
+            return this;
+        }
+
+        public Builder create(ICondition... conditions) {
+            autoActuators.put(TriggerContext.of(new ConditionalTrigger(List.of(conditions))), ActuatorContext.of(new CreateMomentInstanceActuator(),1));
+            return this;
+        }
+
 
         public Builder state(MomentState state, ITrigger trigger, ICondition... conditions) {
             autoActuators.put(TriggerContext.of(trigger, conditions), ActuatorContext.of(StateSettingActuator.of(state),1));

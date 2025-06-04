@@ -1,28 +1,19 @@
 package com.xiaohunao.heaven_destiny_moment.api;
 
 import com.google.common.collect.*;
-import com.google.gson.JsonElement;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
-import com.xiaohunao.xhn_lib.api.data.loader.SimpleDynamicLoader;
-import com.xiaohunao.xhn_lib.common.serialization.DynamicSerializerType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -54,19 +45,14 @@ public class TriggerTypeManager{
 
                             T typedTrigger = triggerType.clazz().cast(rawTrigger); // 安全转换
 
-                            if (actuatorContext.actuator() instanceof StateSettingActuator stateActuator) {
-                                if (stateActuator.state() == MomentState.CREATE) {
-                                    if (iCanTrigger.canTrigger(typedTrigger)) {
-                                        momentInstanceManager.createMomentInstance(moment, pos, serverPlayer);
-                                    }
+                            if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
+                                if (iCanTrigger.canTrigger(typedTrigger)) {
+                                    momentInstanceManager.createMomentInstance(moment, pos, serverPlayer);
                                 }
                             }
 
                             momentInstanceManager.getMomentInstances(moment).forEach(momentInstance -> {
-                                boolean allMatch = triggerContext.conditions().stream().allMatch(condition -> {
-                                    MomentState state = actuatorContext.actuator() instanceof StateSettingActuator(MomentState state1) ? state1 : null;
-                                    return condition.matches(momentInstance, state, pos, serverPlayer);
-                                });
+                                boolean allMatch = triggerContext.conditions().stream().allMatch(condition -> condition.matches(momentInstance, pos, serverPlayer));
 
                                 boolean canTrigger = iCanTrigger.canTrigger(typedTrigger);
 
