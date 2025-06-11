@@ -100,13 +100,6 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
                 matches = false;
             }
         }
-
-        if (killType == KillEntityRecorderAttachment.KillType.MOMENT){
-            //TODO: requiredKill
-//            instance.setVictoryRequiredKill(requiredKill);
-//            PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(instance.getID(),requiredKill));
-        }
-
         // 所有条件都满足
         return matches;
     }

@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
@@ -21,6 +22,7 @@ import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillAnyEntityTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
@@ -113,18 +115,27 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void initTryModifyStateRequiredKill(){
-        for (MomentState value : MomentState.values()) {
-            moment.momentData.flatMap(MomentData::stateSettingsGroup).ifPresent(stateSettingsGroup -> {
-                stateSettingsGroup.states().forEach((state, conditionalTrigger) ->{
-                    conditionalTrigger.conditions().forEach(condition -> {
-                        if (condition instanceof KillEntityCondition killEntityCondition) {
-                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
-                            tryModifyStateRequiredKill.put(value,killRecord);
-                        }
-                    });
-                });
+        moment.momentData().flatMap(MomentData::autoActuatorGroupSettings).ifPresent(autoActuatorGroupSettings -> {
+            autoActuatorGroupSettings.autoActuators().forEach((triggerContext, actuatorContext) -> {
+                if (actuatorContext.actuator() instanceof StateSettingActuator stateSettingActuator) {
+                    if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
+                        conditionalTrigger.conditions().forEach(condition -> {
+                            if (condition instanceof KillEntityCondition killEntityCondition) {
+                                KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                                tryModifyStateRequiredKill.put(stateSettingActuator.state(), killRecord);
+                            }
+                        });
+                    } else {
+                        triggerContext.conditions().forEach(condition -> {
+                            if (condition instanceof KillEntityCondition killEntityCondition) {
+                                KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                                tryModifyStateRequiredKill.put(stateSettingActuator.state(), killRecord);
+                            }
+                        });
+                    }
+                }
             });
-        }
+        });
     }
 
 

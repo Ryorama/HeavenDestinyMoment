@@ -4,16 +4,21 @@ import com.google.common.collect.*;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
+import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
+import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -52,7 +57,21 @@ public class TriggerTypeManager{
                             }
 
                             momentInstanceManager.getMomentInstances(moment).forEach(momentInstance -> {
-                                boolean allMatch = triggerContext.conditions().stream().allMatch(condition -> condition.matches(momentInstance, pos, serverPlayer));
+                                boolean allMatch = true;
+                                for (ICondition condition : triggerContext.conditions()) {
+                                    if (condition instanceof KillEntityCondition killEntityCondition &&
+                                            killEntityCondition.killType() == KillEntityRecorderAttachment.KillType.MOMENT &&
+                                            actuatorContext.actuator() instanceof StateSettingActuator(MomentState state)) {
+                                        KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                                        momentInstance.setVictoryRequiredKill(state,killRecord);
+                                        PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(momentInstance.getID(),state,killRecord));
+                                    }
+
+                                    if (!condition.matches(momentInstance, pos, serverPlayer)) {
+                                        allMatch = false;
+                                        break;
+                                    }
+                                }
 
                                 boolean canTrigger = iCanTrigger.canTrigger(typedTrigger);
 
