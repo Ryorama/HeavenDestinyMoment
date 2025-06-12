@@ -9,6 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
@@ -25,6 +26,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -33,7 +36,9 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class MomentInstanceManager {
+
     private static final TriggerTypeManager triggerTypeManager = TriggerTypeManager.getInstance();
+    private static final Logger LOGGER = LoggerFactory.getLogger(MomentInstanceManager.class);
 
     private final Level level;
 
@@ -177,46 +182,127 @@ public class MomentInstanceManager {
     }
 
     public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier) {
-        MomentInstance instance = moment.newMomentInstance(level, moment);
-
-        Optional.ofNullable(modifier).ifPresent(consumer -> consumer.accept(instance));
-
-
-        instance.updatePlayers();
-        boolean conditionMatch = moment.momentData().flatMap(MomentData::autoActuatorGroupSettings)
-                .map(AutoActuatorGroupSettings::autoActuators)
-                .map(map -> {
-                    for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
-                        TriggerContext triggerContext = entry.getKey();
-                        ActuatorContext actuatorContext = entry.getValue();
-                        if (triggerContext.trigger() instanceof ConditionalTrigger(List<ICondition> conditions)) {
-                            for (ICondition condition : conditions) {
-                                if (!condition.matches(instance, pos, serverPlayer)) {
-                                    return false;
-                                }
-                            }
-                        }
-
-                        if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
-                            for (ICondition condition : triggerContext.conditions()) {
-                                if (!condition.matches(instance, pos, serverPlayer)) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                }).orElse(true);
-
-        boolean canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
-
-        if (canCreate && conditionMatch) {
-            instance.init();
-            instance.registerTracker();
-            addMomentInstance(instance, true);
-            return instance;
+        if (moment == null) {
+            LOGGER.error("Attempted to create MomentInstance with null Moment");
+            throw new IllegalArgumentException("Moment cannot be null");
         }
-        return null;
+
+        if (level == null) {
+            LOGGER.error("Cannot create MomentInstance: level is null");
+            return null;
+        }
+        ResourceLocation momentKey = HDMRegistries.MOMENT.getKey(moment);
+        MomentInstance instance;
+        try {
+            // 通过 Moment 对象创建一个新的 MomentInstance 实例
+            instance = moment.newMomentInstance(level, moment);
+            if (instance == null) {
+                LOGGER.warn("Failed to create MomentInstance for moment: {}", momentKey);
+                return null;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Exception occurred while creating MomentInstance for moment: {}", momentKey, e);
+            return null;
+        }
+
+        if (modifier != null) {
+            try {
+                modifier.accept(instance);
+            } catch (Exception e) {
+                LOGGER.error("Exception occurred while applying modifier to MomentInstance", e);
+                // 继续执行，因为修改器失败不应该阻止实例创建
+            }
+        }
+
+        try {
+            // 更新实例的玩家列表
+            instance.updatePlayers();
+        } catch (Exception e) {
+            LOGGER.error("Failed to update players for MomentInstance", e);
+            // 继续执行，因为这不是致命错误
+        }
+
+        // 检查条件是否匹配
+        boolean conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
+
+        // 检查实例是否可以在当前环境中创建
+        boolean canCreate = false;
+        try {
+            canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
+        } catch (Exception e) {
+            LOGGER.error("Exception during canCreate check for MomentInstance", e);
+            return null;
+        }
+
+        // 如果实例可以创建且条件匹配
+        if (canCreate && conditionMatch) {
+            try {
+                // 初始化实例
+                instance.init();
+                // 注册实例的追踪器
+                instance.registerTracker();
+                // 将实例添加到管理列表中，并标记为新创建
+                addMomentInstance(instance, true);
+
+                LOGGER.debug("Successfully created MomentInstance for moment: {}", momentKey);
+                return instance;
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize or register MomentInstance", e);
+                return null;
+            }
+        } else {
+            if (!canCreate) {
+                LOGGER.debug("Cannot create MomentInstance: canCreate returned false for moment: {}", momentKey);
+            }
+            if (!conditionMatch) {
+                LOGGER.debug("Cannot create MomentInstance: conditions not matched for moment: {}", momentKey);
+            }
+            return null;
+        }
+    }
+
+    private boolean checkConditions(Moment moment, MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        try {
+            return moment.momentData()
+                    .flatMap(MomentData::autoActuatorGroupSettings)
+                    .map(AutoActuatorGroupSettings::autoActuators)
+                    .map(map -> {
+                        for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
+                            TriggerContext triggerContext = entry.getKey();
+                            ActuatorContext actuatorContext = entry.getValue();
+
+                            // 检查条件触发器
+                            if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
+                                List<ICondition> conditions = conditionalTrigger.conditions();
+                                if (conditions != null) {
+                                    for (ICondition condition : conditions) {
+                                        if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
+                                            LOGGER.debug("Condition not matched in ConditionalTrigger: {}", condition);
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 检查创建 MomentInstance 的执行器
+                            if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
+                                List<ICondition> conditions = triggerContext.conditions();
+                                if (conditions != null) {
+                                    for (ICondition condition : conditions) {
+                                        if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
+                                            LOGGER.debug("Condition not matched for CreateMomentInstanceActuator: {}", condition);
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return true;
+                    }).orElse(true);
+        } catch (Exception e) {
+            LOGGER.error("Exception occurred while checking conditions for MomentInstance", e);
+            return false;
+        }
     }
 
     public boolean hasMoment(ResourceLocation key) {
