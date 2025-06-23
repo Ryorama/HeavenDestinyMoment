@@ -101,12 +101,10 @@ public class MomentInstanceManager {
 
 
     public void tick() {
-//        if (level.getServer() != null && level.getServer().getPlayerCount() == 0){
-//            return;
-//        }
         if (runMoments.isEmpty()) return;
         for (Map.Entry<UUID, MomentInstance> entry : runMoments.entrySet()) {
             MomentInstance instance = entry.getValue();
+
             if (instance.state == MomentState.END) {
                 instance.end();
                 instance.unregisterTracker();
@@ -134,7 +132,6 @@ public class MomentInstanceManager {
         momentMap.put(instance.getMomentResource(), instance);
         momentInstanceMap.put(instance.getMoment(), instance);
         addActuatorRemainingUses(instance);
-        instance.setInitialized(true);
         instance.getPlayers().forEach(player -> {
             addPlayerAndSync(player, instance);
         });

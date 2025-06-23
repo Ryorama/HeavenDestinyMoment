@@ -301,6 +301,7 @@ public abstract class MomentInstance extends AttachmentHolder {
 
         if (state == MomentState.END) return;
 
+
         updatePlayers();
         updatePlayerIsInArea();
         updateMomentState();
@@ -310,50 +311,63 @@ public abstract class MomentInstance extends AttachmentHolder {
 
 
     private void updateMomentState() {
+        MomentState previousState = state;
+
+        // 初始状态设置（只在第一个tick执行）
         if (tick == 0L) {
             MomentEvent.Ready ready = (MomentEvent.Ready) setState(MomentState.READY);
             if (ready.isCanceled()) {
                 setState(MomentState.END);
+                return;
             }
         }
 
-        if (state == MomentState.READY) {
-            ready();
-        }
-
-        if (state == MomentState.START) {
-            MomentEvent.Start start = (MomentEvent.Start) setState(MomentState.START);
-            if (!start.isCanceled()) {
-                start();
+        switch (state) {
+            case READY -> {
+                MomentEvent.Start start = (MomentEvent.Start) setState(MomentState.START);
+                if (start.isCanceled()) {
+                    setState(MomentState.END);
+                }
+                ready();
+            }
+            case START -> {
                 setState(MomentState.ONGOING);
+                start();
             }
-        }
-
-        if (state == MomentState.ONGOING) {
-            ongoing();
-        }
-
-        if (state == MomentState.VICTORY) {
-            MomentEvent.Victory momentEvent = (MomentEvent.Victory) setState(MomentState.VICTORY);
-            if (!momentEvent.isCanceled()) {
+            case ONGOING -> {
+                ongoing();
+            }
+            case VICTORY -> {
+                MomentEvent.Victory event = (MomentEvent.Victory) NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, MomentState.VICTORY));
+                if (event.isCanceled()) {
+                    setState(MomentState.END);
+                    return;
+                }
                 victory();
             }
-            setState(MomentState.END);
-        }
-
-        if (state == MomentState.LOSE) {
-            MomentEvent.Lose momentEvent = (MomentEvent.Lose) setState(MomentState.LOSE);
-            if (!momentEvent.isCanceled()) {
+            case LOSE -> {
+                MomentEvent.Lose event = (MomentEvent.Lose) NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, MomentState.LOSE));
+                if (event.isCanceled()) {
+                    setState(MomentState.END);
+                    return;
+                }
                 lose();
             }
-            setState(MomentState.END);
+            case END -> {
+                // 终止状态无需处理
+                return;
+            }
+        }
+
+
+        if (previousState != state) {
+            LOGGER.debug("Moment state changed: {} -> {}", previousState, state);
         }
         tick();
     }
 
 
     protected void ready() {
-        setState(MomentState.START);
     }
 
     protected void start() {
@@ -531,8 +545,8 @@ public abstract class MomentInstance extends AttachmentHolder {
         return initialized;
     }
 
-    public MomentInstance setInitialized(boolean initialized) {
-        this.initialized = initialized;
+    public MomentInstance initialize() {
+        this.initialized = true;
         return this;
     }
 

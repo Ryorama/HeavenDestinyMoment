@@ -38,7 +38,11 @@ public record MomentBarSyncPayload(MomentBar bar,  SyncType syncType) implements
                 switch (syncType) {
                     case ADD -> barMap.put(bar.getID(), bar);
                     case REMOVE -> barMap.remove(bar.getID());
-                    case UPDATE_PROGRESS -> barMap.get(bar.getID()).updateProgress(bar.getProgress());
+                    case UPDATE_PROGRESS -> {
+                        MomentBar momentBar = barMap.get(bar.getID());
+                        if (momentBar == null) return;
+                        momentBar.updateProgress(bar.getProgress());
+                    }
                 }
             }
         }).exceptionally(e -> {

@@ -11,6 +11,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 @EventBusSubscriber
@@ -25,6 +26,12 @@ public class LevelEventSubscriber {
 //        System.out.println("onEntityJoinLevel :" + entity);
 
     }
+
+    @SubscribeEvent
+    public static void onLevelLoad(LevelEvent.Load event) {
+        System.out.println("LevelEvent.Load");
+    }
+
 
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Pre event) {

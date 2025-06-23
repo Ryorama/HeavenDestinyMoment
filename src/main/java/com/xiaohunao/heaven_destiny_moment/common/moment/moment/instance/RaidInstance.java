@@ -92,9 +92,12 @@ public class RaidInstance extends MomentInstance {
         int readyTime = raidMoment.readyTime();
         if (this.readyTime <= 0) {
             setState(MomentState.START);
+            updateBarProgress(1 - (float) this.readyTime / readyTime);
+            return;
         }
         updateBarProgress(1 - (float) this.readyTime / readyTime);
         this.readyTime--;
+        setState(MomentState.READY);
     }
 
     @Override
@@ -107,8 +110,8 @@ public class RaidInstance extends MomentInstance {
     }
 
     @Override
-    public void deserializeNBT(CompoundTag compoundTag) {
-        super.deserializeNBT(compoundTag);
+    public void deserializeNBTWithoutEnemiesManager(CompoundTag compoundTag) {
+        super.deserializeNBTWithoutEnemiesManager(compoundTag);
         this.currentWave = compoundTag.getInt("currentWave");
         this.totalWaves = compoundTag.getInt("totalWaves");
         this.totalEnemy = compoundTag.getInt("totalEnemy");
@@ -119,8 +122,8 @@ public class RaidInstance extends MomentInstance {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        CompoundTag compoundTag = super.serializeNBT();
+    public CompoundTag serializeNBTWithoutEnemiesManager() {
+        CompoundTag compoundTag = super.serializeNBTWithoutEnemiesManager();
         compoundTag.putInt("currentWave", currentWave);
         compoundTag.putInt("totalWaves", totalWaves);
         compoundTag.putInt("totalEnemy", totalEnemy);
