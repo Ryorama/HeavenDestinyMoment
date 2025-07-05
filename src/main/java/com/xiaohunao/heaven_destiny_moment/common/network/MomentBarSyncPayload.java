@@ -33,39 +33,85 @@ public record MomentBarSyncPayload(MomentBar bar,  SyncType syncType) implements
 
     public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (context.player().isLocalPlayer()) {
-                Map<UUID, MomentBar> barMap = MomentBarOverlay.barMap;
-                switch (syncType) {
-                    case ADD -> barMap.put(bar.getID(), bar);
-                    case REMOVE -> barMap.remove(bar.getID());
-                    case UPDATE_PROGRESS -> {
-                        MomentBar momentBar = barMap.get(bar.getID());
-                        if (momentBar == null) return;
+            // 更严格的客户端检查
+            if (!context.flow().isClientbound()) {
+                HeavenDestinyMoment.LOGGER.warn("Received client-only packet on server side!");
+                return;
+            }
+
+            if (context.player() == null || !context.player().isLocalPlayer()) {
+                return;
+            }
+
+            Map<UUID, MomentBar> barMap = MomentBarOverlay.barMap;
+
+            // 添加空值检查
+            if (bar == null || bar.getID() == null) {
+                HeavenDestinyMoment.LOGGER.warn("Received invalid MomentBar data");
+                return;
+            }
+            MomentBar momentBar = barMap.get(bar.getID());
+
+
+            switch (syncType) {
+                case ADD_BAR -> {
+                    if (momentBar == null){
+                        barMap.put(bar.getID(), bar);
+                    }
+                }
+                case REMOVE_BAR -> {
+                    barMap.remove(bar.getID());
+                }
+                case UPDATE_PROGRESS -> {
+                    if (momentBar != null) {
                         momentBar.updateProgress(bar.getProgress());
+                    }
+                }
+                case ADD_PLAYER -> {
+                    if (momentBar != null) {
+                        momentBar.addPlayer(context.player());
+                    }
+                }
+                case REMOVE_PLAYER -> {
+                    if (momentBar != null) {
+                        momentBar.removePlayer(context.player());
                     }
                 }
             }
         }).exceptionally(e -> {
-            context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));
+            HeavenDestinyMoment.LOGGER.error("Error handling MomentBarSyncPayload", e);
+            context.disconnect(Component.translatable("heaven_destiny_moment.network.sync_error"));
             return null;
         });
     }
 
     public static MomentBarSyncPayload addPlayer(MomentBar bar) {
-        return new MomentBarSyncPayload(bar,SyncType.ADD);
+        return new MomentBarSyncPayload(bar,SyncType.ADD_PLAYER);
+    }
+
+    public static MomentBarSyncPayload removePlayer(MomentBar bar) {
+        return new MomentBarSyncPayload(bar,SyncType.REMOVE_PLAYER);
+    }
+
+    public static MomentBarSyncPayload addBar(MomentBar bar) {
+        return new MomentBarSyncPayload(bar,SyncType.ADD_BAR);
+    }
+
+    public static MomentBarSyncPayload removeBar(MomentBar bar) {
+        return new MomentBarSyncPayload(bar,SyncType.REMOVE_BAR);
     }
 
     public static MomentBarSyncPayload updateProgress(MomentBar bar) {
         return new MomentBarSyncPayload(bar,SyncType.UPDATE_PROGRESS);
     }
 
-    public static MomentBarSyncPayload removePlayer(MomentBar bar) {
-        return new MomentBarSyncPayload(bar,SyncType.REMOVE);
-    }
+
 
     public enum SyncType {
-        ADD,
-        REMOVE,
+        ADD_BAR,
+        ADD_PLAYER,
+        REMOVE_BAR,
+        REMOVE_PLAYER,
         UPDATE_PROGRESS;
 
         public static final Codec<SyncType> CODEC = Codec.STRING.xmap(type -> valueOf(type.toUpperCase(Locale.ROOT)), type -> type.name().toLowerCase(Locale.ROOT));

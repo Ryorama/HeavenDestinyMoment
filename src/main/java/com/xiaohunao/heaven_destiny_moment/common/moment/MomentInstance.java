@@ -103,11 +103,6 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     public void initMomentBar() {
         moment.barRenderType.ifPresent(iBarRenderType -> this.bar = new MomentBar(uuid, iBarRenderType));
-
-        if (!level.isClientSide && this.bar != null) {
-            PacketDistributor.sendToPlayersInDimension((ServerLevel) level, MomentBarSyncPayload.addPlayer(this.bar));
-        }
-
     }
 
     public void initSpawnPosList() {
@@ -327,6 +322,7 @@ public abstract class MomentInstance extends AttachmentHolder {
                 MomentEvent.Start start = (MomentEvent.Start) setState(MomentState.START);
                 if (start.isCanceled()) {
                     setState(MomentState.END);
+                    break;
                 }
                 ready();
             }
@@ -339,19 +335,18 @@ public abstract class MomentInstance extends AttachmentHolder {
             }
             case VICTORY -> {
                 MomentEvent.Victory event = (MomentEvent.Victory) NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, MomentState.VICTORY));
-                if (event.isCanceled()) {
+                if (!event.isCanceled()) {
                     setState(MomentState.END);
-                    return;
+                    victory();
                 }
-                victory();
             }
             case LOSE -> {
                 MomentEvent.Lose event = (MomentEvent.Lose) NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, MomentState.LOSE));
-                if (event.isCanceled()) {
+                if (!event.isCanceled()) {
                     setState(MomentState.END);
-                    return;
+                    lose();
                 }
-                lose();
+
             }
             case END -> {
                 // 终止状态无需处理
@@ -423,8 +418,8 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void updatePlayers() {
-        if (bar != null) {
-
+        if (level.isClientSide){
+            return;
         }
 
         final Set<Player> oldPlayers = Sets.newHashSet(players);
@@ -433,24 +428,16 @@ public abstract class MomentInstance extends AttachmentHolder {
         newPlayers.stream()
                 .filter(player -> !oldPlayers.contains(player))
                 .forEach(player1 -> {
-                    if (getMomentManager().addPlayerToInstance(player1, this)) {
-                        players.add(player1);
-                        playerUUIDs.add(player1.getUUID());
-                        if (this.bar != null) {
-                            this.bar.addPlayer(player1);
-                        }
-                    }
+                    getMomentManager().addPlayerToInstance(player1, this);
+                    players.add(player1);
+                    playerUUIDs.add(player1.getUUID());
                 });
         oldPlayers.stream()
                 .filter(player -> !newPlayers.contains(player))
                 .forEach(player1 -> {
-                    if (getMomentManager().removePlayerToMoment(player1, this)) {
-                        players.remove(player1);
-                        playerUUIDs.add(player1.getUUID());
-                        if (this.bar != null) {
-                            this.bar.removePlayer(player1);
-                        }
-                    }
+                    getMomentManager().removePlayerToInstance(player1, this);
+                    players.remove(player1);
+                    playerUUIDs.add(player1.getUUID());
                 });
     }
 

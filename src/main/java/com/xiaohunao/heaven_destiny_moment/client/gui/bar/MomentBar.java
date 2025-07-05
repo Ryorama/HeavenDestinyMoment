@@ -63,6 +63,10 @@ public class MomentBar {
         }
     }
 
+    public void addBar(){
+        broadcast(MomentBarSyncPayload::addBar);
+    }
+
     public UUID getID() {
         return uuid;
     }
@@ -84,9 +88,7 @@ public class MomentBar {
     }
 
     public void broadcast(Function<MomentBar, MomentBarSyncPayload> function) {
-        if (!this.players.isEmpty()) {
-            MomentBarSyncPayload packet = function.apply(this);
-            PacketDistributor.sendToAllPlayers(packet);
-        }
+        MomentBarSyncPayload packet = function.apply(this);
+        PacketDistributor.sendToAllPlayers(packet);
     }
 }

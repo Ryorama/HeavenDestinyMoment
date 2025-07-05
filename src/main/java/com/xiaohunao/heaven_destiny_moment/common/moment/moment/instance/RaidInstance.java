@@ -104,9 +104,10 @@ public class RaidInstance extends MomentInstance {
     protected void ongoing() {
         checkNextWave();
         updateWave();
-        if (players.isEmpty()){
-            setState(MomentState.LOSE);
-        }
+        //当没有任何玩家参与时视为失败
+//        if (players.isEmpty() && !level.players().isEmpty()){
+//            setState(MomentState.LOSE);
+//        }
     }
 
     @Override

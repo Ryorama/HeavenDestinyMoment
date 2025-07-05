@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
@@ -20,6 +21,7 @@ import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTr
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,10 +44,17 @@ public class MomentInstanceManager {
 
     private final Level level;
 
+    //正在运行的时刻
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
+
+    //玩家正在参与的时刻
+    private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
+
+    //时刻对应的映射表
     private final HashMultimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
-    private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
+
+
 
 
     public MomentInstanceManager(Level level) {
@@ -72,13 +81,13 @@ public class MomentInstanceManager {
 
     public void deserializeNBT(CompoundTag compoundTag) {
         if (compoundTag.contains("runMoments")) {
-            ListTag momentListTag = compoundTag.getList("runMoments", 10);
+            ListTag momentListTag = compoundTag.getList("runMoments", Tag.TAG_COMPOUND);
             momentListTag.forEach(momentTag -> {
-                Optional.ofNullable(MomentInstance.loadStatic(level,(CompoundTag) momentTag)).ifPresent(momentInstance -> {
+                MomentInstance momentInstance = MomentInstance.loadStatic(level, (CompoundTag) momentTag);
+                if (momentInstance != null) {
                     momentInstance.registerTracker();
                     addMomentInstance(momentInstance, true);
-                });
-
+                }
             });
         }
     }
@@ -115,11 +124,15 @@ public class MomentInstanceManager {
     }
 
     public void addActuatorRemainingUses(MomentInstance instance){
-        instance.getMoment().momentData().flatMap(MomentData::autoActuatorGroupSettings).map(AutoActuatorGroupSettings::autoActuators).ifPresent(map -> {
-            map.forEach((triggerContext, actuatorContext) -> {
-                triggerTypeManager.addActuatorRemainingUses(instance.getID(),actuatorContext, actuatorContext.count());
-            });
-        });
+        instance.getMoment()
+                .momentData()
+                .flatMap(MomentData::autoActuatorGroupSettings)
+                .map(AutoActuatorGroupSettings::autoActuators)
+                .ifPresent(map -> {
+                    map.forEach((triggerContext, actuatorContext) -> {
+                        triggerTypeManager.addActuatorRemainingUses(instance.getID(),actuatorContext, actuatorContext.count());
+                    });
+                });
     }
 
     public void removeActuatorRemainingUses(MomentInstance instance){
@@ -131,15 +144,13 @@ public class MomentInstanceManager {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getMomentResource(), instance);
         momentInstanceMap.put(instance.getMoment(), instance);
+
         addActuatorRemainingUses(instance);
-        instance.getPlayers().forEach(player -> {
-            addPlayerAndSync(player, instance);
-        });
 
         if (isSync && !level.isClientSide) {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
             if (instance.getBar() != null) {
-                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.getBar()));
+                instance.getBar().addBar();
             }
         }
     }
@@ -150,7 +161,7 @@ public class MomentInstanceManager {
         momentInstanceMap.remove(instance.getMoment(), instance);
         removeActuatorRemainingUses(instance);
         instance.getPlayers().forEach(player -> {
-            removePlayerToMoment(player, instance);
+            removePlayerToInstance(player, instance);
         });
 
         if (!level.isClientSide){
@@ -169,7 +180,7 @@ public class MomentInstanceManager {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),true));
             PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBTWithoutEnemiesManager(), true));
             if (instance.getBar() != null) {
-                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removePlayer(instance.bar));
+                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removeBar(instance.bar));
             }
         }
     }
@@ -197,19 +208,23 @@ public class MomentInstanceManager {
                 LOGGER.warn("Failed to create MomentInstance for moment: {}", momentKey);
                 return null;
             }
+
+            if (modifier != null) {
+                try {
+                    modifier.accept(instance);
+                } catch (Exception e) {
+                    LOGGER.error("Exception occurred while applying modifier to MomentInstance", e);
+                    // 继续执行，因为修改器失败不应该阻止实例创建
+                }
+            }
+
+            instance.init();
         } catch (Exception e) {
             LOGGER.error("Exception occurred while creating MomentInstance for moment: {}", momentKey, e);
             return null;
         }
 
-        if (modifier != null) {
-            try {
-                modifier.accept(instance);
-            } catch (Exception e) {
-                LOGGER.error("Exception occurred while applying modifier to MomentInstance", e);
-                // 继续执行，因为修改器失败不应该阻止实例创建
-            }
-        }
+
 
         try {
             // 更新实例的玩家列表
@@ -235,7 +250,7 @@ public class MomentInstanceManager {
         if (canCreate && conditionMatch) {
             try {
                 // 初始化实例
-                instance.init();
+//                instance.init();
                 // 注册实例的追踪器
                 instance.registerTracker();
                 // 将实例添加到管理列表中，并标记为新创建
@@ -306,70 +321,19 @@ public class MomentInstanceManager {
         return momentMap.containsKey(key);
     }
 
-    public boolean addPlayerToInstance(Player player, MomentInstance instance) {
-        if (player == null || instance == null) {
-            return false;
-        }
-
+    public void addPlayerToInstance(Player player, MomentInstance instance) {
         UUID uuid = player.getUUID();
-
-        if (!playerMoments.containsKey(uuid)) {
-            addPlayerAndSync(player, instance);
-            return true;
-        }
-
-        boolean canAddPlayer = true;
-        for (MomentInstance existingInstance : playerMoments.get(uuid)) {
-            if (existingInstance.getID().equals(instance.getID())) {
-                break;
-            }
-
-            boolean hasClientSettings = existingInstance.isClientOnlyMoment();
-            if (hasClientSettings) {
-                canAddPlayer = false;
-                break;
-            }
-        }
-
-        if (canAddPlayer) {
-            addPlayerAndSync(player, instance);
-            return true;
-        }
-
-        return false;
+        playerMoments.put(uuid, instance);
+        instance.bar.addPlayer(player);
     }
 
-    private void addPlayerAndSync(Player player, MomentInstance instance){
-        if (!instance.isInitialized()){
-            return;
-        }
-
-        playerMoments.put(player.getUUID(), instance);
-
-        if (!level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
-            if (instance.isClientOnlyMoment()) {
-                PacketDistributor.sendToPlayer((ServerPlayer) player, new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
-            }
-            if (instance.getBar() != null) {
-                PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.addPlayer(instance.bar));
-            }
-        }
-
-
-    }
-
-    public boolean removePlayerToMoment(Player player, MomentInstance instance) {
-        if (player == null || instance == null) {
-            return false;
-        }
+    public void removePlayerToInstance(Player player, MomentInstance instance) {
         UUID uuid = player.getUUID();
-        if (!playerMoments.containsKey(uuid)) {
-            return false;
-        }
-
-        return playerMoments.remove(uuid, instance);
+        playerMoments.remove(uuid,instance);
+        instance.bar.removePlayer(player);
     }
+
+
 
     public Optional<MomentInstance> getClientMomentInstance() {
         if (!level.isClientSide){
