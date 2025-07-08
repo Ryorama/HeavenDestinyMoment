@@ -3,7 +3,6 @@ package com.xiaohunao.heaven_destiny_moment.common.data.gen.provider;
 import com.google.gson.JsonObject;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
@@ -13,7 +12,6 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public abstract class MomentLanguageProvider extends LanguageProvider {
     private final Map<String, String> translationData;
@@ -57,7 +54,7 @@ public abstract class MomentLanguageProvider extends LanguageProvider {
                     .flatMap(TipSettings::texts)
                     .ifPresentOrElse(
                             texts -> processTooltipTexts(texts, en, zh),
-                            () -> System.out.println("No tip settings found for moment: " + holder.getKey().location())
+                            () -> HeavenDestinyMoment.LOGGER.warn("No tip settings found for moment: {}", holder.getKey().location())
                     );
         } catch (Exception e) {
             throw new RuntimeException("Failed to process tooltip for moment: " + holder.getKey().location(), e);
