@@ -37,9 +37,9 @@ public record  MomentManagerSyncPayload(CompoundTag runMoment,boolean isRemove) 
                 Optional<MomentInstance> momentInstance = Optional.ofNullable(MomentInstance.loadStatic(level, runMoment));
 
                 if (isRemove){
-                    momentInstance.ifPresent(instance -> momentInstanceManager.removeMomentInstance(instance,false));
+                    momentInstance.ifPresent(instance -> momentInstanceManager.removeMomentInstance(instance));
                 }else {
-                    momentInstance.ifPresent(instance -> momentInstanceManager.addMomentInstance(instance,false));
+                    momentInstance.ifPresent(instance -> momentInstanceManager.addMomentInstance(instance));
                 }
 
             }

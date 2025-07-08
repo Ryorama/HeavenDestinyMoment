@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public abstract class MomentInstance extends AttachmentHolder {
@@ -57,16 +59,17 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     private boolean initialized = false;
 
+
     protected MomentBar bar;
     protected long tick = -1L;
-    protected MomentState state;
+    protected MomentState state = MomentState.UNINITIALIZED;
     protected Set<UUID> playerUUIDs = Sets.newHashSet();
     protected Set<Player> players = Sets.newHashSet();
     protected Set<UUID> inAreaPlayers = Sets.newHashSet();
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
     protected final EnemiesManager enemiesManager = new EnemiesManager();
-    protected Map<MomentState,KillEntityCondition.RequiredKill> tryModifyStateRequiredKill = new HashMap<>();
+    protected Map<MomentState,KillEntityCondition.RequiredKill> tryModifyStateRequiredKill = new ConcurrentHashMap<>();
 
     protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
         this.uuid = UUID.randomUUID();
@@ -145,11 +148,9 @@ public abstract class MomentInstance extends AttachmentHolder {
 
 
     public void updateBarProgress(float progress) {
+        progress = Mth.clamp(progress, 0.0f, 1.0f);
         if (this.bar != null) {
             this.bar.updateProgress(progress);
-            if (!level.isClientSide) {
-                PacketDistributor.sendToPlayersInDimension((ServerLevel) level, MomentBarSyncPayload.updateProgress(this.bar));
-            }
         }
     }
 
@@ -186,21 +187,18 @@ public abstract class MomentInstance extends AttachmentHolder {
         }
     }
 
+
     public CompoundTag serializeNBT() {
-        CompoundTag compoundTag = serializeNBTWithoutEnemiesManager();
-
-        compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
-
-        return compoundTag;
-    }
-
-    public CompoundTag serializeNBTWithoutEnemiesManager() {
         CompoundTag compoundTag = new CompoundTag();
 
         serializeMetaData(compoundTag);
-        serializeBar(compoundTag);
+        compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
         compoundTag.put("persistentData", this.persistentData);
         compoundTag.putLong("tick", tick);
+        if (this.bar != null) {
+            compoundTag.put("bar", MomentBar.CODEC.encodeStart(NbtOps.INSTANCE, this.bar).getOrThrow());
+        }
+
         if (state != null) {
             compoundTag.putString("state", state.name());
         }
@@ -222,32 +220,15 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
 
+    public void deserializeNBT(CompoundTag compoundTag) {
+        enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
+        this.persistentData = compoundTag.getCompound("persistentData");
+        this.tick = compoundTag.getLong("tick");
 
-    private void serializeBar(CompoundTag compoundTag) {
-        if (this.bar != null) {
-            compoundTag.put("bar", MomentBar.CODEC.encodeStart(NbtOps.INSTANCE, this.bar).getOrThrow());
-        }
-    }
-
-    private void deserializeBar(CompoundTag compoundTag) {
         if (compoundTag.contains("bar")) {
             this.bar = MomentBar.CODEC.decode(NbtOps.INSTANCE, compoundTag.get("bar")).getOrThrow().getFirst();
         }
-    }
 
-    public void deserializeNBT(CompoundTag compoundTag) {
-        deserializeNBTWithoutEnemiesManager(compoundTag);
-        if (compoundTag.contains("enemies_manager")) {
-            enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
-            enemiesManager.loadStoredEntities(level);
-        }
-    }
-
-    public void deserializeNBTWithoutEnemiesManager(CompoundTag compoundTag) {
-        deserializeBar(compoundTag);
-
-        this.persistentData = compoundTag.getCompound("persistentData");
-        this.tick = compoundTag.getLong("tick");
         if (compoundTag.contains("state")) {
             this.state = MomentState.valueOf(compoundTag.getString("state"));
         }
@@ -578,12 +559,12 @@ public abstract class MomentInstance extends AttachmentHolder {
         enemiesManager.removeEnemy(uuid);
     }
 
-    public boolean hasEnemy(UUID uuid) {
-        return enemiesManager.hasEnemy(uuid);
+    public void markEnemyAsLoaded(UUID uuid) {
+        enemiesManager.markEntityAsLoaded(uuid);
     }
 
-    public boolean hasEnemies() {
-        return !enemiesManager.isEmpty();
+    public boolean hasEnemy(UUID uuid) {
+        return enemiesManager.hasEnemy(uuid);
     }
 
     public int getEnemyCount() {

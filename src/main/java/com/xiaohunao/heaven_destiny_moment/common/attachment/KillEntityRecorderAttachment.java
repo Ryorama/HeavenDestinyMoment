@@ -15,6 +15,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -33,16 +34,24 @@ public final class KillEntityRecorderAttachment {
     private Map<EntityType<?>, Integer> entityTypeKills; //按实体类型记录击杀数量
     private Map<EntityType<?>, Integer> entityTypeScores; //按实体类型记录击杀分数
 
-    public KillEntityRecorderAttachment(List<KillRecord> killRecords, int totalKills, int totalScore, Map<EntityType<?>, Integer> entityTypeKills, Map<EntityType<?>, Integer> entityTypeScores) {
-        this.killRecords = killRecords;
+    public KillEntityRecorderAttachment(List<KillRecord> killRecords, int totalKills, int totalScore,
+                                        Map<EntityType<?>, Integer> entityTypeKills,
+                                        Map<EntityType<?>, Integer> entityTypeScores) {
+        this.killRecords = new CopyOnWriteArrayList<>(killRecords);
         this.totalKills = totalKills;
         this.totalScore = totalScore;
-        this.entityTypeKills = entityTypeKills;
-        this.entityTypeScores = entityTypeScores;
+        this.entityTypeKills = new ConcurrentHashMap<>(entityTypeKills);
+        this.entityTypeScores = new ConcurrentHashMap<>(entityTypeScores);
     }
 
     public static KillEntityRecorderAttachment create(){
-        return new KillEntityRecorderAttachment(new CopyOnWriteArrayList<>(), 0, 0, new HashMap<>(), new HashMap<>());
+        return new KillEntityRecorderAttachment(
+                new ArrayList<>(),
+                0,
+                0,
+                new HashMap<>(),
+                new HashMap<>()
+        );
     }
 
 

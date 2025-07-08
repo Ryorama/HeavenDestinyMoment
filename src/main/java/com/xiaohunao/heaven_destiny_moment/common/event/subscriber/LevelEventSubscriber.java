@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,41 +24,24 @@ public class LevelEventSubscriber {
         if (level.isClientSide || entity instanceof Player){
             return;
         }
-//        System.out.println("onEntityJoinLevel :" + entity);
 
+        if (event.loadedFromDisk() && level instanceof ServerLevel serverLevel) {
+            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
+            momentInstanceManager.getMomentInstances().forEach(instance -> {
+                if (instance.hasEnemy(entity.getUUID())) {
+                    instance.markEnemyAsLoaded(entity.getUUID());
+                }
+            });
+        }
     }
 
-    @SubscribeEvent
-    public static void onLevelLoad(LevelEvent.Load event) {
-        System.out.println("LevelEvent.Load");
-    }
+
 
 
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Pre event) {
         Level level = event.getLevel();
         MomentInstanceManager.of(level).tick();
-//        if (level instanceof ServerLevel serverLevel) {
-//            Registry<Moment<?>> moments = level.registryAccess().registryOrThrow(HDMRegistries.Keys.MOMENT);
-//            moments.entrySet().forEach(resourceKeyMomentEntry -> {
-//                Moment<?> moment = resourceKeyMomentEntry.getValue();
-//
-//                serverLevel.getPlayers(serverPlayer -> true).forEach(serverPlayer -> {
-//                    moment.momentData()
-//                            .flatMap(MomentData::conditionGroup)
-//                            .flatMap(ConditionGroup::create)
-//                            .ifPresent(createCondition -> {
-//                                boolean allMatch = createCondition.getFirst() &&
-//                                        createCondition.getSecond().stream()
-//                                                .allMatch(condition -> condition.matches(momentInstance, serverPlayer.blockPosition(),serverPlayer));
-//
-//                                if (allMatch) {
-//                                    MomentManager.of(serverLevel).createMomentInstance(resourceKeyMomentEntry.getKey(), serverPlayer.blockPosition(), serverPlayer);
-//                                }
-//                            });
-//                });
-//            });
-//        }
     }
 
     @SubscribeEvent

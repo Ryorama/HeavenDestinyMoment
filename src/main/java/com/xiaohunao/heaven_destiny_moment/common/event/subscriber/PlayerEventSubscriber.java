@@ -31,7 +31,7 @@ public class PlayerEventSubscriber {
         Player player = event.getEntity();
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(player.level());
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
-            PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
+            PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
             if (instance.getBar() != null) {
                 instance.getBar().addBar();
             }

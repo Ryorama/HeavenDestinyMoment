@@ -37,7 +37,7 @@ public record KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillTyp
                 Level level = context.player().level();
                 if (killType == KillEntityRecorderAttachment.KillType.MOMENT) {
                     MomentInstanceManager manager = MomentInstanceManager.of(level);
-                    manager.getMomentInstance(uuid).setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
+                        manager.getMomentInstance(uuid).setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
                 }
 
                 if (killType == KillEntityRecorderAttachment.KillType.PLAYER) {

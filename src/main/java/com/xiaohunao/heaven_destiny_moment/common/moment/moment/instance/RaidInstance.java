@@ -111,8 +111,8 @@ public class RaidInstance extends MomentInstance {
     }
 
     @Override
-    public void deserializeNBTWithoutEnemiesManager(CompoundTag compoundTag) {
-        super.deserializeNBTWithoutEnemiesManager(compoundTag);
+    public void deserializeNBT(CompoundTag compoundTag) {
+        super.deserializeNBT(compoundTag);
         this.currentWave = compoundTag.getInt("currentWave");
         this.totalWaves = compoundTag.getInt("totalWaves");
         this.totalEnemy = compoundTag.getInt("totalEnemy");
@@ -123,8 +123,8 @@ public class RaidInstance extends MomentInstance {
     }
 
     @Override
-    public CompoundTag serializeNBTWithoutEnemiesManager() {
-        CompoundTag compoundTag = super.serializeNBTWithoutEnemiesManager();
+    public CompoundTag serializeNBT() {
+        CompoundTag compoundTag = super.serializeNBT();
         compoundTag.putInt("currentWave", currentWave);
         compoundTag.putInt("totalWaves", totalWaves);
         compoundTag.putInt("totalEnemy", totalEnemy);
@@ -169,18 +169,13 @@ public class RaidInstance extends MomentInstance {
 
         Set<UUID> toRemove = Sets.newHashSet();
         getEnemies().forEach(uid -> {
-            Entity entity = serverLevel.getEntity(uid);
-            updateBarProgress(getEnemyCount() / (float) totalEnemy);
-            if (entity == null && !serverLevel.entityManager.isLoaded(uid)){
+            if (enemiesManager.shouldRemoveEntity(uid, serverLevel)) {
                 toRemove.add(uid);
             }
-
-            if (entity != null){
-                enemiesManager.updateEntityStorage(entity);
-            }
         });
-        
         toRemove.forEach(this::removeEnemy);
+
+        updateBarProgress(enemiesManager.size() / (float) totalEnemy);
     }
 
     public void setOriginalPos(Vec3 originalPos) {

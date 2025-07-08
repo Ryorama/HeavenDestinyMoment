@@ -86,7 +86,7 @@ public class MomentInstanceManager {
                 MomentInstance momentInstance = MomentInstance.loadStatic(level, (CompoundTag) momentTag);
                 if (momentInstance != null) {
                     momentInstance.registerTracker();
-                    addMomentInstance(momentInstance, true);
+                    addMomentInstance(momentInstance);
                 }
             });
         }
@@ -117,7 +117,7 @@ public class MomentInstanceManager {
             if (instance.state == MomentState.END) {
                 instance.end();
                 instance.unregisterTracker();
-                removeMomentInstance(instance, true);
+                removeMomentInstance(instance);
             }
             instance.baseTick();
         }
@@ -140,22 +140,22 @@ public class MomentInstanceManager {
     }
 
 
-    public void addMomentInstance(MomentInstance instance, boolean isSync) {
+    public void addMomentInstance(MomentInstance instance) {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getMomentResource(), instance);
         momentInstanceMap.put(instance.getMoment(), instance);
 
         addActuatorRemainingUses(instance);
 
-        if (isSync && !level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),false));
+        if (!level.isClientSide) {
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
             if (instance.getBar() != null) {
                 instance.getBar().addBar();
             }
         }
     }
 
-    public void removeMomentInstance(MomentInstance instance, boolean isSync) {
+    public void removeMomentInstance(MomentInstance instance) {
         runMoments.remove(instance.getID());
         momentMap.remove(instance.getMomentResource(), instance);
         momentInstanceMap.remove(instance.getMoment(), instance);
@@ -176,9 +176,9 @@ public class MomentInstanceManager {
 
 
 
-        if (isSync && !level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBTWithoutEnemiesManager(),true));
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBTWithoutEnemiesManager(), true));
+        if (!level.isClientSide) {
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),true));
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
             if (instance.getBar() != null) {
                 PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removeBar(instance.bar));
             }
@@ -202,7 +202,6 @@ public class MomentInstanceManager {
         ResourceLocation momentKey = HDMRegistries.MOMENT.getKey(moment);
         MomentInstance instance;
         try {
-            // 通过 Moment 对象创建一个新的 MomentInstance 实例
             instance = moment.newMomentInstance(level, moment);
             if (instance == null) {
                 LOGGER.warn("Failed to create MomentInstance for moment: {}", momentKey);
@@ -214,7 +213,6 @@ public class MomentInstanceManager {
                     modifier.accept(instance);
                 } catch (Exception e) {
                     LOGGER.error("Exception occurred while applying modifier to MomentInstance", e);
-                    // 继续执行，因为修改器失败不应该阻止实例创建
                 }
             }
 
@@ -227,18 +225,16 @@ public class MomentInstanceManager {
 
 
         try {
-            // 更新实例的玩家列表
             instance.updatePlayers();
         } catch (Exception e) {
             LOGGER.error("Failed to update players for MomentInstance", e);
-            // 继续执行，因为这不是致命错误
         }
 
         // 检查条件是否匹配
         boolean conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
 
         // 检查实例是否可以在当前环境中创建
-        boolean canCreate = false;
+        boolean canCreate;
         try {
             canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
         } catch (Exception e) {
@@ -254,21 +250,13 @@ public class MomentInstanceManager {
                 // 注册实例的追踪器
                 instance.registerTracker();
                 // 将实例添加到管理列表中，并标记为新创建
-                addMomentInstance(instance, true);
-
-                LOGGER.debug("Successfully created MomentInstance for moment: {}", momentKey);
+                addMomentInstance(instance);
                 return instance;
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize or register MomentInstance", e);
                 return null;
             }
         } else {
-            if (!canCreate) {
-                LOGGER.debug("Cannot create MomentInstance: canCreate returned false for moment: {}", momentKey);
-            }
-            if (!conditionMatch) {
-                LOGGER.debug("Cannot create MomentInstance: conditions not matched for moment: {}", momentKey);
-            }
             return null;
         }
     }
@@ -283,26 +271,22 @@ public class MomentInstanceManager {
                             TriggerContext triggerContext = entry.getKey();
                             ActuatorContext actuatorContext = entry.getValue();
 
-                            // 检查条件触发器
                             if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
                                 List<ICondition> conditions = conditionalTrigger.conditions();
                                 if (conditions != null) {
                                     for (ICondition condition : conditions) {
                                         if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
-                                            LOGGER.debug("Condition not matched in ConditionalTrigger: {}", condition);
                                             return false;
                                         }
                                     }
                                 }
                             }
 
-                            // 检查创建 MomentInstance 的执行器
                             if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
                                 List<ICondition> conditions = triggerContext.conditions();
                                 if (conditions != null) {
                                     for (ICondition condition : conditions) {
                                         if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
-                                            LOGGER.debug("Condition not matched for CreateMomentInstanceActuator: {}", condition);
                                             return false;
                                         }
                                     }

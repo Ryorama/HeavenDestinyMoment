@@ -9,26 +9,26 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.Level;
 
 import java.util.*;
 
 public class EnemiesManager {
     private final Set<UUID> enemies = Sets.newHashSet();
-    private final Map<UUID, CompoundTag> enemiesStorage = Maps.newHashMap();
+    private final Set<UUID> loadingEntities = Sets.newHashSet();
+
+    private final Map<UUID,Entity> entitySet = Maps.newHashMap();
 
     public void addEnemy(Entity entity) {
         UUID uuid = entity.getUUID();
         enemies.add(uuid);
-        CompoundTag tag = new CompoundTag();
-        entity.save(tag);
-        enemiesStorage.put(uuid, tag);
+        entitySet.put(entity.getUUID(),entity);
+        loadingEntities.remove(uuid);
     }
 
     public void removeEnemy(UUID uuid) {
         enemies.remove(uuid);
-        enemiesStorage.remove(uuid);
+        entitySet.remove(uuid);
+        loadingEntities.remove(uuid);
     }
 
     public boolean hasEnemy(UUID uuid) {
@@ -47,61 +47,55 @@ public class EnemiesManager {
         return enemies;
     }
 
-    public void deserializeNBT(CompoundTag compoundTag) {
-        enemies.clear();
-        enemiesStorage.clear();
-        
-        compoundTag.getList("enemies", Tag.TAG_STRING).forEach(uid -> {
-            enemies.add(UUID.fromString(uid.getAsString()));
-        });
-
-        compoundTag.getList("enemiesStorage", Tag.TAG_COMPOUND).forEach(tag -> {
-            CompoundTag tag1 = (CompoundTag) tag;
-            UUID uuid = tag1.getUUID("uuid");
-            CompoundTag compoundTag1 = tag1.getCompound("tag");
-            enemiesStorage.put(uuid, compoundTag1);
-        });
+    public void markEntityAsLoaded(UUID uuid) {
+        if (enemies.contains(uuid)) {
+            loadingEntities.remove(uuid);
+        }
     }
 
+    public boolean shouldRemoveEntity(UUID uuid, ServerLevel serverLevel) {
+        if (!enemies.contains(uuid)) {
+            return false;
+        }
 
+        if (loadingEntities.contains(uuid)) {
+            return false;
+        }
+
+        Entity entity = serverLevel.getEntity(uuid);
+        if (entity != null) {
+            return false;
+        }
+
+        if (serverLevel.entityManager.isLoaded(uuid)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void deserializeNBT(CompoundTag compoundTag) {
+        enemies.clear();
+        loadingEntities.clear();
+        
+        compoundTag.getList("enemies", Tag.TAG_STRING).forEach(uid -> {
+            UUID uuid = UUID.fromString(uid.getAsString());
+            enemies.add(uuid);
+            loadingEntities.add(uuid);
+        });
+    }
 
     public CompoundTag serializeNBT() {
         CompoundTag compoundTag = new CompoundTag();
         
         ListTag enemiesListTag = new ListTag();
-        ListTag enemiesStorageTag = new ListTag();
+
         
         enemies.forEach(uid -> {
             enemiesListTag.add(StringTag.valueOf(uid.toString()));
         });
         compoundTag.put("enemies", enemiesListTag);
-
-        enemiesStorage.forEach((uuid, tag) -> {
-            CompoundTag tag1 = new CompoundTag();
-            tag1.putUUID("uuid", uuid);
-            tag1.put("tag", tag);
-            enemiesStorageTag.add(tag1);
-        });
-        compoundTag.put("enemiesStorage", enemiesStorageTag);
         return compoundTag;
-    }
-
-    public void loadStoredEntities(Level level) {
-        enemiesStorage.forEach((uuid, tag) -> {
-            EntityType.create(tag, level).ifPresent(entity -> {
-                level.addFreshEntity(entity);
-                enemies.add(uuid);
-            });
-        });
-    }
-
-    public void updateEntityStorage(Entity entity) {
-        UUID uuid = entity.getUUID();
-        if (enemies.contains(uuid)) {
-            CompoundTag tag = new CompoundTag();
-            entity.save(tag);
-            enemiesStorage.put(uuid, tag);
-        }
     }
 
     public void killAllEnemies(ServerLevel serverLevel) {
@@ -119,7 +113,8 @@ public class EnemiesManager {
 
         for (UUID uuid : toRemove) {
             enemies.remove(uuid);
-            enemiesStorage.remove(uuid);
+            entitySet.remove(uuid);
+            loadingEntities.remove(uuid);
         }
     }
 

@@ -26,7 +26,7 @@ public class RemoveCommand {
         var manager = MomentInstanceManager.of(source.getLevel());
         
         MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
-        manager.removeMomentInstance(instance, true);
+        manager.removeMomentInstance(instance);
         
         source.sendSuccess(() -> Component.translatable("commands.moment.remove.success", 
                 Component.literal(uuidStr)), true);
