@@ -14,8 +14,7 @@
         "NeoForgeModMixin",
         "PathfinderMobMixin",
         "ServerLevelMixin",
-        "SlimeMixin",
-        "StructureStartMixin"
+        "SlimeMixin"
     ],
     "client": [
         "client.ClientLevelMixin",
