@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class MomentInstanceManager {
 
@@ -43,6 +44,7 @@ public class MomentInstanceManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MomentInstanceManager.class);
 
     private final Level level;
+    private final MomentHistoryManager momentHistoryManager = new MomentHistoryManager();
 
     //正在运行的时刻
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
@@ -55,8 +57,6 @@ public class MomentInstanceManager {
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
 
 
-
-
     public MomentInstanceManager(Level level) {
         this.level = level;
     }
@@ -65,6 +65,9 @@ public class MomentInstanceManager {
         return ((MomentManagerMixed) level).heaven_destiny_moment$getMomentManager();
     }
 
+    public MomentHistoryManager getMomentHistoryManager() {
+        return momentHistoryManager;
+    }
 
     public CompoundTag serializeNBT() {
         CompoundTag rootTag = new CompoundTag();
@@ -76,6 +79,11 @@ public class MomentInstanceManager {
             });
             rootTag.put("runMoments", momentListTag);
         }
+        ListTag historyTag = momentHistoryManager.serializeNBT();
+        if (!historyTag.isEmpty()) {
+            rootTag.put("history", historyTag);
+        }
+
         return rootTag;
     }
 
@@ -89,6 +97,10 @@ public class MomentInstanceManager {
                     addMomentInstance(momentInstance);
                 }
             });
+        }
+
+        if (compoundTag.contains("history")) {
+            momentHistoryManager.deserializeNBT(compoundTag.getList("history", Tag.TAG_COMPOUND));
         }
     }
 
@@ -146,6 +158,7 @@ public class MomentInstanceManager {
         momentInstanceMap.put(instance.getMoment(), instance);
 
         addActuatorRemainingUses(instance);
+        momentHistoryManager.addHistory(instance);
 
         if (!level.isClientSide) {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
@@ -160,6 +173,9 @@ public class MomentInstanceManager {
         momentMap.remove(instance.getMomentResource(), instance);
         momentInstanceMap.remove(instance.getMoment(), instance);
         removeActuatorRemainingUses(instance);
+
+        momentHistoryManager.finishRecord(instance);
+
         instance.getPlayers().forEach(player -> {
             removePlayerToInstance(player, instance);
         });
@@ -230,10 +246,7 @@ public class MomentInstanceManager {
             LOGGER.error("Failed to update players for MomentInstance", e);
         }
 
-        // 检查条件是否匹配
         boolean conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
-
-        // 检查实例是否可以在当前环境中创建
         boolean canCreate;
         try {
             canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
@@ -242,14 +255,9 @@ public class MomentInstanceManager {
             return null;
         }
 
-        // 如果实例可以创建且条件匹配
         if (canCreate && conditionMatch) {
             try {
-                // 初始化实例
-//                instance.init();
-                // 注册实例的追踪器
                 instance.registerTracker();
-                // 将实例添加到管理列表中，并标记为新创建
                 addMomentInstance(instance);
                 return instance;
             } catch (Exception e) {
