@@ -1,14 +1,12 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
-import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
@@ -22,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,8 +34,6 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class MomentInstanceManager {
 
@@ -53,7 +50,7 @@ public class MomentInstanceManager {
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
     //时刻对应的映射表
-    private final HashMultimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
+    private final HashMultimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
 
 
@@ -108,8 +105,8 @@ public class MomentInstanceManager {
         return runMoments.get(uuid);
     }
 
-    public Set<MomentInstance> getMomentInstances(ResourceLocation location) {
-        return momentMap.get(location);
+    public Set<MomentInstance> getMomentInstances(ResourceKey<Moment> key) {
+        return momentMap.get(key);
     }
 
     public Collection<MomentInstance> getMomentInstances(Moment moment) {
@@ -154,7 +151,7 @@ public class MomentInstanceManager {
 
     public void addMomentInstance(MomentInstance instance) {
         runMoments.put(instance.getID(), instance);
-        momentMap.put(instance.getMomentResource(), instance);
+        momentMap.put(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.put(instance.getMoment(), instance);
 
         addActuatorRemainingUses(instance);
@@ -309,7 +306,7 @@ public class MomentInstanceManager {
         }
     }
 
-    public boolean hasMoment(ResourceLocation key) {
+    public boolean hasMoment(ResourceKey<Moment> key) {
         return momentMap.containsKey(key);
     }
 

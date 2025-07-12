@@ -6,6 +6,7 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,7 +22,7 @@ public record KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillTyp
     public static final StreamCodec<ByteBuf, KillEntityRecorderSyncPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.fromCodec(KillEntityRecorderAttachment.KillType.CODEC), KillEntityRecorderSyncPayload::killType,
             UUIDUtil.STREAM_CODEC, KillEntityRecorderSyncPayload::uuid,
-            ByteBufCodecs.fromCodec(KillEntityRecorderAttachment.CODEC), KillEntityRecorderSyncPayload::attachment,
+            ByteBufCodecs.fromCodec(KillEntityRecorderAttachment.CODEC, NbtAccounter::unlimitedHeap), KillEntityRecorderSyncPayload::attachment,
             KillEntityRecorderSyncPayload::new
     );
 
