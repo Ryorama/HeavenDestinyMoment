@@ -5,6 +5,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -19,7 +20,7 @@ import java.util.Optional;
 public record  MomentManagerSyncPayload(CompoundTag runMoment,boolean isRemove) implements CustomPacketPayload {
     public static final Type<MomentManagerSyncPayload> TYPE = new Type<>(HeavenDestinyMoment.asResource("moment_manager_sync"));
     public static final StreamCodec<ByteBuf, MomentManagerSyncPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.fromCodec(CompoundTag.CODEC), MomentManagerSyncPayload::runMoment,
+            ByteBufCodecs.fromCodec(CompoundTag.CODEC, NbtAccounter::unlimitedHeap), MomentManagerSyncPayload::runMoment,
             ByteBufCodecs.BOOL, MomentManagerSyncPayload::isRemove,
             MomentManagerSyncPayload::new
     );
