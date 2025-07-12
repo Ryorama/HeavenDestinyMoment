@@ -92,6 +92,14 @@ public final class KillEntityRecorderAttachment {
         return entityTypeScores;
     }
 
+    public int getKillsByEntityType(EntityType<?> entityType) {
+        return entityTypeKills.getOrDefault(entityType, 0);
+    }
+
+    public int getScoreByEntityType(EntityType<?> entityType) {
+        return entityTypeScores.getOrDefault(entityType, 0);
+    }
+
 
     public record KillRecord(EntityType<?> entityType, long timestamp, int score, DamageType damageType,
                              Optional<EntityType<?>> causingEntity, Optional<EntityType<?>> directEntity,

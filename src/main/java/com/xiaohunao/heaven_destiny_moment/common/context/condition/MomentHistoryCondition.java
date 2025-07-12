@@ -3,6 +3,8 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IAmount;
+import com.xiaohunao.heaven_destiny_moment.common.context.amount.IntegerAmount;
+import com.xiaohunao.heaven_destiny_moment.common.context.amount.RandomAmount;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.*;
@@ -17,6 +19,14 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
             IAmount.CODEC.fieldOf("time").forGetter(MomentHistoryCondition::time),
             HDMRegistries.MOMENT_TYPE.byNameCodec().fieldOf("moment_type").forGetter(MomentHistoryCondition::momentType)
     ).apply(instance, MomentHistoryCondition::new));
+
+    public static MomentHistoryCondition fixedTicks(int ticks, MomentType<?> momentType) {
+        return new MomentHistoryCondition(new IntegerAmount(ticks), momentType);
+    }
+
+    public static MomentHistoryCondition randomTicks(int minTicks, int maxTicks, MomentType<?> momentType) {
+        return new MomentHistoryCondition(new RandomAmount(minTicks, maxTicks), momentType);
+    }
 
     @Override
     public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
