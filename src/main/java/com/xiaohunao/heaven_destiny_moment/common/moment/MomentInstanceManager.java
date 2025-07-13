@@ -22,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,7 +54,7 @@ public class MomentInstanceManager {
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
     //时刻对应的映射表
-    private final Multimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
 
 
@@ -108,7 +109,7 @@ public class MomentInstanceManager {
         return runMoments.get(uuid);
     }
 
-    public Collection<MomentInstance> getMomentInstances(ResourceLocation location) {
+    public Collection<MomentInstance> getMomentInstances(ResourceKey<Moment> location) {
         return momentMap.get(location);
     }
 
@@ -154,7 +155,7 @@ public class MomentInstanceManager {
 
     public void addMomentInstance(MomentInstance instance) {
         runMoments.put(instance.getID(), instance);
-        momentMap.put(instance.getMomentResource(), instance);
+        momentMap.put(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.put(instance.moment, instance);
 
         addActuatorRemainingUses(instance);
@@ -308,7 +309,7 @@ public class MomentInstanceManager {
         }
     }
 
-    public boolean hasMoment(ResourceLocation key) {
+    public boolean hasMoment(ResourceKey<Moment> key) {
         return momentMap.containsKey(key);
     }
 
