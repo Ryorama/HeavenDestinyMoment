@@ -194,7 +194,6 @@ public class MomentInstanceManager {
 
         if (!level.isClientSide) {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),true));
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
             if (instance.bar != null) {
                 PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removeBar(instance.bar));
             }
@@ -320,6 +319,9 @@ public class MomentInstanceManager {
             instance.bar.addPlayer(player);
         }
 
+        if (instance.isClientOnlyMoment()){
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
+        }
     }
 
     public void removePlayerToInstance(Player player, MomentInstance instance) {
@@ -327,6 +329,10 @@ public class MomentInstanceManager {
         playerMoments.remove(uuid,instance);
         if(instance.bar != null){
             instance.bar.removePlayer(player);
+        }
+
+        if (instance.isClientOnlyMoment()){
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
         }
     }
 
