@@ -9,6 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
@@ -57,14 +58,17 @@ public class TriggerTypeManager{
                             }
 
                             momentInstanceManager.getMomentInstances(moment).forEach(momentInstance -> {
+                                if (!momentInstance.getMoment().getClass().isInstance(moment)) {
+                                    return;
+                                }
+
                                 boolean allMatch = true;
                                 for (ICondition condition : triggerContext.conditions()) {
                                     if (condition instanceof KillEntityCondition killEntityCondition &&
-                                            killEntityCondition.killType() == KillEntityRecorderAttachment.KillType.MOMENT &&
-                                            actuatorContext.actuator() instanceof StateSettingActuator(MomentState state)) {
+                                            killEntityCondition.killType() == KillEntityRecorderAttachment.KillType.MOMENT) {
                                         KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
-                                        momentInstance.setVictoryRequiredKill(state,killRecord);
-                                        PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(momentInstance.getID(),state,killRecord));
+                                        momentInstance.setVictoryRequiredKill(actuatorContext.actuator(),killRecord);
+                                        PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(momentInstance.getID(),actuatorContext.actuator(),killRecord));
                                     }
 
                                     if (!condition.matches(momentInstance, pos, serverPlayer)) {

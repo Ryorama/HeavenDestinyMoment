@@ -3,10 +3,9 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
-import com.mojang.serialization.Codec;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
@@ -18,12 +17,12 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillEntityRecorderSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillAnyEntityTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
@@ -69,7 +68,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
     protected final EnemiesManager enemiesManager = new EnemiesManager();
-    protected Map<MomentState,KillEntityCondition.RequiredKill> tryModifyStateRequiredKill = new ConcurrentHashMap<>();
+    protected Map<IActuator,KillEntityCondition.RequiredKill> tryRequiredKill = new ConcurrentHashMap<>();
 
     protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
         this.uuid = UUID.randomUUID();
@@ -115,22 +114,20 @@ public abstract class MomentInstance extends AttachmentHolder {
     public void initTryModifyStateRequiredKill(){
         moment.momentData().flatMap(MomentData::autoActuatorGroupSettings).ifPresent(autoActuatorGroupSettings -> {
             autoActuatorGroupSettings.autoActuators().forEach((triggerContext, actuatorContext) -> {
-                if (actuatorContext.actuator() instanceof StateSettingActuator stateSettingActuator) {
-                    if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
-                        conditionalTrigger.conditions().forEach(condition -> {
-                            if (condition instanceof KillEntityCondition killEntityCondition) {
-                                KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
-                                tryModifyStateRequiredKill.put(stateSettingActuator.state(), killRecord);
-                            }
-                        });
-                    } else {
-                        triggerContext.conditions().forEach(condition -> {
-                            if (condition instanceof KillEntityCondition killEntityCondition) {
-                                KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
-                                tryModifyStateRequiredKill.put(stateSettingActuator.state(), killRecord);
-                            }
-                        });
-                    }
+                if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
+                    conditionalTrigger.conditions().forEach(condition -> {
+                        if (condition instanceof KillEntityCondition killEntityCondition) {
+                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                            tryRequiredKill.put(actuatorContext.actuator(), killRecord);
+                        }
+                    });
+                } else {
+                    triggerContext.conditions().forEach(condition -> {
+                        if (condition instanceof KillEntityCondition killEntityCondition) {
+                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                            tryRequiredKill.put(actuatorContext.actuator(), killRecord);
+                        }
+                    });
                 }
             });
         });
@@ -211,8 +208,10 @@ public abstract class MomentInstance extends AttachmentHolder {
         spawnPosList.forEach(vec3 -> spawnPosListTag.add(Vec3.CODEC.encodeStart(NbtOps.INSTANCE, vec3).getOrThrow()));
         compoundTag.put("spawnPosList", spawnPosListTag);
 
-        if (tryModifyStateRequiredKill != null) {
-            Codec.unboundedMap(MomentState.CODEC,KillEntityCondition.RequiredKill.CODEC).encodeStart(NbtOps.INSTANCE, tryModifyStateRequiredKill).result().ifPresent(tryModifyStateRequiredKillTag -> compoundTag.put("tryModifyStateRequiredKill", tryModifyStateRequiredKillTag));
+        if (tryRequiredKill != null) {
+            CodecUtils.complexKeyMap(IActuator.CODEC,KillEntityCondition.RequiredKill.CODEC)
+                    .encodeStart(NbtOps.INSTANCE, tryRequiredKill).result()
+                    .ifPresent(tryRequiredKill -> compoundTag.put("tryRequiredKill", tryRequiredKill));
         }
 
 
@@ -239,12 +238,12 @@ public abstract class MomentInstance extends AttachmentHolder {
         ListTag spawnPosListTag = compoundTag.getList("spawnPosList", Tag.TAG_LIST);
         spawnPosListTag.forEach(tag -> spawnPosList.add(Vec3.CODEC.decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()));
 
-        if (compoundTag.contains("tryModifyStateRequiredKill")) {
-            this.tryModifyStateRequiredKill.clear();
-            Map<MomentState, KillEntityCondition.RequiredKill> decodedMap = Codec.unboundedMap(MomentState.CODEC, KillEntityCondition.RequiredKill.CODEC)
-                    .decode(NbtOps.INSTANCE, compoundTag.get("tryModifyStateRequiredKill"))
+        if (compoundTag.contains("tryRequiredKill")) {
+            this.tryRequiredKill.clear();
+            Map<IActuator, KillEntityCondition.RequiredKill> decodedMap = CodecUtils.complexKeyMap(IActuator.CODEC, KillEntityCondition.RequiredKill.CODEC)
+                    .decode(NbtOps.INSTANCE, compoundTag.get("tryRequiredKill"))
                     .getOrThrow().getFirst();
-            this.tryModifyStateRequiredKill.putAll(decodedMap);
+            this.tryRequiredKill.putAll(decodedMap);
         }
     }
 
@@ -475,8 +474,7 @@ public abstract class MomentInstance extends AttachmentHolder {
             BlockPos pos = serverPlayer == null ? null : serverPlayer.blockPosition();
 
             PacketDistributor.sendToPlayersInDimension(serverLevel,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), level, KillAnyEntityTrigger::canTrigger, pos, serverPlayer);
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ENTITY_MOMENT.get(), level, trigger -> trigger.canTrigger(livingEntity.getType()),pos, serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), level, KillEntityTrigger::canTrigger, pos, serverPlayer);
         }
     }
 
@@ -579,11 +577,11 @@ public abstract class MomentInstance extends AttachmentHolder {
         return HDMRegistries.MOMENT.getKey(moment);
     }
 
-    public void setVictoryRequiredKill(MomentState tryModifyState, KillEntityCondition.RequiredKill requiredKill) {
-        this.tryModifyStateRequiredKill.put(tryModifyState, requiredKill);
+    public void setVictoryRequiredKill(IActuator actuator, KillEntityCondition.RequiredKill requiredKill) {
+        this.tryRequiredKill.put(actuator, requiredKill);
     }
 
-    public KillEntityCondition.RequiredKill getVictoryRequiredKill(MomentState state) {
-        return this.tryModifyStateRequiredKill.get(state);
+    public Map<IActuator, KillEntityCondition.RequiredKill> getTryRequiredKill() {
+        return tryRequiredKill;
     }
 }

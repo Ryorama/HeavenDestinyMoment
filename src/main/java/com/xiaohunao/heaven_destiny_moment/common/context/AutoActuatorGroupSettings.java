@@ -15,6 +15,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
+import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,18 +24,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public record AutoActuatorGroupSettings(Map<TriggerContext,ActuatorContext> autoActuators) {
-    public static final Codec<AutoActuatorGroupSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.pair(TriggerContext.CODEC, ActuatorContext.CODEC)
-                    .listOf()
-                    .fieldOf("autoActuators")
-                    .forGetter(settings -> settings.autoActuators.entrySet().stream()
-                            .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-                            .collect(Collectors.toList()))
-    ).apply(instance, entries -> {
-        Map<TriggerContext, ActuatorContext> map = new HashMap<>();
-        entries.forEach(pair -> map.put(pair.getFirst(), pair.getSecond()));
-        return new AutoActuatorGroupSettings(map);
-    }));
+    public static final Codec<AutoActuatorGroupSettings> CODEC = CodecUtils.complexKeyMap(
+            TriggerContext.CODEC,
+            ActuatorContext.CODEC
+    ).xmap(AutoActuatorGroupSettings::new, AutoActuatorGroupSettings::autoActuators);
 
 
     public static Builder builder() {

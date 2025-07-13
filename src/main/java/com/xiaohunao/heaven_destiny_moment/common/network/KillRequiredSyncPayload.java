@@ -1,6 +1,8 @@
 package com.xiaohunao.heaven_destiny_moment.common.network;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -17,11 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public record KillRequiredSyncPayload(UUID uuid, MomentState tryModifyState, KillEntityCondition.RequiredKill requiredKill) implements CustomPacketPayload{
+public record KillRequiredSyncPayload(UUID uuid, IActuator actuator, KillEntityCondition.RequiredKill requiredKill) implements CustomPacketPayload{
     public static final Type<KillRequiredSyncPayload> TYPE = new Type<>(HeavenDestinyMoment.asResource("kill_required_sync"));
     public static final StreamCodec<ByteBuf, KillRequiredSyncPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, KillRequiredSyncPayload::uuid,
-            ByteBufCodecs.fromCodec(MomentState.CODEC), KillRequiredSyncPayload::tryModifyState,
+            ByteBufCodecs.fromCodec(IActuator.CODEC), KillRequiredSyncPayload::actuator,
             ByteBufCodecs.fromCodec(KillEntityCondition.RequiredKill.CODEC), KillRequiredSyncPayload::requiredKill,
             KillRequiredSyncPayload::new
     );
@@ -38,7 +40,7 @@ public record KillRequiredSyncPayload(UUID uuid, MomentState tryModifyState, Kil
                 Level level = context.player().level();
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
                 MomentInstance momentInstance = momentInstanceManager.getMomentInstance(uuid);
-                momentInstance.setVictoryRequiredKill(tryModifyState,requiredKill);
+                momentInstance.setVictoryRequiredKill(actuator,requiredKill);
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));

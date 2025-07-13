@@ -53,7 +53,7 @@ public class MomentInstanceManager {
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
     //时刻对应的映射表
-    private final HashMultimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<ResourceLocation,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
 
 
@@ -108,7 +108,7 @@ public class MomentInstanceManager {
         return runMoments.get(uuid);
     }
 
-    public Set<MomentInstance> getMomentInstances(ResourceLocation location) {
+    public Collection<MomentInstance> getMomentInstances(ResourceLocation location) {
         return momentMap.get(location);
     }
 
@@ -155,7 +155,7 @@ public class MomentInstanceManager {
     public void addMomentInstance(MomentInstance instance) {
         runMoments.put(instance.getID(), instance);
         momentMap.put(instance.getMomentResource(), instance);
-        momentInstanceMap.put(instance.getMoment(), instance);
+        momentInstanceMap.put(instance.moment, instance);
 
         addActuatorRemainingUses(instance);
         momentHistoryManager.addHistory(instance);
@@ -171,7 +171,7 @@ public class MomentInstanceManager {
     public void removeMomentInstance(MomentInstance instance) {
         runMoments.remove(instance.getID());
         momentMap.remove(instance.getMomentResource(), instance);
-        momentInstanceMap.remove(instance.getMoment(), instance);
+        momentInstanceMap.remove(instance.moment, instance);
         removeActuatorRemainingUses(instance);
 
         momentHistoryManager.finishRecord(instance);

@@ -2,13 +2,11 @@ package com.xiaohunao.heaven_destiny_moment.common.utils;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CodecUtils {
@@ -43,6 +41,24 @@ public class CodecUtils {
                     .collect(Collectors.toList());
             }
         );
+    }
+
+    public static <K, V> Codec<Map<K, V>> complexKeyMap(Codec<K> keyCodec, Codec<V> valueCodec) {
+        return Codec.pair(keyCodec, valueCodec)
+                .listOf()
+                .xmap(
+                        pairList -> pairList.stream().collect(Collectors.toMap(
+                                Pair::getFirst,
+                                Pair::getSecond,
+                                (existingValue, duplicateValue) -> {
+                                    return duplicateValue;
+                                },
+                                LinkedHashMap::new
+                        )),
+                        originalMap -> originalMap.entrySet().stream()
+                                .map(mapEntry -> Pair.of(mapEntry.getKey(), mapEntry.getValue()))
+                                .toList()
+                );
     }
 
 }

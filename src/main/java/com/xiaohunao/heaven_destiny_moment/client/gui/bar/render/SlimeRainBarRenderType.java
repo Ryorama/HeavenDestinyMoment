@@ -3,10 +3,9 @@ package com.xiaohunao.heaven_destiny_moment.client.gui.bar.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.SimpleEntitySpawnActuator;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -17,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class TerrariaBarRenderType implements IBarRenderType {
+public class SlimeRainBarRenderType implements IBarRenderType {
     // 存储每个时刻条的动画状态
     private static final Map<UUID, AnimationState> animationStates = new HashMap<>();
     
@@ -113,75 +112,75 @@ public class TerrariaBarRenderType implements IBarRenderType {
         Component momentName = Component.translatable(momentInstance.getMomentResource().toLanguageKey());
 
         int totalScore = momentInstance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).getTotalScore();
-        KillEntityCondition.RequiredKill victoryRequiredKill = momentInstance.getVictoryRequiredKill(MomentState.VICTORY);
-        int percent = (int) ((float) totalScore / victoryRequiredKill.totalScore() * 100);
-        Component momentKillDescription = Component.translatable(momentInstance.getMomentResource().toLanguageKey() + ".bar_kill_description",percent);
+        momentInstance.getTryRequiredKill().forEach((actuator, requiredKill) -> {
+            if (actuator instanceof SimpleEntitySpawnActuator){
+                int percent = (int) ((float) totalScore / requiredKill.totalScore() * 100);
+                Component momentKillDescription = Component.translatable(momentInstance.getMomentResource().toLanguageKey() + ".bar_kill_description",percent);
 
+                if (ENABLE_ANIMATION) {
+                    // 生成唯一ID，用于识别不同的条
+                    // 获取或创建动画状态
+                    AnimationState state = animationStates.computeIfAbsent(bar.getID(), k -> new AnimationState(startX, startY));
 
+                    // 更新目标位置（如果位置发生变化）
+                    state.updateTarget(startX, startY);
 
+                    // 更新当前位置
+                    state.update();
 
-        if (ENABLE_ANIMATION) {
-            // 生成唯一ID，用于识别不同的条
-            // 获取或创建动画状态
-            AnimationState state = animationStates.computeIfAbsent(bar.getID(), k -> new AnimationState(startX, startY));
+                    // 使用当前位置进行渲染
+                    int currentX = Math.round(state.currentX);
+                    int currentY = Math.round(state.currentY);
 
-            // 更新目标位置（如果位置发生变化）
-            state.updateTarget(startX, startY);
+                    poseStack.pushPose();
 
-            // 更新当前位置
-            state.update();
+                    // 根据动画状态应用一些效果
+                    float alpha = 1.0f;
+                    if (state.isAnimating) {
+                        // 计算完成百分比
+                        long elapsedTime = System.currentTimeMillis() - state.startTime;
+                        float progress = Math.min(1.0f, (float) elapsedTime / ANIMATION_DURATION);
+                        // 渐入效果
+                        alpha = progress;
 
-            // 使用当前位置进行渲染
-            int currentX = Math.round(state.currentX);
-            int currentY = Math.round(state.currentY);
+                        // 可以添加额外的动画效果，如缩放或旋转
+                        float scale = 0.8f + 0.2f * progress; // 从80%大小逐渐到100%
+                        poseStack.scale(scale, scale, 1.0f);
+                        currentX = Math.round(currentX / scale);
+                        currentY = Math.round(currentY / scale);
+                    }
 
-            poseStack.pushPose();
+                    // 绘制图标
+                    guiGraphics.setColor(1.0f, 1.0f, 1.0f, alpha);
+                    guiGraphics.blit(icon, currentX, currentY - iconSize, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
-            // 根据动画状态应用一些效果
-            float alpha = 1.0f;
-            if (state.isAnimating) {
-                // 计算完成百分比
-                long elapsedTime = System.currentTimeMillis() - state.startTime;
-                float progress = Math.min(1.0f, (float) elapsedTime / ANIMATION_DURATION);
-                // 渐入效果
-                alpha = progress;
+                    // 绘制背景
+                    guiGraphics.blit(MomentBarOverlay.BACKGROUND, currentX - 3, currentY, 0, 0, backgroundWidth + 3, backgroundHeight, backgroundWidth + 3, backgroundHeight);
 
-                // 可以添加额外的动画效果，如缩放或旋转
-                float scale = 0.8f + 0.2f * progress; // 从80%大小逐渐到100%
-                poseStack.scale(scale, scale, 1.0f);
-                currentX = Math.round(currentX / scale);
-                currentY = Math.round(currentY / scale);
+                    // 绘制文本
+                    int textColor = 0xFFFFFF | (Math.round(alpha * 255) << 24);
+                    guiGraphics.drawString(minecraft.font, momentName, currentX + iconSize + 8, currentY - iconSize + 4, textColor);
+                    guiGraphics.drawString(minecraft.font, momentKillDescription, currentX + iconSize, currentY - iconSize + 18, textColor);
+
+                    // 绘制进度条
+                    DefaultBarRenderType.drawCustomWidthBar(guiGraphics, bar, currentX + 2, currentY + 15, backgroundWidth - 10, 5, BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.NOTCHED_6);
+
+                    // 重置颜色
+                    guiGraphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+                    poseStack.popPose();
+                } else {
+                    poseStack.pushPose();
+                    guiGraphics.blit(icon, startX, startY - iconSize, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                    guiGraphics.blit(background, startX - 3, startY, 0, 0, backgroundWidth + 3, backgroundHeight, backgroundWidth + 3, backgroundHeight);
+                    guiGraphics.drawString(minecraft.font, momentName, startX + iconSize + 8, startY - iconSize + 4, 0xFFFFFF);
+                    guiGraphics.drawString(minecraft.font, momentKillDescription, startX + iconSize, startY - iconSize + 18, 0xFFFFFF);
+                    bar.updateProgress(0.5f);
+                    DefaultBarRenderType.drawCustomWidthBar(guiGraphics, bar, startX + 2, startY + 15, backgroundWidth - 10, 5, BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.NOTCHED_6);
+                    poseStack.popPose();
+                }
             }
-
-            // 绘制图标
-            guiGraphics.setColor(1.0f, 1.0f, 1.0f, alpha);
-            guiGraphics.blit(icon, currentX, currentY - iconSize, 0, 0, iconSize, iconSize, iconSize, iconSize);
-
-            // 绘制背景
-            guiGraphics.blit(MomentBarOverlay.BACKGROUND, currentX - 3, currentY, 0, 0, backgroundWidth + 3, backgroundHeight, backgroundWidth + 3, backgroundHeight);
-
-            // 绘制文本
-            int textColor = 0xFFFFFF | (Math.round(alpha * 255) << 24);
-            guiGraphics.drawString(minecraft.font, momentName, currentX + iconSize + 8, currentY - iconSize + 4, textColor);
-            guiGraphics.drawString(minecraft.font, momentKillDescription, currentX + iconSize, currentY - iconSize + 18, textColor);
-
-            // 绘制进度条
-            DefaultBarRenderType.drawCustomWidthBar(guiGraphics, bar, currentX + 2, currentY + 15, backgroundWidth - 10, 5, BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.NOTCHED_6);
-
-            // 重置颜色
-            guiGraphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-            poseStack.popPose();
-        } else {
-            poseStack.pushPose();
-            guiGraphics.blit(icon, startX, startY - iconSize, 0, 0, iconSize, iconSize, iconSize, iconSize);
-            guiGraphics.blit(background, startX - 3, startY, 0, 0, backgroundWidth + 3, backgroundHeight, backgroundWidth + 3, backgroundHeight);
-            guiGraphics.drawString(minecraft.font, momentName, startX + iconSize + 8, startY - iconSize + 4, 0xFFFFFF);
-            guiGraphics.drawString(minecraft.font, momentKillDescription, startX + iconSize, startY - iconSize + 18, 0xFFFFFF);
-            bar.updateProgress(0.5f);
-            DefaultBarRenderType.drawCustomWidthBar(guiGraphics, bar, startX + 2, startY + 15, backgroundWidth - 10, 5, BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.NOTCHED_6);
-            poseStack.popPose();
-        }
+        });
     }
 }
 

@@ -2,7 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillAnyEntityTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.LevelTickTrigger;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,8 +46,7 @@ public class CommonTriggerSubscriber {
         if (victim.level().isClientSide) return;
         ServerPlayer serverPlayer = event.getSource() == null ? null : event.getSource().getEntity() instanceof ServerPlayer player ? player : null;
 
-        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_COMMON.get(), victim.level(), KillAnyEntityTrigger::canTrigger, victim.blockPosition(), serverPlayer);
-        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ENTITY_COMMON.get(), victim.level(), trigger -> trigger.canTrigger(victim.getType()), victim.blockPosition(), serverPlayer);
+        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_COMMON.get(), victim.level(), KillEntityTrigger::canTrigger, victim.blockPosition(), serverPlayer);
     }
 
 }
