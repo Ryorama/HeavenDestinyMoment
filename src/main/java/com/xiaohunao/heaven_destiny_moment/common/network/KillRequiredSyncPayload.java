@@ -1,14 +1,13 @@
 package com.xiaohunao.heaven_destiny_moment.common.network;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,7 +23,7 @@ public record KillRequiredSyncPayload(UUID uuid, IActuator actuator, KillEntityC
     public static final StreamCodec<ByteBuf, KillRequiredSyncPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, KillRequiredSyncPayload::uuid,
             ByteBufCodecs.fromCodec(IActuator.CODEC), KillRequiredSyncPayload::actuator,
-            ByteBufCodecs.fromCodec(KillEntityCondition.RequiredKill.CODEC), KillRequiredSyncPayload::requiredKill,
+            ByteBufCodecs.fromCodec(KillEntityCondition.RequiredKill.CODEC, NbtAccounter::unlimitedHeap), KillRequiredSyncPayload::requiredKill,
             KillRequiredSyncPayload::new
     );
 
