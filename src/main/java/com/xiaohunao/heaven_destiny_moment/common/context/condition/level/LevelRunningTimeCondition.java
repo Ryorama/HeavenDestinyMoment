@@ -22,7 +22,7 @@ public record LevelRunningTimeCondition(Optional<Long> min, Optional<Long> max) 
     @Override
     public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         Level level = instance.getLevel();
-        return this.matches(level.getGameTime() % 24000);
+        return this.matches(level.getGameTime());
     }
 
     @Override

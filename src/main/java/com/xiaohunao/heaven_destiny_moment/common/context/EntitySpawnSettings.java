@@ -80,7 +80,7 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     return spawnerData != null ? new ArrayList<>(spawnerData.unwrap()) : new ArrayList<MobSpawnSettings.SpawnerData>();
                 })
                 .ifPresent(newSpawnerData -> {
-                    boolean allowOriginal = rule.flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(false);
+                    boolean allowOriginal = rule.flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(true);
                     if (allowOriginal) {
                         mergeSpawnerData(originalSpawnerData, newSpawnerData);
                     } else {

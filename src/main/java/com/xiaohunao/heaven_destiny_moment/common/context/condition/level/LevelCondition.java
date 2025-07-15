@@ -1,13 +1,11 @@
-package com.xiaohunao.heaven_destiny_moment.common.context.condition;
+package com.xiaohunao.heaven_destiny_moment.common.context.condition.level;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.DifficultyCondition;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.TimeCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -16,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record LevelCondition(Optional<DifficultyCondition> difficulty, Optional<TimeCondition> time, Optional<List<Integer>> validMoonPhases) implements ICondition{
+public record LevelCondition(Optional<DifficultyCondition> difficulty, Optional<TimeCondition> time, Optional<List<Integer>> validMoonPhases) implements ICondition {
     public static final MapCodec<LevelCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             DifficultyCondition.CODEC.codec().optionalFieldOf("difficulty").forGetter(LevelCondition::difficulty),
             TimeCondition.CODEC.codec().optionalFieldOf("time").forGetter(LevelCondition::time),

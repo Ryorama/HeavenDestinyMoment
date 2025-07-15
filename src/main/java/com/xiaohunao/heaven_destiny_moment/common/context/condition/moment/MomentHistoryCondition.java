@@ -1,10 +1,11 @@
-package com.xiaohunao.heaven_destiny_moment.common.context.condition;
+package com.xiaohunao.heaven_destiny_moment.common.context.condition.moment;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IntegerAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.RandomAmount;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.*;
@@ -44,6 +45,6 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.MOMENT_HISTORY.get();
+        return HDMConditions.MOMENT_HISTORY_TIME.get();
     }
 }

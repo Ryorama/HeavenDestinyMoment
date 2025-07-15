@@ -1,7 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment.area;
 
 import com.mojang.serialization.MapCodec;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.LocationCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.LocationCondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
