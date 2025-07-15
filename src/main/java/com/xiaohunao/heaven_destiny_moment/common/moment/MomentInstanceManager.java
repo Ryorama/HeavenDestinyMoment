@@ -202,10 +202,18 @@ public class MomentInstanceManager {
     }
 
     public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return createMomentInstance(moment, pos, serverPlayer, null);
+        return createMomentInstance(moment, pos, serverPlayer, null,true);
     }
 
     public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier) {
+        return createMomentInstance(moment, pos, serverPlayer, modifier,true);
+    }
+
+    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,boolean isCheckConditions) {
+        return createMomentInstance(moment, pos, serverPlayer, null,isCheckConditions);
+    }
+
+    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier,boolean isCheckConditions) {
         if (moment == null) {
             LOGGER.error("Attempted to create MomentInstance with null Moment");
             throw new IllegalArgumentException("Moment cannot be null");
@@ -255,10 +263,16 @@ public class MomentInstanceManager {
             return null;
         }
 
+        if (!isCheckConditions){
+            conditionMatch = true;
+            canCreate = true;
+        }
+
         if (canCreate && conditionMatch) {
             try {
                 instance.registerTracker();
                 addMomentInstance(instance);
+                instance.initialize();
                 return instance;
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize or register MomentInstance", e);

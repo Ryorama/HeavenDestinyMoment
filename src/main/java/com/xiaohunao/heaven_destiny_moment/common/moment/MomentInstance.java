@@ -17,6 +17,8 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillEntityRecorderSyncPayload;
+import com.xiaohunao.heaven_destiny_moment.common.network.MomentStateSyncPayload;
+import com.xiaohunao.heaven_destiny_moment.common.network.MomentUpdatePlayersPayload;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
@@ -24,6 +26,7 @@ import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTr
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -189,6 +192,9 @@ public abstract class MomentInstance extends AttachmentHolder {
         CompoundTag compoundTag = new CompoundTag();
 
         serializeMetaData(compoundTag);
+        CompoundTag attachments = serializeAttachments(level.registryAccess());
+        if (attachments != null) compoundTag.put(ATTACHMENTS_NBT_KEY, attachments);
+
         compoundTag.put("enemies_manager", enemiesManager.serializeNBT());
         compoundTag.put("persistentData", this.persistentData);
         compoundTag.putLong("tick", tick);
@@ -220,6 +226,7 @@ public abstract class MomentInstance extends AttachmentHolder {
 
 
     public void deserializeNBT(CompoundTag compoundTag) {
+        if (compoundTag.contains(ATTACHMENTS_NBT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) deserializeAttachments(level.registryAccess(), compoundTag.getCompound(ATTACHMENTS_NBT_KEY));
         enemiesManager.deserializeNBT(compoundTag.getCompound("enemies_manager"));
         this.persistentData = compoundTag.getCompound("persistentData");
         this.tick = compoundTag.getLong("tick");

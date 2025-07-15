@@ -42,6 +42,9 @@ public class MomentRunningRecord {
         return isFinished() ? endTime - createTime : -1L;
     }
 
+    public long getCreateTime() {
+        return createTime;
+    }
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
@@ -66,11 +69,9 @@ public class MomentRunningRecord {
             if (momentType == null) {
                 throw new IllegalArgumentException("Unknown moment type: " + typeLocation);
             }
-
             UUID uuid = tag.getUUID("uuid");
             long createTime = tag.getLong("createTime");
             long endTime = tag.getLong("endTime");
-
             return new MomentRunningRecord(momentType, uuid, createTime, endTime);
         } catch (Exception e) {
             // 记录错误日志
