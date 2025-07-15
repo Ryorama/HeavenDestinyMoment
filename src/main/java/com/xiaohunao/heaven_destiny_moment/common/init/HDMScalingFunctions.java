@@ -73,4 +73,12 @@ public class HDMScalingFunctions {
                     return Math.round(baseValue * modifier);
                 }
             );
+
+    public static final FlexibleHolder<BiFunction<Integer, Integer, Integer>, ?> MULTIPLY =
+            PLAYER_COUNT_SCALING.registerStatic("multiply", () ->
+                    (baseValue, playerCount) -> {
+                        int count = Math.max(1, playerCount);
+                        return baseValue * count;
+                    }
+            );
 }

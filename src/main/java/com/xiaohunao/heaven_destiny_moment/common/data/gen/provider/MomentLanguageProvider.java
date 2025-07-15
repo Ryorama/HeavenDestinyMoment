@@ -46,30 +46,30 @@ public abstract class MomentLanguageProvider extends LanguageProvider {
     }
 
 
-    public void addMomentTooltip(FlexibleHolder<Moment, ?> holder, Map<MomentState, String> en, Map<MomentState, String> zh) {
-        try {
-            Moment moment = holder.get();
+//    public void addMomentTooltip(FlexibleHolder<Moment, ?> holder, Map<MomentState, String> en, Map<MomentState, String> zh) {
+//        try {
+//            Moment moment = holder.get();
+//
+//            moment.tipSettings()
+//                    .flatMap(TipSettings::texts)
+//                    .ifPresentOrElse(
+//                            texts -> processTooltipTexts(texts, en, zh),
+//                            () -> HeavenDestinyMoment.LOGGER.warn("No tip settings found for moment: {}", holder.getKey().location())
+//                    );
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to process tooltip for moment: " + holder.getKey().location(), e);
+//        }
+//    }
 
-            moment.tipSettings()
-                    .flatMap(TipSettings::texts)
-                    .ifPresentOrElse(
-                            texts -> processTooltipTexts(texts, en, zh),
-                            () -> HeavenDestinyMoment.LOGGER.warn("No tip settings found for moment: {}", holder.getKey().location())
-                    );
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to process tooltip for moment: " + holder.getKey().location(), e);
-        }
-    }
-
-    private void processTooltipTexts(Map<MomentState, ?> texts, Map<MomentState, String> en, Map<MomentState, String> zh) {
-        texts.forEach((state, component) -> {
-            if (component instanceof MutableComponent mutable && mutable.getContents() instanceof TranslatableContents translatable) {
-                addTranslation(translatable.getKey(),
-                        en.getOrDefault(state, null),
-                        zh.getOrDefault(state, null));
-            }
-        });
-    }
+//    private void processTooltipTexts(Map<MomentState, ?> texts, Map<MomentState, String> en, Map<MomentState, String> zh) {
+//        texts.forEach((state, component) -> {
+//            if (component instanceof MutableComponent mutable && mutable.getContents() instanceof TranslatableContents translatable) {
+//                addTranslation(translatable.getKey(),
+//                        en.getOrDefault(state, null),
+//                        zh.getOrDefault(state, null));
+//            }
+//        });
+//    }
 
     protected void addTranslation(String key, String en, String zh) {
         if (key == null || key.isEmpty()) {
