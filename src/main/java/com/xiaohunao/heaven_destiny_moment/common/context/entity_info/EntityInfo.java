@@ -24,7 +24,8 @@ public class EntityInfo implements IEntityInfo {
             IAmount.CODEC.optionalFieldOf("amount").forGetter(EntityInfo::amount),
             Codec.INT.optionalFieldOf("weight").forGetter(EntityInfo::weight),
             IAttachable.CODEC.listOf().optionalFieldOf("attaches").forGetter(EntityInfo::attaches),
-            IEntityInfo.CODEC.optionalFieldOf("vehicle").forGetter(EntityInfo::vehicle)
+            IEntityInfo.CODEC.optionalFieldOf("vehicle").forGetter(EntityInfo::vehicle),
+            Codec.INT.optionalFieldOf("portal_cooldown").forGetter(EntityInfo::portal_cooldown)
     ).apply(instance, EntityInfo::new));
 
     private final EntityType<?> entityType;
@@ -32,13 +33,15 @@ public class EntityInfo implements IEntityInfo {
     private final Optional<Integer> weight;
     private final Optional<List<IAttachable>> attaches;
     private final Optional<IEntityInfo> vehicle;
+    private final Optional<Integer> portal_cooldown;
 
-    public EntityInfo(EntityType<?> entityType, Optional<IAmount> amount, Optional<Integer> weight, Optional<List<IAttachable>> attaches, Optional<IEntityInfo> vehicle) {
+    public EntityInfo(EntityType<?> entityType, Optional<IAmount> amount, Optional<Integer> weight, Optional<List<IAttachable>> attaches, Optional<IEntityInfo> vehicle, Optional<Integer> portalCooldown) {
         this.entityType = entityType;
         this.amount = amount;
         this.weight = weight;
         this.attaches = attaches;
         this.vehicle = vehicle;
+        portal_cooldown = portalCooldown;
     }
 
 
@@ -59,6 +62,12 @@ public class EntityInfo implements IEntityInfo {
                 entity.startRiding(first);
                 arrayList.add(first);
             });
+
+            if (entity == null) {
+                continue;
+            }
+
+            portal_cooldown.ifPresent(entity::setPortalCooldown);
 
             arrayList.add(entity);
         }
@@ -86,6 +95,10 @@ public class EntityInfo implements IEntityInfo {
         return attaches;
     }
 
+    public Optional<Integer> portal_cooldown() {
+        return portal_cooldown;
+    }
+
     public Optional<IEntityInfo> vehicle() {
         return vehicle;
     }
@@ -97,6 +110,7 @@ public class EntityInfo implements IEntityInfo {
         protected List<IAttachable> attaches;
         protected Integer weight;
         protected IEntityInfo vehicle;
+        protected Integer portal_cooldown;
 
         public Builder(EntityType<?> entityType) {
             this.entityType = (entityType);
@@ -135,10 +149,14 @@ public class EntityInfo implements IEntityInfo {
             return this;
         }
 
+        public Builder portalCooldown(int portalCooldown) {
+            this.portal_cooldown = portalCooldown == -1 ? Integer.MAX_VALUE : portalCooldown;
+            return this;
+        }
+
 
         public IEntityInfo build() {
-            return new EntityInfo(entityType, Optional.ofNullable(amount), Optional.ofNullable(weight), Optional.ofNullable(attaches), Optional.ofNullable(vehicle)
-            );
+            return new EntityInfo(entityType, Optional.ofNullable(amount), Optional.ofNullable(weight), Optional.ofNullable(attaches), Optional.ofNullable(vehicle), Optional.ofNullable(portal_cooldown));
         }
     }
 }
