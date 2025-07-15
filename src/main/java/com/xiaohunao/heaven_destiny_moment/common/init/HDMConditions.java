@@ -3,11 +3,14 @@ package com.xiaohunao.heaven_destiny_moment.common.init;
 import com.mojang.serialization.MapCodec;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.*;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.WorldUniqueMomentCondition;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.*;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.DifficultyCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.LevelCondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.LevelRunningTimeCondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.TimeCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.moment.MomentHistoryCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.moment.MomentRunningTimeCondition;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.player.PlayerCondition;
 import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import com.xiaohunao.xhn_lib.api.register.FlexibleRegister;
 
@@ -24,5 +27,6 @@ public class HDMConditions {
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOD_LOADED_CONDITION = CONDITION_CODEC.registerStatic("mod_loaded", () -> ModLoadedCondition.CODEC);
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> OR_CONDITION = CONDITION_CODEC.registerStatic("or", () -> OrCondition.CODEC);
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> LEVEL_RUNNING_TIME = CONDITION_CODEC.registerStatic("level_running_time", () -> LevelRunningTimeCondition.CODEC);
-    public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOMENT_HISTORY = CONDITION_CODEC.registerStatic("moment_history", () -> MomentHistoryCondition.CODEC);
+    public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOMENT_HISTORY_TIME = CONDITION_CODEC.registerStatic("moment_history_time", () -> MomentHistoryCondition.CODEC);
+    public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOMENT_RUNNING_TIME = CONDITION_CODEC.registerStatic("moment_running_time", () -> MomentRunningTimeCondition.CODEC);
 }
