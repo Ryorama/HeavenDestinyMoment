@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.Level;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,7 +14,11 @@ public class MomentHistoryManager {
 
     private final Map<MomentType<?>, LinkedHashSet<MomentRunningRecord>> momentHistoryMap =
         new ConcurrentHashMap<>();
-    
+
+    public static MomentHistoryManager of(Level level) {
+        return MomentInstanceManager.of(level).getMomentHistoryManager();
+    }
+
     /**
      * 添加新的历史记录
      * @param instance Moment实例
@@ -126,6 +131,15 @@ public class MomentHistoryManager {
                 .filter(record -> !record.isFinished())
                 .collect(Collectors.toList());
     }
+
+    public MomentRunningRecord getActiveRecords(MomentType<?> type,UUID uuid) {
+        return getHistory(type).stream()
+                .filter(record -> !record.isFinished())
+                .filter(record -> record.uuid.equals(uuid))
+                .findFirst()
+                .orElse(null);
+    }
+
     
     // 获取所有活跃记录
     public Map<MomentType<?>, List<MomentRunningRecord>> getAllActiveRecords() {

@@ -19,5 +19,7 @@ public class HDMNetworkRegister {
         registrar.playToClient(ClientOnlyMomentSyncPayload.TYPE, ClientOnlyMomentSyncPayload.STREAM_CODEC, ClientOnlyMomentSyncPayload::handle);
         registrar.playToClient(KillRequiredSyncPayload.TYPE, KillRequiredSyncPayload.STREAM_CODEC, KillRequiredSyncPayload::handle);
         registrar.playToClient(KillEntityRecorderSyncPayload.TYPE, KillEntityRecorderSyncPayload.STREAM_CODEC, KillEntityRecorderSyncPayload::handle);
+        registrar.playToClient(MomentStateSyncPayload.TYPE, MomentStateSyncPayload.STREAM_CODEC, MomentStateSyncPayload::handle);
+        registrar.playToClient(MomentUpdatePlayersPayload.TYPE, MomentUpdatePlayersPayload.STREAM_CODEC, MomentUpdatePlayersPayload::handle);
     }
 }

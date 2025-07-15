@@ -271,13 +271,18 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public final void baseTick() {
+        if(!isInitialized()) return;
+
         this.tick++;
         NeoForge.EVENT_BUS.post(new MomentEvent.Tick(this));
 
         if (state == MomentState.END) return;
 
+        if (!level.isClientSide){
+            updatePlayers();
 
-        updatePlayers();
+        }
+
         updatePlayerIsInArea();
         updateMomentState();
 
@@ -378,6 +383,11 @@ public abstract class MomentInstance extends AttachmentHolder {
     public MomentEvent setState(MomentState state) {
         this.state = state;
         moment.tipSettings.ifPresent(tip -> tip.playTooltip(this));
+        if (!level.isClientSide){
+            players.forEach(player ->{
+                PacketDistributor.sendToPlayer((ServerPlayer) player,new MomentStateSyncPayload(uuid,state));
+            });
+        }
         return NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, state));
     }
 
@@ -398,9 +408,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void updatePlayers() {
-        if (level.isClientSide){
-            return;
-        }
+
 
         final Set<Player> oldPlayers = Sets.newHashSet(players);
         final Set<Player> newPlayers = Sets.newHashSet((getPlayers(validPlayer())));
@@ -419,6 +427,12 @@ public abstract class MomentInstance extends AttachmentHolder {
                     players.remove(player1);
                     playerUUIDs.add(player1.getUUID());
                 });
+
+        if (!level.isClientSide){
+            PacketDistributor.sendToAllPlayers(new MomentUpdatePlayersPayload(uuid));
+        }
+
+
     }
 
     private void updatePlayerIsInArea() {
