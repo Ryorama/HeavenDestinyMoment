@@ -11,6 +11,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayload;
@@ -53,7 +54,7 @@ public class TriggerTypeManager{
 
                             if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
                                 if (iCanTrigger.canTrigger(typedTrigger)) {
-                                    momentInstanceManager.createMomentInstance(moment, pos, serverPlayer);
+                                    MomentInstanceBuilder.create(level,moment, pos, serverPlayer);
                                 }
                             }
 

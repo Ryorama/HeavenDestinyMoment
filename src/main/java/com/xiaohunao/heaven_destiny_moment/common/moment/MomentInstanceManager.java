@@ -121,6 +121,9 @@ public class MomentInstanceManager {
         return runMoments.values();
     }
 
+    public ConcurrentHashMap<UUID, MomentInstance> getRunMoments() {
+        return runMoments;
+    }
 
     public void tick() {
         if (runMoments.isEmpty()) return;
@@ -201,19 +204,15 @@ public class MomentInstanceManager {
         }
     }
 
-    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        return createMomentInstance(moment, pos, serverPlayer, null,true);
-    }
+    public MomentInstance createMomentInstance(MomentInstanceBuilder builder) {
+        Moment moment = builder.getMoment();
+        Level level = builder.getLevel();
+        BlockPos pos = builder.getPos();
+        ServerPlayer serverPlayer = builder.getServerPlayer();
+        Consumer<MomentInstance> modifier = builder.getModifier();
+        boolean isCheckConditions = builder.isCheckConditions();
+        List<ICondition> specialConditions = builder.getSpecialConditions();
 
-    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier) {
-        return createMomentInstance(moment, pos, serverPlayer, modifier,true);
-    }
-
-    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,boolean isCheckConditions) {
-        return createMomentInstance(moment, pos, serverPlayer, null,isCheckConditions);
-    }
-
-    public MomentInstance createMomentInstance(Moment moment, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer, @Nullable Consumer<MomentInstance> modifier,boolean isCheckConditions) {
         if (moment == null) {
             LOGGER.error("Attempted to create MomentInstance with null Moment");
             throw new IllegalArgumentException("Moment cannot be null");
@@ -223,8 +222,10 @@ public class MomentInstanceManager {
             LOGGER.error("Cannot create MomentInstance: level is null");
             return null;
         }
+
         ResourceLocation momentKey = HDMRegistries.MOMENT.getKey(moment);
         MomentInstance instance;
+
         try {
             instance = moment.newMomentInstance(level, moment);
             if (instance == null) {
@@ -246,41 +247,75 @@ public class MomentInstanceManager {
             return null;
         }
 
-
-
         try {
             instance.updatePlayers();
         } catch (Exception e) {
             LOGGER.error("Failed to update players for MomentInstance", e);
         }
 
-        boolean conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
-        boolean canCreate;
+        // 条件验证
+        if (!validateConditions(moment, instance, pos, serverPlayer, isCheckConditions, specialConditions, momentKey)) {
+            return null;
+        }
+
+        // 完成创建
         try {
-            canCreate = instance.canCreate(runMoments, level, pos, serverPlayer);
+            instance.registerTracker();
+            addMomentInstance(instance);
+            instance.initialize();
+            return instance;
         } catch (Exception e) {
-            LOGGER.error("Exception during canCreate check for MomentInstance", e);
+            LOGGER.error("Failed to initialize or register MomentInstance", e);
             return null;
         }
+    }
 
-        if (!isCheckConditions){
-            conditionMatch = true;
-            canCreate = true;
-        }
 
-        if (canCreate && conditionMatch) {
+    private boolean validateConditions(Moment moment, MomentInstance instance,
+                                       BlockPos pos, ServerPlayer serverPlayer,
+                                       boolean isCheckConditions, List<ICondition> specialConditions,
+                                       ResourceLocation momentKey) {
+        // 默认条件检查
+        boolean conditionMatch = true;
+        boolean canCreate = true;
+
+        if (isCheckConditions) {
+            conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
             try {
-                instance.registerTracker();
-                addMomentInstance(instance);
-                instance.initialize();
-                return instance;
+                canCreate = instance.canCreate(getRunMoments(), level, pos, serverPlayer);
             } catch (Exception e) {
-                LOGGER.error("Failed to initialize or register MomentInstance", e);
-                return null;
+                LOGGER.error("Exception during canCreate check for MomentInstance", e);
+                return false;
             }
-        } else {
-            return null;
         }
+
+        // 特殊条件检查
+        boolean specialConditionsPass = checkSpecialConditions(specialConditions, instance, pos, serverPlayer, momentKey);
+
+        return canCreate && conditionMatch && specialConditionsPass;
+    }
+
+    private boolean checkSpecialConditions(List<ICondition> specialConditions, MomentInstance instance,
+                                           BlockPos pos, ServerPlayer serverPlayer, ResourceLocation momentKey) {
+        if (specialConditions == null || specialConditions.isEmpty()) {
+            return true;
+        }
+
+        for (int i = 0; i < specialConditions.size(); i++) {
+            ICondition condition = specialConditions.get(i);
+            try {
+                if (!condition.matches(instance, pos, serverPlayer)) {
+                    LOGGER.debug("Special condition {} failed at index {} for moment: {}",
+                            condition.getClass().getSimpleName(), i, momentKey);
+                    return false;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Exception while checking special condition at index {} for moment: {}: {}",
+                        i, momentKey, condition.getClass().getSimpleName(), e);
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean checkConditions(Moment moment, MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
