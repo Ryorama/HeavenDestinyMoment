@@ -5,11 +5,15 @@ import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
+import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.KillEntityCondition;
 import com.xiaohunao.heaven_destiny_moment.common.event.MomentEvent;
 import com.xiaohunao.heaven_destiny_moment.common.event.PlayerMomentAreaEvent;
@@ -22,6 +26,7 @@ import com.xiaohunao.heaven_destiny_moment.common.network.MomentUpdatePlayersPay
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
@@ -505,6 +510,46 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     public boolean canCreate(Map<UUID, MomentInstance> runMoments, Level level, @Nullable BlockPos pos, @Nullable ServerPlayer player) {
         return true;
+    }
+
+    public boolean checkGeneralConditions(@Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+        try {
+            return moment.momentData()
+                    .flatMap(MomentData::autoActuatorGroupSettings)
+                    .map(AutoActuatorGroupSettings::autoActuators)
+                    .map(map -> {
+                        for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
+                            TriggerContext triggerContext = entry.getKey();
+                            ActuatorContext actuatorContext = entry.getValue();
+
+                            if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
+                                List<ICondition> conditions = conditionalTrigger.conditions();
+                                if (conditions != null) {
+                                    for (ICondition condition : conditions) {
+                                        if (condition != null && !condition.matches(this, pos, serverPlayer)) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
+                                List<ICondition> conditions = triggerContext.conditions();
+                                if (conditions != null) {
+                                    for (ICondition condition : conditions) {
+                                        if (condition != null && !condition.matches(this, pos, serverPlayer)) {
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return true;
+                    }).orElse(true);
+        } catch (Exception e) {
+            LOGGER.error("Exception occurred while checking conditions for MomentInstance", e);
+            return false;
+        }
     }
 
     public Player getRandomPlayer() {

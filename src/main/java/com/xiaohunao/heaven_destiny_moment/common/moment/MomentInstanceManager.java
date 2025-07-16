@@ -280,7 +280,7 @@ public class MomentInstanceManager {
         boolean canCreate = true;
 
         if (isCheckConditions) {
-            conditionMatch = checkConditions(moment, instance, pos, serverPlayer);
+            conditionMatch = instance.checkGeneralConditions(pos, serverPlayer);
             try {
                 canCreate = instance.canCreate(getRunMoments(), level, pos, serverPlayer);
             } catch (Exception e) {
@@ -318,45 +318,6 @@ public class MomentInstanceManager {
         return true;
     }
 
-    private boolean checkConditions(Moment moment, MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        try {
-            return moment.momentData()
-                    .flatMap(MomentData::autoActuatorGroupSettings)
-                    .map(AutoActuatorGroupSettings::autoActuators)
-                    .map(map -> {
-                        for (Map.Entry<TriggerContext, ActuatorContext> entry : map.entrySet()) {
-                            TriggerContext triggerContext = entry.getKey();
-                            ActuatorContext actuatorContext = entry.getValue();
-
-                            if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
-                                List<ICondition> conditions = conditionalTrigger.conditions();
-                                if (conditions != null) {
-                                    for (ICondition condition : conditions) {
-                                        if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
-                                            return false;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (actuatorContext.actuator() instanceof CreateMomentInstanceActuator) {
-                                List<ICondition> conditions = triggerContext.conditions();
-                                if (conditions != null) {
-                                    for (ICondition condition : conditions) {
-                                        if (condition != null && !condition.matches(instance, pos, serverPlayer)) {
-                                            return false;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        return true;
-                    }).orElse(true);
-        } catch (Exception e) {
-            LOGGER.error("Exception occurred while checking conditions for MomentInstance", e);
-            return false;
-        }
-    }
 
     public boolean hasMoment(ResourceKey<Moment> key) {
         return momentMap.containsKey(key);
