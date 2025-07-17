@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.data.gen;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.data.gen.provider.HDMLanguageProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -19,8 +20,14 @@ public class ModDataGenerator {
         DataGenerator generator = event.getGenerator();
         PackOutput output = generator.getPackOutput();
 
+        boolean server = event.includeServer();
+        boolean client = event.includeClient();
+
         ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+
+        generator.addProvider(server, new HDMLanguageProvider(output, lookupProvider,"en_us"));
+        generator.addProvider(server, new HDMLanguageProvider(output, lookupProvider,"zh_cn"));
     }
 
 }
