@@ -1,23 +1,16 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
-import com.xiaohunao.heaven_destiny_moment.common.mixed.ClientMomentInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -32,12 +25,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class MomentInstanceManager {
 
@@ -56,6 +46,9 @@ public class MomentInstanceManager {
     //时刻对应的映射表
     private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
+
+    //客户端唯一时刻实例 //在服务端中没有作用,只是标记
+    public MomentInstance clientOnlyMomentInstance = null;
 
 
     public MomentInstanceManager(Level level) {
@@ -80,6 +73,7 @@ public class MomentInstanceManager {
             });
             rootTag.put("runMoments", momentListTag);
         }
+
         ListTag historyTag = momentHistoryManager.serializeNBT();
         if (!historyTag.isEmpty()) {
             rootTag.put("history", historyTag);
@@ -331,7 +325,7 @@ public class MomentInstanceManager {
         }
 
         if (instance.isClientOnlyMoment()){
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), false));
+            setClientMomentInstance(instance);
         }
     }
 
@@ -342,8 +336,9 @@ public class MomentInstanceManager {
             instance.bar.removePlayer(player);
         }
 
+
         if (instance.isClientOnlyMoment()){
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(instance.serializeNBT(), true));
+            setClientMomentInstance(null);
         }
     }
 
@@ -354,16 +349,20 @@ public class MomentInstanceManager {
             return Optional.empty();
 
         }
-
-        return Optional.ofNullable(((ClientMomentInstanceMixed) level).heaven_destiny_moment$getClientMomentInstance());
+        return Optional.ofNullable(this.clientOnlyMomentInstance);
     }
 
     public void setClientMomentInstance(MomentInstance momentInstance) {
+        this.clientOnlyMomentInstance = momentInstance;
         if (!level.isClientSide){
-            return;
+            CompoundTag compoundTag = ClientOnlyMomentSyncPayload.CLEAR_ALL_TAG;
+            boolean isRemove = true;
+            if (momentInstance != null) {
+                compoundTag = momentInstance.serializeNBT();
+                isRemove = false;
+            }
+            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(compoundTag,isRemove));
         }
-
-        ((ClientMomentInstanceMixed) level).heaven_destiny_moment$setClientMomentInstance(momentInstance);
     }
 
     public Collection<MomentInstance> getPlayerMoments(ServerPlayer player) {

@@ -30,7 +30,9 @@ public class PlayerEventSubscriber {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(player.level());
+
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            instance.updatePlayers();
             PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
             if (instance.getBar() != null) {
                 instance.getBar().addBar();

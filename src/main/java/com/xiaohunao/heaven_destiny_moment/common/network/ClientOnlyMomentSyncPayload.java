@@ -20,16 +20,14 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean 
             ClientOnlyMomentSyncPayload::new
     );
     
-    // 一个空的NBT标签，用于表示清空所有客户端时刻的特殊情况
-    private static final CompoundTag CLEAR_ALL_TAG = new CompoundTag();
+
+    public static final CompoundTag CLEAR_ALL_TAG = new CompoundTag();
     
     static {
-        // 添加一个特殊标记到CLEAR_ALL_TAG，以便识别
         CLEAR_ALL_TAG.putBoolean("clear_all_client_moments", true);
     }
-    
-    // 创建一个清空所有客户端时刻的包
-    public static ClientOnlyMomentSyncPayload clearAllClientMoments() {
+
+    public static ClientOnlyMomentSyncPayload clearClientMoments() {
         return new ClientOnlyMomentSyncPayload(CLEAR_ALL_TAG, true);
     }
 
@@ -43,13 +41,11 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean 
             if (context.player().isLocalPlayer()) {
                 Level level = context.player().level();
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
-                
-                // 检查是否为清空所有客户端时刻的特殊情况
+
                 if (isRemove && clientOnlyMoment.contains("clear_all_client_moments")) {
-                    // 直接清空客户端时刻，不需要加载具体实例
+
                     momentInstanceManager.setClientMomentInstance(null);
                 } else {
-                    // 原有逻辑
                     MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
 
                     if (!isRemove) {

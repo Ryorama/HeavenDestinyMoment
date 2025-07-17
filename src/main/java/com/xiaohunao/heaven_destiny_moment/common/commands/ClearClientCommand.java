@@ -22,11 +22,11 @@ public class ClearClientCommand {
         
         // 发送清理客户端时刻的网络包
         if (player != null) {
-            PacketDistributor.sendToPlayer(player,ClientOnlyMomentSyncPayload.clearAllClientMoments());
+            PacketDistributor.sendToPlayer(player,ClientOnlyMomentSyncPayload.clearClientMoments());
             source.sendSuccess(() -> Component.translatable("commands.moment.clear_only_client.success"), false);
         } else {
             // 如果没有玩家（可能是控制台执行），则发送到所有玩家
-            PacketDistributor.sendToAllPlayers(ClientOnlyMomentSyncPayload.clearAllClientMoments());
+            PacketDistributor.sendToAllPlayers(ClientOnlyMomentSyncPayload.clearClientMoments());
             source.sendSuccess(() -> Component.translatable("commands.moment.clear_only_client.sent_to_all"), false);
         }
         
