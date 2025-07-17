@@ -207,6 +207,8 @@ public class QueryCommand {
             }
             source.sendSuccess(() -> message, false);
         });
+        source.sendSuccess(() -> Component.translatable("commands.moment.query.enemiesManager.enemy_count", instance.getEnemyCount())
+                .withStyle(ChatFormatting.AQUA), false);
 
         return instance.getEnemyCount();
     }

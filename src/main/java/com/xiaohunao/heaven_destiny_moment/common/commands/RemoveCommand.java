@@ -9,6 +9,8 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 
 
 public class RemoveCommand {
@@ -28,8 +30,16 @@ public class RemoveCommand {
         MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
         manager.removeMomentInstance(instance);
         
+        // 创建一个带悬停提示的UUID文本组件，悬停时显示时刻类型
+        String momentTypeName = instance.getMomentResource().toLanguageKey();
+        Component uuidComponent = Component.literal(uuidStr)
+                .setStyle(Style.EMPTY.withHoverEvent(
+                    new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                    Component.translatable(momentTypeName))
+                ));
+        
         source.sendSuccess(() -> Component.translatable("commands.moment.remove.success", 
-                Component.literal(uuidStr)), true);
+                uuidComponent), true);
         
         return 1;
     }

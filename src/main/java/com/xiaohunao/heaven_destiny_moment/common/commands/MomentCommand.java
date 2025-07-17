@@ -51,7 +51,8 @@ public class MomentCommand {
                 .then(QueryCommand.register()
                         .requires(ctx -> ctx.hasPermission(PERMISSION_QUERY)))
                 .then(RemoveCommand.register()
-                        .requires(ctx -> ctx.hasPermission(PERMISSION_REMOVE)));
+                        .requires(ctx -> ctx.hasPermission(PERMISSION_REMOVE)))
+                .then(ClearClientCommand.register());
 
         dispatcher.register(builder);
     }
