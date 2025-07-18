@@ -77,7 +77,7 @@ public class RaidInstance extends MomentInstance {
 
     @Override
     public void finalizeSpawn(Entity entity) {
-        attackRandomPlayer(entity);
+        mandatoryAttackRandomPlayer(entity);
     }
 
 
@@ -180,17 +180,6 @@ public class RaidInstance extends MomentInstance {
 
     public void setOriginalPos(Vec3 originalPos) {
         this.originalPos = originalPos;
-    }
-
-    private void attackRandomPlayer(Entity entity) {
-        if (!level.isClientSide && entity instanceof Mob mob && !this.players.isEmpty()) {
-            List<Player> players = this.players.stream().filter(player -> !player.isCreative()).toList();
-            Optional<Player> target = Util.getRandomSafe(players, level.random);
-            target.ifPresent(player -> {
-                mob.getBrain().setMemory(MemoryModuleType.ANGRY_AT, player.getUUID());
-                mob.setTarget(player);
-            });
-        }
     }
 
     @Override

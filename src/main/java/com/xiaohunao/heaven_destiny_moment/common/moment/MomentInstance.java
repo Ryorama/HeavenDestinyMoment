@@ -30,6 +30,7 @@ import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.*;
@@ -41,6 +42,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -156,6 +159,17 @@ public abstract class MomentInstance extends AttachmentHolder {
         progress = Mth.clamp(progress, 0.0f, 1.0f);
         if (this.bar != null) {
             this.bar.updateProgress(progress);
+        }
+    }
+
+    public void mandatoryAttackRandomPlayer(Entity entity) {
+        if (!level.isClientSide && entity instanceof Mob mob && !this.players.isEmpty()) {
+            List<Player> players = this.players.stream().filter(player -> !player.isCreative()).toList();
+            Optional<Player> target = Util.getRandomSafe(players, level.random);
+            target.ifPresent(player -> {
+                mob.getBrain().setMemory(MemoryModuleType.ANGRY_AT, player.getUUID());
+                mob.setTarget(player);
+            });
         }
     }
 
