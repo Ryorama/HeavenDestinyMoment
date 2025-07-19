@@ -72,13 +72,13 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     protected MomentBar bar;
     protected long tick = -1L;
+    protected EnemiesManager enemiesManager;
     protected MomentState state = MomentState.UNINITIALIZED;
     protected Set<UUID> playerUUIDs = Sets.newHashSet();
     protected Set<Player> players = Sets.newHashSet();
     protected Set<UUID> inAreaPlayers = Sets.newHashSet();
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
-    protected final EnemiesManager enemiesManager = new EnemiesManager();
     protected Map<IActuator,KillEntityCondition.RequiredKill> tryRequiredKill = new ConcurrentHashMap<>();
 
     protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
@@ -86,6 +86,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.type = type;
         this.level = level;
         this.moment = moment;
+        this.enemiesManager = new EnemiesManager(uuid);
         this.momentInstanceManager = null;
     }
 
@@ -94,6 +95,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.type = type;
         this.level = level;
         this.moment = moment;
+        this.enemiesManager = new EnemiesManager(uuid);
         this.momentInstanceManager = null;
     }
 
@@ -144,6 +146,9 @@ public abstract class MomentInstance extends AttachmentHolder {
         });
     }
 
+    public EnemiesManager getEnemiesManager() {
+        return enemiesManager;
+    }
 
     public Vec3 getRandomSpawnPos() {
         if (spawnPosList.isEmpty()) {
@@ -580,7 +585,9 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void registerTracker(){
-        moment.trackers.ifPresent(trackers -> trackers.forEach(ITracker::register));
+        moment.trackers.ifPresent(trackers -> {
+            trackers.forEach(iTracker -> iTracker.register(uuid));
+        });
     }
 
     public void unregisterTracker(){
@@ -600,9 +607,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         return true;
     }
 
-    public void setEntityTagMark(Entity entity) {
-        entity.setData(HDMAttachments.MOMENT_ENTITY, entity.getData(HDMAttachments.MOMENT_ENTITY).setUid(this.uuid));
-    }
+
 
     public void setSpawnPos(Entity entity) {
         ISpawnAlgorithm spawnAlgorithm = moment.momentData
@@ -613,7 +618,6 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void spawnEntity(Entity entity) {
-        setEntityTagMark(entity);
         setSpawnPos(entity);
         finalizeSpawn(entity);
         level.addFreshEntity(entity);
@@ -623,13 +627,10 @@ public abstract class MomentInstance extends AttachmentHolder {
         enemiesManager.killAllEnemies(level);
     }
 
-    public void clearAllEnemiesFlags(ServerLevel level){
-        enemiesManager.clearAllEnemiesFlags(level);
-    }
+
 
     public void addEnemy(Entity entity) {
         enemiesManager.addEnemy(entity);
-        setEntityTagMark(entity);
         finalizeSpawn(entity);
     }
 
@@ -637,9 +638,6 @@ public abstract class MomentInstance extends AttachmentHolder {
         enemiesManager.removeEnemy(uuid);
     }
 
-    public void markEnemyAsLoaded(UUID uuid) {
-        enemiesManager.markEntityAsLoaded(uuid);
-    }
 
     public boolean hasEnemy(UUID uuid) {
         return enemiesManager.hasEnemy(uuid);

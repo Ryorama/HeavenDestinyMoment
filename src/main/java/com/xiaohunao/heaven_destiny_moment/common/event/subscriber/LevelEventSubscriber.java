@@ -18,41 +18,8 @@ import net.neoforged.neoforge.event.tick.LevelTickEvent;
 @EventBusSubscriber
 public class LevelEventSubscriber {
     @SubscribeEvent
-    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-        Entity entity = event.getEntity();
-        Level level = event.getLevel();
-        if (level.isClientSide || entity instanceof Player){
-            return;
-        }
-
-        if (event.loadedFromDisk() && level instanceof ServerLevel serverLevel) {
-            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
-            momentInstanceManager.getMomentInstances().forEach(instance -> {
-                if (instance.hasEnemy(entity.getUUID())) {
-                    instance.markEnemyAsLoaded(entity.getUUID());
-                }
-            });
-        }
-    }
-
-
-
-
-    @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Pre event) {
         Level level = event.getLevel();
         MomentInstanceManager.of(level).tick();
     }
-
-    @SubscribeEvent
-    public static void onLivingDeath(LivingDeathEvent event) {
-        DamageSource source = event.getSource();
-        if (source == null) return;
-        LivingEntity entity = event.getEntity();
-        entity.getData(HDMAttachments.MOMENT_ENTITY).getMomentInstance(entity).ifPresent(instance -> {
-            instance.addKillCount(entity,source);
-            instance.livingDeath(entity,source);
-        });
-    }
-
 }

@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -34,8 +35,30 @@ public class PlayerEventSubscriber {
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
             instance.updatePlayers();
             PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
-            if (instance.getBar() != null) {
-                instance.getBar().addBar();
+            MomentBar bar = instance.getBar();
+            if (bar != null) {
+                bar.addBar();
+                for (Player player1 : bar.getPlayers()) {
+                    bar.addPlayer(player1);
+                }
+            }
+
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        Player player = event.getEntity();
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(player.level());
+        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            instance.updatePlayers();
+            PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            MomentBar bar = instance.getBar();
+            if (bar != null) {
+                bar.addBar();
+                for (Player player1 : bar.getPlayers()) {
+                    bar.addPlayer(player1);
+                }
             }
         }
     }
@@ -53,29 +76,6 @@ public class PlayerEventSubscriber {
         if (hand != InteractionHand.MAIN_HAND) {
             return;
         }
-
-//        try {
-//            MomentTypeKubeJSBuilder.CanSpawnEntityCallback callback = (instance, level1, entity, pos) -> {
-//                System.out.println("Checking spawn at: " + pos);
-//                return true;
-//            };
-//
-//            CallbackMetadata metadata = CallbackMetadata.serialize(callback);
-//            CallbackMetadata.CODEC.encodeStart(JsonOps.INSTANCE, metadata).result().ifPresent(jsonElement -> {
-//                System.out.println("Serialized: " + jsonElement);
-//                CallbackMetadata.CODEC.parse(JsonOps.INSTANCE, jsonElement).result().ifPresent(callbackMetadata -> {
-//                    try {
-//                        MomentTypeKubeJSBuilder.CanSpawnEntityCallback deserialize =
-//                            (MomentTypeKubeJSBuilder.CanSpawnEntityCallback) CallbackMetadata.deserialize(callbackMetadata);
-//                        deserialize.canSpawnEntity(null, null, null, event.getPos());
-//                    } catch (Exception e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                });
-//            });
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
     }
 
 }

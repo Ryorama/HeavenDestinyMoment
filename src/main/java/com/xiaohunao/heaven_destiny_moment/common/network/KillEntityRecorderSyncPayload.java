@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.network;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
@@ -38,7 +39,10 @@ public record KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillTyp
                 Level level = context.player().level();
                 if (killType == KillEntityRecorderAttachment.KillType.MOMENT) {
                     MomentInstanceManager manager = MomentInstanceManager.of(level);
-                        manager.getMomentInstance(uuid).setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
+                    MomentInstance momentInstance = manager.getMomentInstance(uuid);
+                    if (momentInstance != null) {
+                        momentInstance.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
+                    }
                 }
 
                 if (killType == KillEntityRecorderAttachment.KillType.PLAYER) {

@@ -9,12 +9,15 @@ import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Tracker implements ITracker {
     public static final MapCodec<Tracker> CODEC = createCodec(tag -> new Tracker());
     private final Multimap<Class<? extends Event>, Consumer<? extends Event>> trackerEventMap = HashMultimap.create();
+
+    protected UUID instanceUUID;
 
     public Tracker() {
         init();
@@ -44,7 +47,8 @@ public class Tracker implements ITracker {
     }
 
     @Override
-    public void register() {
+    public void register(UUID instanceUUID) {
+        this.instanceUUID = instanceUUID;
         trackerEventMap.forEach((eventClass, consumer) -> {
             @SuppressWarnings("unchecked")
             Class<Event> castedEventClass = (Class<Event>) eventClass;
@@ -76,6 +80,5 @@ public class Tracker implements ITracker {
     }
 
     public void deserializeNBT(CompoundTag tag) {
-
     }
 }

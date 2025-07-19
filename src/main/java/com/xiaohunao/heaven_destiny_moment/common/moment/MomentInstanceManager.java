@@ -181,7 +181,6 @@ public class MomentInstanceManager {
         if (!level.isClientSide){
             ServerLevel serverLevel = (ServerLevel) level;
             instance.getMoment().momentData.flatMap(MomentData::entitySpawnSettings).ifPresent(entitySpawnSettings -> {
-                instance.clearAllEnemiesFlags(serverLevel);
                 if (entitySpawnSettings.isAfterEndClearMonster()){
                     instance.killAllEnemies(serverLevel);
                 }
