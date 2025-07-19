@@ -36,6 +36,9 @@ public class CommonTriggerSubscriber {
     @SubscribeEvent
     public static void onBreakEvent(BlockEvent.BreakEvent event) {
         LevelAccessor level = event.getLevel();
+        if (level.isClientSide()) {
+            return;
+        }
 
         TriggerTypeManager.trigger(HDMTriggerTypes.BLOCK_BREAK.get(), (Level) level, trigger -> trigger.canTrigger((Level) level, event.getPos()), event.getPos(), (ServerPlayer) event.getPlayer());
     }
