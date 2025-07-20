@@ -6,12 +6,16 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.predicate.AttributePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
+import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.advancements.critereon.PlayerPredicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +25,12 @@ import java.util.Optional;
 import java.util.function.Function;
 
 
-public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredicate, Optional<EntityPredicate> entityPredicate) implements ICondition {
+public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredicate, Optional<EntityPredicate> entityPredicate, Optional<AttributePredicate> attributePredicate) implements ICondition {
     public static final MapCodec<PlayerCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Type.CODEC.fieldOf("player_type").forGetter(PlayerCondition::type),
             PlayerPredicate.CODEC.codec().optionalFieldOf("player").forGetter(PlayerCondition::playerPredicate),
-            EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(PlayerCondition::entityPredicate)
+            EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(PlayerCondition::entityPredicate),
+             AttributePredicate.CODEC.codec().optionalFieldOf("attribute").forGetter(PlayerCondition::attributePredicate)
     ).apply(instance, PlayerCondition::new));
 
 
@@ -48,8 +53,12 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
             
             boolean entityResult = entityPredicate.map(pred -> 
                     pred.matches(level, player.position(), player)).orElse(true);
+
+            boolean attributeResult = attributePredicate.map(attrPred ->
+                    attrPred.matches(player,level,null)).orElse(true);
+
                     
-            return playerResult && entityResult;
+            return playerResult && entityResult && attributeResult;
         });
     }
 
@@ -107,6 +116,7 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
         private final Type type;
         private PlayerPredicate playerPredicate = null;
         private EntityPredicate entityPredicate = null;
+        private AttributePredicate attributePredicate = null;
 
         public Builder(Type type) {
             this.type = type;
@@ -123,8 +133,13 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
             return this;
         }
 
+        public Builder attributePredicate(Holder<Attribute> attribute, AttributePredicate.ValueType type, MinMaxBounds.Doubles value) {
+            this.attributePredicate = new AttributePredicate(attribute, type, value);
+            return this;
+        }
+
         public PlayerCondition build() {
-            return new PlayerCondition(type, Optional.ofNullable(playerPredicate), Optional.ofNullable(entityPredicate));
+            return new PlayerCondition(type, Optional.ofNullable(playerPredicate), Optional.ofNullable(entityPredicate),Optional.ofNullable(attributePredicate));
         }
     }
 }

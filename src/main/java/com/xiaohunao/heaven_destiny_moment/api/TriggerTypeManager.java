@@ -67,7 +67,7 @@ public class TriggerTypeManager{
                                 for (ICondition condition : triggerContext.conditions()) {
                                     if (condition instanceof KillEntityCondition killEntityCondition &&
                                             killEntityCondition.killType() == KillEntityRecorderAttachment.KillType.MOMENT) {
-                                        KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                                        KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(momentInstance);
                                         momentInstance.setVictoryRequiredKill(actuatorContext.actuator(),killRecord);
                                         PacketDistributor.sendToAllPlayers(new KillRequiredSyncPayload(momentInstance.getID(),actuatorContext.actuator(),killRecord));
                                     }

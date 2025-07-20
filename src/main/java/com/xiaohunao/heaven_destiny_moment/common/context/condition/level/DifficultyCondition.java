@@ -14,20 +14,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public record DifficultyCondition(List<Difficulty> difficulty) implements ICondition {
-    public static final DifficultyCondition PEACEFUL = new DifficultyCondition(Collections.singletonList(Difficulty.PEACEFUL));
-    public static final DifficultyCondition EASY = new DifficultyCondition(Collections.singletonList(Difficulty.EASY));
-    public static final DifficultyCondition NORMAL = new DifficultyCondition(Collections.singletonList(Difficulty.NORMAL));
-    public static final DifficultyCondition HARD = new DifficultyCondition(Collections.singletonList(Difficulty.HARD));
+public record DifficultyCondition(Difficulty difficulty) implements ICondition {
+    public static final DifficultyCondition PEACEFUL = new DifficultyCondition(Difficulty.PEACEFUL);
+    public static final DifficultyCondition EASY = new DifficultyCondition(Difficulty.EASY);
+    public static final DifficultyCondition NORMAL = new DifficultyCondition(Difficulty.NORMAL);
+    public static final DifficultyCondition HARD = new DifficultyCondition(Difficulty.HARD);
 
     public static final MapCodec<DifficultyCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Difficulty.CODEC.listOf().fieldOf("difficulty").forGetter(DifficultyCondition::difficulty)
+            Difficulty.CODEC.fieldOf("difficulty").forGetter(DifficultyCondition::difficulty)
     ).apply(instance, DifficultyCondition::new));
+
+    public static DifficultyCondition of(Difficulty difficulty) {
+        return new DifficultyCondition(difficulty);
+    }
+
     @Override
     public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
         MinecraftServer server = instance.getLevel().getServer();
         if (server != null){
-            return difficulty.contains(server.getWorldData().getDifficulty());
+            return difficulty.equals(server.getWorldData().getDifficulty());
         }
         return false;
     }

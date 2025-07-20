@@ -29,4 +29,6 @@ public class HDMConditions {
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> LEVEL_RUNNING_TIME = CONDITION_CODEC.registerStatic("level_running_time", () -> LevelRunningTimeCondition.CODEC);
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOMENT_HISTORY_TIME = CONDITION_CODEC.registerStatic("moment_history_time", () -> MomentHistoryCondition.CODEC);
     public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> MOMENT_RUNNING_TIME = CONDITION_CODEC.registerStatic("moment_running_time", () -> MomentRunningTimeCondition.CODEC);
+    public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> INVERT = CONDITION_CODEC.registerStatic("invert", () -> InvertCondition.CODEC);
+    public static final FlexibleHolder<MapCodec<? extends ICondition>, MapCodec<? extends ICondition>> LIST = CONDITION_CODEC.registerStatic("list", () -> ListCondition.CODEC);
 }

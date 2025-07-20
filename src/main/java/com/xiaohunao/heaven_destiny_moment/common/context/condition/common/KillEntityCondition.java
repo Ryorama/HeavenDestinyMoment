@@ -57,7 +57,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
         }
 
 
-        RequiredKill requiredKill = getKillRecord(instance.getLevel());
+        RequiredKill requiredKill = getKillRecord(instance);
 
         int totalKills = killEntityRecorderAttachment.getTotalKills();
         int totalScore = killEntityRecorderAttachment.getTotalScore();
@@ -104,16 +104,16 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
         return matches;
     }
 
-    public RequiredKill getKillRecord(Level level) {
+    public RequiredKill getKillRecord(MomentInstance instance) {
         // 应用难度和玩家数量缩放
-        int scaledRequiredTotalCount = getScaledValue(requiredTotalCount, level);
-        int scaledRequiredTotalScore = getScaledValue(requiredTotalScore, level);
+        int scaledRequiredTotalCount = getScaledValue(requiredTotalCount, instance);
+        int scaledRequiredTotalScore = getScaledValue(requiredTotalScore, instance);
         Map<EntityType<?>, Integer> scaledRequiredKillCounts = Maps.newHashMap();
         if (requiredKillCounts.isPresent()) {
             scaledRequiredKillCounts = new HashMap<>();
             for (Map.Entry<EntityType<?>, Integer> entry : requiredKillCounts.get().entrySet()) {
                 EntityType<?> entityType = entry.getKey();
-                scaledRequiredKillCounts.put(entityType, getScaledValue(Optional.of(entry.getValue()), level));
+                scaledRequiredKillCounts.put(entityType, getScaledValue(Optional.of(entry.getValue()), instance));
             }
         }
 
@@ -122,7 +122,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
             scaledRequiredKillScores = new HashMap<>();
             for (Map.Entry<EntityType<?>, Integer> entry : requiredKillScores.get().entrySet()) {
                 EntityType<?> entityType = entry.getKey();
-                scaledRequiredKillScores.put(entityType, getScaledValue(Optional.of(entry.getValue()), level));
+                scaledRequiredKillScores.put(entityType, getScaledValue(Optional.of(entry.getValue()), instance));
             }
         }
 
@@ -134,14 +134,14 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
     /**
      * 根据难度和玩家数量缩放获得实际需要的值
      */
-    private int getScaledValue(Optional<Integer> baseValue, Level level) {
+    private int getScaledValue(Optional<Integer> baseValue, MomentInstance instance) {
         if (baseValue.isEmpty()) {
             return baseValue.orElse(0);
         }
         
         int value = baseValue.get();
-        Difficulty difficulty = level.getDifficulty();
-        int playerCount = level.players().size();
+        Difficulty difficulty = instance.getLevel().getDifficulty();
+        int playerCount = instance.getPlayers().size();
 
         // 应用难度缩放
         if (difficultyScaling.isPresent()) {

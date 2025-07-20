@@ -130,14 +130,14 @@ public abstract class MomentInstance extends AttachmentHolder {
                 if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
                     conditionalTrigger.conditions().forEach(condition -> {
                         if (condition instanceof KillEntityCondition killEntityCondition) {
-                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(this);
                             tryRequiredKill.put(actuatorContext.actuator(), killRecord);
                         }
                     });
                 } else {
                     triggerContext.conditions().forEach(condition -> {
                         if (condition instanceof KillEntityCondition killEntityCondition) {
-                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(level);
+                            KillEntityCondition.RequiredKill killRecord = killEntityCondition.getKillRecord(this);
                             tryRequiredKill.put(actuatorContext.actuator(), killRecord);
                         }
                     });
