@@ -31,6 +31,18 @@ public class HDMScalingFunctions {
                 }
             );
 
+    public static final FlexibleHolder<BiFunction<Integer, Difficulty, Integer>, ?> EASY =
+            DIFFICULTY_SCALING.registerStatic("common", () ->
+                    (baseValue, difficulty) -> {
+                        float modifier = switch (difficulty) {
+                            case PEACEFUL -> 0.25f;
+                            case EASY -> 0.5f;
+                            case NORMAL -> 0.75f;
+                            case HARD -> 1.0f;
+                        };
+                        return Math.round(baseValue * modifier);
+                    }
+            );
 
     public static final FlexibleHolder<BiFunction<Integer, Difficulty, Integer>, ?> HARD =
             DIFFICULTY_SCALING.registerStatic("hard", () ->
