@@ -519,7 +519,7 @@ public abstract class MomentInstance extends AttachmentHolder {
             BlockPos pos = serverPlayer == null ? null : serverPlayer.blockPosition();
 
             PacketDistributor.sendToPlayersInDimension(serverLevel,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY_MOMENT.get(), level, KillEntityTrigger::canTrigger, pos, serverPlayer);
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), level, KillEntityTrigger::canTrigger, pos, serverPlayer);
         }
     }
 
@@ -541,8 +541,7 @@ public abstract class MomentInstance extends AttachmentHolder {
                             TriggerContext triggerContext = entry.getKey();
                             ActuatorContext actuatorContext = entry.getValue();
 
-                            if (triggerContext.trigger() instanceof ConditionalTrigger conditionalTrigger) {
-                                List<ICondition> conditions = conditionalTrigger.conditions();
+                            if (triggerContext.trigger() instanceof ConditionalTrigger(List<ICondition> conditions)) {
                                 if (conditions != null) {
                                     for (ICondition condition : conditions) {
                                         if (condition != null && !condition.matches(this, pos, serverPlayer)) {
