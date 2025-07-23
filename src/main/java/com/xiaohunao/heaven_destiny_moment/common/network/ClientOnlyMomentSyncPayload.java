@@ -5,6 +5,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -15,7 +16,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean isRemove) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ClientOnlyMomentSyncPayload> TYPE = new CustomPacketPayload.Type<>(HeavenDestinyMoment.asResource("client_only_moment_sync"));
     public static final StreamCodec<ByteBuf, ClientOnlyMomentSyncPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.fromCodec(CompoundTag.CODEC), ClientOnlyMomentSyncPayload::clientOnlyMoment,
+            ByteBufCodecs.fromCodec(CompoundTag.CODEC, NbtAccounter::unlimitedHeap), ClientOnlyMomentSyncPayload::clientOnlyMoment,
             ByteBufCodecs.BOOL, ClientOnlyMomentSyncPayload::isRemove,
             ClientOnlyMomentSyncPayload::new
     );
