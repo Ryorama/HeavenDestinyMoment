@@ -128,7 +128,9 @@ public final class KillEntityRecorderAttachment {
 
     public enum KillType implements StringRepresentable {
         MOMENT,
-        PLAYER;
+        MOMENT_PLAYER_ANY,
+        MOMENT_PLAYER_ALL,
+        MOMENT_PLAYER;
 
         public static final Codec<KillType> CODEC = StringRepresentable.fromValues(KillType::values);
 

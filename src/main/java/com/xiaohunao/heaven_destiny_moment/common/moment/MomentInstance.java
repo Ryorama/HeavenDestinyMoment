@@ -78,8 +78,7 @@ public abstract class MomentInstance extends AttachmentHolder {
 
 
     protected MomentState state = MomentState.UNINITIALIZED;
-    protected Set<UUID> playerUUIDs = Sets.newHashSet();
-    protected Set<Player> players = Sets.newHashSet();
+
     protected Set<UUID> inAreaPlayers = Sets.newHashSet();
     protected Set<Vec3> spawnPosList = Sets.newHashSet();
     protected CompoundTag persistentData = new CompoundTag();
@@ -154,8 +153,16 @@ public abstract class MomentInstance extends AttachmentHolder {
         });
     }
 
+    public long getTick() {
+        return tick;
+    }
+
     public EnemiesManager getEnemiesManager() {
         return enemiesManager;
+    }
+
+    public PlayerListManager getPlayerListManager() {
+        return playerListManager;
     }
 
     public Vec3 getRandomSpawnPos() {
@@ -175,16 +182,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         }
     }
 
-    public void mandatoryAttackRandomPlayer(Entity entity) {
-        if (!level.isClientSide && entity instanceof Mob mob && !this.players.isEmpty()) {
-            List<Player> players = this.players.stream().filter(player -> !player.isCreative()).toList();
-            Optional<Player> target = Util.getRandomSafe(players, level.random);
-            target.ifPresent(player -> {
-                mob.getBrain().setMemory(MemoryModuleType.ANGRY_AT, player.getUUID());
-                mob.setTarget(player);
-            });
-        }
-    }
+
 
     @Nullable
     public static MomentInstance loadStatic(Level level, CompoundTag compoundTag) {
@@ -238,10 +236,6 @@ public abstract class MomentInstance extends AttachmentHolder {
             compoundTag.putString("state", state.name());
         }
 
-        ListTag playerUUIDTags = new ListTag();
-        playerUUIDs.forEach(uuid -> playerUUIDTags.add(StringTag.valueOf(uuid.toString())));
-        compoundTag.put("player_uuids", playerUUIDTags);
-
         ListTag spawnPosListTag = new ListTag();
         spawnPosList.forEach(vec3 -> spawnPosListTag.add(Vec3.CODEC.encodeStart(NbtOps.INSTANCE, vec3).getOrThrow()));
         compoundTag.put("spawnPosList", spawnPosListTag);
@@ -270,9 +264,6 @@ public abstract class MomentInstance extends AttachmentHolder {
         if (compoundTag.contains("state")) {
             this.state = MomentState.valueOf(compoundTag.getString("state"));
         }
-
-        ListTag playerUUIDTags = compoundTag.getList("player_uuids", Tag.TAG_LIST);
-        playerUUIDTags.forEach(tag -> playerUUIDs.add(UUID.fromString(tag.getAsString())));
 
         ListTag spawnPosListTag = compoundTag.getList("spawnPosList", Tag.TAG_LIST);
         spawnPosListTag.forEach(tag -> spawnPosList.add(Vec3.CODEC.decode(NbtOps.INSTANCE, tag).getOrThrow().getFirst()));
@@ -400,7 +391,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     protected void victory() {
         moment.momentData.flatMap(MomentData::rewards)
                 .ifPresent(rewards ->
-                    players.forEach(player ->
+                    playerListManager.players.forEach(player ->
                             rewards.forEach(reward ->
                                     reward.createReward(this, player)
                             )
@@ -423,7 +414,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.state = state;
         moment.tipSettings.ifPresent(tip -> tip.playTooltip(this));
         if (!level.isClientSide){
-            players.forEach(player ->{
+            playerListManager.players.forEach(player ->{
                 PacketDistributor.sendToPlayer((ServerPlayer) player,new MomentStateSyncPayload(uuid,state));
             });
         }
@@ -449,22 +440,20 @@ public abstract class MomentInstance extends AttachmentHolder {
     public void updatePlayers() {
 
 
-        final Set<Player> oldPlayers = Sets.newHashSet(players);
+        final Set<Player> oldPlayers = Sets.newHashSet(playerListManager.players);
         final Set<Player> newPlayers = Sets.newHashSet((getPlayers(validPlayer())));
 
         newPlayers.stream()
                 .filter(player -> !oldPlayers.contains(player))
                 .forEach(player1 -> {
                     getMomentManager().addPlayerToInstance(player1, this);
-                    players.add(player1);
-                    playerUUIDs.add(player1.getUUID());
+                    playerListManager.addPlayer(player1);
                 });
         oldPlayers.stream()
                 .filter(player -> !newPlayers.contains(player))
                 .forEach(player1 -> {
                     getMomentManager().removePlayerToInstance(player1, this);
-                    players.remove(player1);
-                    playerUUIDs.add(player1.getUUID());
+                    playerListManager.removePlayer(player1);
                 });
 
         if (!level.isClientSide){
@@ -477,7 +466,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     private void updatePlayerIsInArea() {
         if (level.isClientSide) return;
 
-        players.stream().filter(Objects::nonNull).forEach(player -> {
+        playerListManager.players.stream().filter(Objects::nonNull).forEach(player -> {
             boolean inArea = moment.isInArea((ServerLevel) level, player.blockPosition());
             boolean uuidContains = inAreaPlayers.contains(player.getUUID());
             if (inArea && !uuidContains) {
@@ -503,7 +492,7 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public Set<Player> getPlayers() {
-        return players;
+        return playerListManager.players;
     }
 
     public MomentBar getBar() {
@@ -518,16 +507,22 @@ public abstract class MomentInstance extends AttachmentHolder {
     }
 
     public void addKillCount(LivingEntity livingEntity, DamageSource source) {
-        EntityTypeScoreTable entityTypeScoreTable = moment.momentData.flatMap(MomentData::entityTypeScoreTable).orElse(new EntityTypeScoreTable.Builder().build());
+        EntityTypeScoreTable entityTypeScoreTable = cacheProvider.getEntityTypeScoreTable();
         Integer score = entityTypeScoreTable.get(livingEntity.getType());
+
         KillEntityRecorderAttachment recorderAttachment = getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER).addKill(livingEntity, source, score);
         this.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, recorderAttachment);
-        if (level instanceof ServerLevel serverLevel){
+
+        if (level instanceof ServerLevel){
             ServerPlayer serverPlayer = source.getEntity() instanceof ServerPlayer player ? player : null;
             BlockPos pos = serverPlayer == null ? null : serverPlayer.blockPosition();
 
-            PacketDistributor.sendToPlayersInDimension(serverLevel,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
-            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), level, KillEntityTrigger::canTrigger, pos, serverPlayer);
+            PacketDistributor.sendToAllPlayers(new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT,uuid,recorderAttachment));
+            TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), level, trigger -> trigger.canTrigger(livingEntity.getType()), pos, serverPlayer);
+
+            if (serverPlayer != null) {
+                playerListManager.addPlayerKillCount(serverPlayer, livingEntity, score);
+            }
         }
     }
 
@@ -578,14 +573,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         }
     }
 
-    public Player getRandomPlayer() {
-        if (players.isEmpty()) {
-            return null;
-        }
 
-        List<Player> playerList = Lists.newArrayList(players);
-        return playerList.get(level.random.nextInt(playerList.size()));
-    }
 
     public boolean isClientOnlyMoment() {
         return moment.isClientMomentInstanceOccupied();

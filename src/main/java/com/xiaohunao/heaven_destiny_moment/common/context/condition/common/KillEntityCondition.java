@@ -8,17 +8,22 @@ import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderA
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.PlayerListManager;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -43,27 +48,53 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
 
     @Override
     public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        KillEntityRecorderAttachment killEntityRecorderAttachment = null;
-        if (killType == KillEntityRecorderAttachment.KillType.MOMENT){
-            killEntityRecorderAttachment = instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER);
-        }else {
-            if (serverPlayer != null) {
-                killEntityRecorderAttachment = serverPlayer.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER);
+        PlayerListManager playerListManager = instance.getPlayerListManager();
+        RequiredKill requiredKill = getKillRecord(instance);
+
+        switch (killType){
+            case MOMENT -> {
+                return matchesKillEntityRecorder(instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER), requiredKill);
+            }
+            case MOMENT_PLAYER_ANY -> {
+                if (!playerListManager.isEmpty()){
+                    for (Player player : playerListManager.getPlayers()) {
+                        if (matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            case MOMENT_PLAYER_ALL -> {
+                if (!playerListManager.isEmpty()) {
+                    for (Player player : playerListManager.getPlayers()) {
+                        if (!matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+            case MOMENT_PLAYER -> {
+                if (serverPlayer != null && playerListManager.containsPlayer(serverPlayer)) {
+                    return matchesKillEntityRecorder(playerListManager.getKillRecorder(serverPlayer.getUUID()), requiredKill);
+                }
+            }
+            default -> {
+                return false;
             }
         }
+        return false;
+    }
 
+    private boolean matchesKillEntityRecorder(KillEntityRecorderAttachment killEntityRecorderAttachment, RequiredKill requiredKill) {
         if (killEntityRecorderAttachment == null) {
             return false;
         }
-
-
-        RequiredKill requiredKill = getKillRecord(instance);
 
         int totalKills = killEntityRecorderAttachment.getTotalKills();
         int totalScore = killEntityRecorderAttachment.getTotalScore();
         Map<EntityType<?>, Integer> entityTypeKills = killEntityRecorderAttachment.getEntityTypeKills();
         Map<EntityType<?>, Integer> entityTypeScores = killEntityRecorderAttachment.getEntityTypeScores();
-
 
 
         boolean matches = true;

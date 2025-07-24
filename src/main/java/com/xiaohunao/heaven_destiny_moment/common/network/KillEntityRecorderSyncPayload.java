@@ -37,17 +37,21 @@ public record KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillTyp
         context.enqueueWork(() -> {
             if (context.player().isLocalPlayer()) {
                 Level level = context.player().level();
-                if (killType == KillEntityRecorderAttachment.KillType.MOMENT) {
-                    MomentInstanceManager manager = MomentInstanceManager.of(level);
-                    MomentInstance momentInstance = manager.getMomentInstance(uuid);
-                    if (momentInstance != null) {
-                        momentInstance.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
+                MomentInstance momentInstance = MomentInstanceManager.of(level).getMomentInstance(uuid);
+
+                switch (killType){
+                    case MOMENT -> {
+                        if (momentInstance != null) {
+                            momentInstance.setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
+                        }
+                    }
+                    case MOMENT_PLAYER -> {
+                        if (momentInstance != null){
+                            momentInstance.getPlayerListManager().setKillRecorder(context.player().getUUID(), attachment);
+                        }
                     }
                 }
 
-                if (killType == KillEntityRecorderAttachment.KillType.PLAYER) {
-                    context.player().setData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER, attachment);
-                }
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));

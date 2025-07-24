@@ -49,7 +49,7 @@ public class CommonTriggerSubscriber {
         if (victim.level().isClientSide) return;
         ServerPlayer serverPlayer = event.getSource() == null ? null : event.getSource().getEntity() instanceof ServerPlayer player ? player : null;
 
-        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), victim.level(), KillEntityTrigger::canTrigger, victim.blockPosition(), serverPlayer);
+        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), victim.level(), trigger -> trigger.canTrigger(victim.getType()), victim.blockPosition(), serverPlayer);
     }
 
 }
