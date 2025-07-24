@@ -18,7 +18,7 @@ public class RandomPlayerPosImitationVanillaNaturalSpawner implements ISpawnAlgo
     @Override
     public Vec3 spawn(MomentInstance momentInstance, Entity entity) {
         Level level = momentInstance.getLevel();
-        Player randomPlayer = momentInstance.getRandomPlayer();
+        Player randomPlayer = momentInstance.getPlayerListManager().getRandomPlayer();
         if(randomPlayer != null){
             return Vec3.atLowerCornerOf(NaturalSpawner.getRandomPosWithin(level, level.getChunkAt(randomPlayer.blockPosition())));
         }

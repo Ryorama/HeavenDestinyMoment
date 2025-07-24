@@ -235,6 +235,7 @@ public class MomentInstanceManager {
             }
 
             instance.init();
+            instance.cacheProvider.iniCache();
         } catch (Exception e) {
             LOGGER.error("Exception occurred while creating MomentInstance for moment: {}", momentKey, e);
             return null;
@@ -247,15 +248,15 @@ public class MomentInstanceManager {
         }
 
         // 条件验证
-        if (!validateConditions(moment, instance, pos, serverPlayer, isCheckConditions, specialConditions, momentKey)) {
+        if (!validateConditions(instance, pos, serverPlayer, isCheckConditions, specialConditions, momentKey)) {
             return null;
         }
 
         // 完成创建
         try {
             instance.registerTracker();
-            addMomentInstance(instance);
             instance.initialize();
+            addMomentInstance(instance);
             return instance;
         } catch (Exception e) {
             LOGGER.error("Failed to initialize or register MomentInstance", e);
@@ -264,7 +265,7 @@ public class MomentInstanceManager {
     }
 
 
-    private boolean validateConditions(Moment moment, MomentInstance instance,
+    private boolean validateConditions(MomentInstance instance,
                                        BlockPos pos, ServerPlayer serverPlayer,
                                        boolean isCheckConditions, List<ICondition> specialConditions,
                                        ResourceLocation momentKey) {
