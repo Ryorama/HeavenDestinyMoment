@@ -73,6 +73,9 @@ public abstract class MomentInstance extends AttachmentHolder {
     protected MomentBar bar;
     protected long tick = -1L;
     protected EnemiesManager enemiesManager;
+    protected MomentInstanceCacheProvider cacheProvider;
+
+
     protected MomentState state = MomentState.UNINITIALIZED;
     protected Set<UUID> playerUUIDs = Sets.newHashSet();
     protected Set<Player> players = Sets.newHashSet();
@@ -87,6 +90,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.level = level;
         this.moment = moment;
         this.enemiesManager = new EnemiesManager(uuid);
+        this.cacheProvider = new MomentInstanceCacheProvider(moment);
         this.momentInstanceManager = null;
     }
 
@@ -96,6 +100,7 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.level = level;
         this.moment = moment;
         this.enemiesManager = new EnemiesManager(uuid);
+        this.cacheProvider = new MomentInstanceCacheProvider(moment);
         this.momentInstanceManager = null;
     }
 
