@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -278,9 +279,10 @@ public class EnemiesManager {
     @SubscribeEvent
     public void onEntityDeath(LivingDeathEvent event) {
         Level level = event.getEntity().level();
-        if (level.isClientSide()) return;
+        DamageSource source = event.getSource();
+        if (source == null) return;
+        if (level.isClientSide() || enemyMap.isEmpty()) return;
 
-        if (enemyMap.isEmpty()) return;
 
         UUID uuid = event.getEntity().getUUID();
         if (enemyMap.containsKey(uuid)) {
