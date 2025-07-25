@@ -521,7 +521,7 @@ public abstract class MomentInstance extends AttachmentHolder {
             TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), level, trigger -> trigger.canTrigger(livingEntity.getType()), pos, serverPlayer);
 
             if (serverPlayer != null) {
-                playerListManager.addPlayerKillCount(serverPlayer, livingEntity, score);
+                playerListManager.addPlayerKillCount(serverPlayer, livingEntity,source, score);
             }
         }
     }

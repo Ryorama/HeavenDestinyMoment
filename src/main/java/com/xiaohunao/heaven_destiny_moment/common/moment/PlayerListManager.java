@@ -9,6 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.network.KillEntityRecorderSync
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
 import net.minecraft.Util;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -132,13 +133,13 @@ public class PlayerListManager {
         }
     }
 
-    public void addPlayerKillCount(ServerPlayer serverPlayer, LivingEntity livingEntity, Integer score) {
+    public void addPlayerKillCount(ServerPlayer serverPlayer, LivingEntity livingEntity, DamageSource source, Integer score) {
         if (playerKillRecorders.isEmpty() || !playerKillRecorders.containsKey(serverPlayer.getUUID())){
             return;
         }
 
         KillEntityRecorderAttachment killEntityRecorderAttachment = playerKillRecorders.get(serverPlayer.getUUID());
-        killEntityRecorderAttachment.addKill(livingEntity, livingEntity.getLastDamageSource(), score);
+        killEntityRecorderAttachment.addKill(livingEntity, source, score);
 
         PacketDistributor.sendToPlayer(serverPlayer,new KillEntityRecorderSyncPayload(KillEntityRecorderAttachment.KillType.MOMENT_PLAYER,instanceUUID,killEntityRecorderAttachment));
 
