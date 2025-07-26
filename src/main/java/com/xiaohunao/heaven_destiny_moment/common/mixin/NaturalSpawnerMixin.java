@@ -139,7 +139,7 @@ public class NaturalSpawnerMixin {
     private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
         if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData ownSpawnerData && ownSpawnerData.getMoment() != HeavenDestinyMoment.EMITY_MOMENT) {
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel.getLevel());
-            for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+            for (MomentInstance instance : momentInstanceManager.getMomentInstances(ownSpawnerData.getMoment())) {
                 if (instance.canSpawnEntity(serverLevel, mob, pos)) {
                     instance.addEnemy(mob);
                 } else {
