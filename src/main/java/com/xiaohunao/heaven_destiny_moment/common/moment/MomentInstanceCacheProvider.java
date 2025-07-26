@@ -1,11 +1,13 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
-import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
-import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
-import com.xiaohunao.heaven_destiny_moment.common.context.EntityTypeScoreTable;
+import com.xiaohunao.heaven_destiny_moment.common.context.*;
+import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.context.reward.IReward;
+import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
+import net.minecraft.world.entity.MobCategory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class MomentInstanceCacheProvider {
@@ -16,6 +18,17 @@ public class MomentInstanceCacheProvider {
     private EntityTypeScoreTable entityTypeScoreTable;
     private AutoActuatorGroupSettings autoActuatorGroupSettings;
     private EntitySpawnSettings entitySpawnSettings;
+
+
+    private List<Weighted<List<IEntityInfo>>> entitySpawnList;
+    private BiomeEntitySpawnSettings biomeEntitySpawnSettings;
+    private MobSpawnRule mobSpawnRule;
+    private ISpawnAlgorithm spawnAlgorithm;
+    private Boolean isAfterEndClearMonster;
+
+    private Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap;
+    private BiomeEntitySpawnSettings.OwnMobSpawnSettings biomeMobSpawnSettings;
+    private EntitySpawnList entitySpawnListContext;
 
 
 
@@ -37,8 +50,30 @@ public class MomentInstanceCacheProvider {
                 this.autoActuatorGroupSettings = settings;
             });
 
-            momentData.entitySpawnSettings().ifPresent(settings -> {
-                this.entitySpawnSettings = settings;
+            momentData.entitySpawnSettings().ifPresent(entitySpawnSettings -> {
+                this.entitySpawnSettings = entitySpawnSettings;
+                entitySpawnSettings.biomeEntitySpawnSettings().ifPresent(biomeEntitySpawnSettings -> {
+                    this.biomeEntitySpawnSettings = biomeEntitySpawnSettings;
+                    biomeEntitySpawnSettings.spawnCategoryMultiplier().ifPresent(spawnCategoryMultiplierMap -> {
+                        this.spawnCategoryMultiplierMap = spawnCategoryMultiplierMap;
+                    });
+                    biomeEntitySpawnSettings.biomeMobSpawnSettings().ifPresent(biomeMobSpawnSettings -> {
+                        this.biomeMobSpawnSettings = biomeMobSpawnSettings;
+                    });
+                    biomeEntitySpawnSettings.entitySpawnListContext().ifPresent(entitySpawnListContext -> {
+                        this.entitySpawnListContext = entitySpawnListContext;
+                    });
+                });
+                entitySpawnSettings.entitySpawnList().ifPresent(entitySpawnList -> {
+                    this.entitySpawnList = entitySpawnList;
+                });
+                entitySpawnSettings.rule().ifPresent(rule -> {
+                    this.mobSpawnRule = rule;
+                });
+                entitySpawnSettings.spawnAlgorithm().ifPresent(spawnAlgorithm -> {
+                    this.spawnAlgorithm = spawnAlgorithm;
+                });
+                this.isAfterEndClearMonster = entitySpawnSettings.isAfterEndClearMonster();
             });
         });
     }
@@ -57,5 +92,37 @@ public class MomentInstanceCacheProvider {
 
     public EntitySpawnSettings getEntitySpawnSettings() {
         return entitySpawnSettings;
+    }
+
+    public List<Weighted<List<IEntityInfo>>> getEntitySpawnList() {
+        return entitySpawnList;
+    }
+
+    public BiomeEntitySpawnSettings getBiomeEntitySpawnSettings() {
+        return biomeEntitySpawnSettings;
+    }
+
+    public MobSpawnRule getMobSpawnRule() {
+        return mobSpawnRule;
+    }
+
+    public ISpawnAlgorithm getSpawnAlgorithm() {
+        return spawnAlgorithm;
+    }
+
+    public Boolean getAfterEndClearMonster() {
+        return isAfterEndClearMonster;
+    }
+
+    public Map<MobCategory, SpawnCategoryMultiplierModifier> getSpawnCategoryMultiplierMap() {
+        return spawnCategoryMultiplierMap;
+    }
+
+    public BiomeEntitySpawnSettings.OwnMobSpawnSettings getBiomeMobSpawnSettings() {
+        return biomeMobSpawnSettings;
+    }
+
+    public EntitySpawnList getEntitySpawnListContext() {
+        return entitySpawnListContext;
     }
 }

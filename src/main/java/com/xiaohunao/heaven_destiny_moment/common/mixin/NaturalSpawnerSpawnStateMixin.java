@@ -52,7 +52,6 @@ public class NaturalSpawnerSpawnStateMixin {
 
                         SpawnCategoryMultiplierModifier multiplierModifier = multiplierMap.get(mobCategory);
                         if (multiplierModifier != null){
-                            multiplierInstance.addModifier(multiplierModifier);
                             double spawnMultiplier = multiplierInstance.getValue();
                             int maxLimit = (int) (maxInstancesPerChunk * (this.spawnableChunkCount * spawnMultiplier) / NaturalSpawner.MAGIC_NUMBER);
                             if (currentCount >= maxLimit) {

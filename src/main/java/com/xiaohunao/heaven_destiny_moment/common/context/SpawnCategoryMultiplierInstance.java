@@ -58,6 +58,7 @@ public class SpawnCategoryMultiplierInstance {
     public void removeModifiers() {
         for(SpawnCategoryMultiplierModifier multiplierModifier : this.getModifiers()) {
             this.removeModifier(multiplierModifier);
+            this.setDirty();
         }
 
     }

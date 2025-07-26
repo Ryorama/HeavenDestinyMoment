@@ -5,9 +5,12 @@ import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierInstance;
+import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierModifier;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
+import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierInstanceMixed;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
@@ -19,6 +22,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -158,6 +162,19 @@ public class MomentInstanceManager {
         addActuatorRemainingUses(instance);
         momentHistoryManager.addHistory(instance);
 
+        Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
+        if (spawnCategoryMultiplierMap != null) {
+            spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
+                SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) level;
+                SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(mobCategory);
+                if (multiplierInstance != null) {
+                    multiplierInstance.addModifier(multiplierModifier);
+                } else {
+                    LOGGER.warn("SpawnCategoryMultiplierInstance for {} is null in level {}", mobCategory, level);
+                }
+            });
+        }
+
         if (!level.isClientSide) {
             PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
             if (instance.getBar() != null) {
@@ -173,6 +190,19 @@ public class MomentInstanceManager {
         removeActuatorRemainingUses(instance);
 
         momentHistoryManager.finishRecord(instance);
+
+        Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
+        if (spawnCategoryMultiplierMap != null) {
+            spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
+                SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) level;
+                SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(mobCategory);
+                if (multiplierInstance != null) {
+                    multiplierInstance.removeModifier(multiplierModifier);
+                } else {
+                    LOGGER.warn("SpawnCategoryMultiplierInstance for {} is null in level {}", mobCategory, level);
+                }
+            });
+        }
 
         instance.getPlayers().forEach(player -> {
             removePlayerToInstance(player, instance);
