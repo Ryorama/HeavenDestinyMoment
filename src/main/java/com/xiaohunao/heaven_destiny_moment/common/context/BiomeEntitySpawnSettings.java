@@ -5,6 +5,8 @@ import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import net.minecraft.util.random.Weight;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.EntityType;
@@ -82,6 +84,8 @@ public record BiomeEntitySpawnSettings(Optional<OwnMobSpawnSettings> biomeMobSpa
     public static class OwnSpawnerData extends MobSpawnSettings.SpawnerData {
         public static final Codec<OwnSpawnerData> CODEC = MobSpawnSettings.SpawnerData.CODEC.xmap(OwnSpawnerData::new, java.util.function.Function.identity());
 
+        private Moment moment;
+
         public OwnSpawnerData(EntityType<?> type, int weight, int minCount, int maxCount) {
             super(type, weight, minCount, maxCount);
         }
@@ -92,6 +96,19 @@ public record BiomeEntitySpawnSettings(Optional<OwnMobSpawnSettings> biomeMobSpa
 
         public OwnSpawnerData(MobSpawnSettings.SpawnerData spawnerData) {
             super(spawnerData.type, spawnerData.getWeight(), spawnerData.minCount, spawnerData.maxCount);
+        }
+
+        public OwnSpawnerData(MobSpawnSettings.SpawnerData spawnerData, Moment moment) {
+            this(spawnerData);
+            this.moment = moment;
+        }
+
+        public static OwnSpawnerData of(MobSpawnSettings.SpawnerData spawnerData, Moment moment) {
+            return new OwnSpawnerData(spawnerData, moment);
+        }
+
+        public static OwnSpawnerData ofVanilla(MobSpawnSettings.SpawnerData spawnerData) {
+            return new OwnSpawnerData(spawnerData, HeavenDestinyMoment.EMITY_MOMENT);
         }
 
         @Override
@@ -108,6 +125,10 @@ public record BiomeEntitySpawnSettings(Optional<OwnMobSpawnSettings> biomeMobSpa
                     this.getWeight() == that.getWeight() &&
                     this.minCount == that.minCount &&
                     this.maxCount == that.maxCount;
+        }
+
+        public Moment getMoment() {
+            return moment;
         }
     }
 }

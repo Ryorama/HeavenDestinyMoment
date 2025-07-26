@@ -7,6 +7,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.EntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInfo;
+import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
 import net.minecraft.util.random.WeightedRandomList;
@@ -73,30 +74,37 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
         return list;
     }
 
-    public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
+    public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(Moment moment,MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
+        List<MobSpawnSettings.SpawnerData> ownSpawnerDataList = Lists.newArrayList();
+        for (MobSpawnSettings.SpawnerData originalSpawnerDatum : originalSpawnerData) {
+            ownSpawnerDataList.add(BiomeEntitySpawnSettings.OwnSpawnerData.ofVanilla(originalSpawnerDatum));
+        }
+
+
         biomeEntitySpawnSettings.flatMap(BiomeEntitySpawnSettings::biomeMobSpawnSettings)
                 .map(mobSpawnSettings -> {
                     WeightedRandomList<MobSpawnSettings.SpawnerData> spawnerData = mobSpawnSettings.spawners.get(mobCategory);
                     return spawnerData != null ? new ArrayList<>(spawnerData.unwrap()) : new ArrayList<MobSpawnSettings.SpawnerData>();
                 })
                 .ifPresent(newSpawnerData -> {
+                    List<MobSpawnSettings.SpawnerData> newOwnSpawnerDataList = Lists.newArrayList();
+                    for (MobSpawnSettings.SpawnerData originalSpawnerDatum : newSpawnerData) {
+                        newOwnSpawnerDataList.add(BiomeEntitySpawnSettings.OwnSpawnerData.of(originalSpawnerDatum,moment));
+                    }
+
+
                     boolean allowOriginal = rule.flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(true);
                     if (allowOriginal) {
-                        mergeSpawnerData(originalSpawnerData, newSpawnerData);
+                        mergeSpawnerData(ownSpawnerDataList, newOwnSpawnerDataList);
                     } else {
-                        List<BiomeEntitySpawnSettings.OwnSpawnerData> newSpawnerData1 = new ArrayList<>();
-                        newSpawnerData.forEach(data -> {
-                            newSpawnerData1.add(new BiomeEntitySpawnSettings.OwnSpawnerData(data));
-                        });
-
-                        originalSpawnerData.clear();
-                        originalSpawnerData.addAll(newSpawnerData1);
+                        ownSpawnerDataList.clear();
+                        ownSpawnerDataList.addAll(newOwnSpawnerDataList);
                     }
                 });
 
-        applyBlackOrWhiteListFilter(originalSpawnerData);
+        applyBlackOrWhiteListFilter(ownSpawnerDataList);
 
-        return WeightedRandomList.create(originalSpawnerData);
+        return WeightedRandomList.create(ownSpawnerDataList);
     }
 
     private void mergeSpawnerData(List<MobSpawnSettings.SpawnerData> original, List<MobSpawnSettings.SpawnerData> newData) {
@@ -106,12 +114,11 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
 
         for (MobSpawnSettings.SpawnerData data : newData) {
             EntityType<?> newDataType = data.type;
-            BiomeEntitySpawnSettings.OwnSpawnerData ownSpawnerData = new BiomeEntitySpawnSettings.OwnSpawnerData(data);
             if (!originalTypes.contains(newDataType)) {
-                original.add(ownSpawnerData);
+                original.add(data);
             } else {
                 original.removeIf(d -> d.type.equals(newDataType));
-                original.add(ownSpawnerData);
+                original.add(data);
             }
         }
     }

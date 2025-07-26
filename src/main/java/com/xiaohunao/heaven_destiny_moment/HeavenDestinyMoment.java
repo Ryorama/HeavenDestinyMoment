@@ -1,14 +1,18 @@
 package com.xiaohunao.heaven_destiny_moment;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.serialization.MapCodec;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.commands.MomentCommand;
 import com.xiaohunao.heaven_destiny_moment.common.init.*;
+import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.compat.LoadedCompat;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -26,6 +30,18 @@ import org.slf4j.LoggerFactory;
 public class HeavenDestinyMoment {
     public static final String MODID = "heaven_destiny_moment";
     public static final Logger LOGGER = LoggerFactory.getLogger("HeavenDestinyMoment");
+
+    public static final Moment EMITY_MOMENT = new Moment() {
+        @Override
+        public MomentInstance newMomentInstance(Level level, Moment moment) {
+            return null;
+        }
+
+        @Override
+        public MapCodec<? extends Moment> codec() {
+            return null;
+        }
+    };
 
     public HeavenDestinyMoment(IEventBus modEventBus, ModContainer modContainer) {
         HDMTriggerTypes.TRIGGER_TYPE.register(modEventBus);

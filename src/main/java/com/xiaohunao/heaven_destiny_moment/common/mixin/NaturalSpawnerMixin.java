@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.context.BiomeEntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
@@ -46,7 +47,7 @@ public class NaturalSpawnerMixin {
                     .flatMap(MomentData::entitySpawnSettings)
                     .ifPresent(entitySpawnSettingsContext -> {
                         List<MobSpawnSettings.SpawnerData> unwrap = new ArrayList<>(cir.getReturnValue().unwrap());
-                        cir.setReturnValue(entitySpawnSettingsContext.adjustmentBiomeEntitySpawnSettings(mobCategory, unwrap));
+                        cir.setReturnValue(entitySpawnSettingsContext.adjustmentBiomeEntitySpawnSettings(instance.getMoment(),mobCategory, unwrap));
                     });
         }
     }
@@ -88,7 +89,7 @@ public class NaturalSpawnerMixin {
                                 MobCategory mobCategory = entry.getKey();
                                 WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = entry.getValue();
                                 List<MobSpawnSettings.SpawnerData> unwrap = Lists.newArrayList(weightedRandomList.unwrap());
-                                newSpawners.put(mobCategory, entitySpawnSettingsContext.adjustmentBiomeEntitySpawnSettings(mobCategory, unwrap));
+                                newSpawners.put(mobCategory, entitySpawnSettingsContext.adjustmentBiomeEntitySpawnSettings(instance.getMoment(),mobCategory, unwrap));
                             }
 
                             Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> mobSpawnCosts = Maps.newHashMap(mobSettings.mobSpawnCosts);
@@ -96,16 +97,7 @@ public class NaturalSpawnerMixin {
                                 EntityType<?> entityType = entry.getKey();
                                 MobSpawnSettings.MobSpawnCost mobSpawnCost = entry.getValue();
                                 MobSpawnSettings.MobSpawnCost newCost = mobSpawnSettings.mobSpawnCosts.get(entityType);
-//                                if (entitySpawnSettingsContext.rule().flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(true)) {
-//                                    mobSpawnCosts.put(entityType, mobSpawnCost);
-//                                    if (newCost != null) {
-//                                        mobSpawnCosts.put(entityType, newCost);
-//                                    }
-//                                }else {
-//                                    if (newCost == null) {
-//                                        mobSpawnCosts.remove(entityType);
-//                                    }
-//                                }
+
                             }
 
 
@@ -141,69 +133,11 @@ public class NaturalSpawnerMixin {
         }
     }
 
-//    @Inject(method = "isValidSpawnPostitionForType", at = @At("HEAD"), cancellable = true)
-//    private static void isValidSpawnPostitionForType(ServerLevel level, MobCategory category, StructureManager structureManager, ChunkGenerator generator, MobSpawnSettings.SpawnerData data, BlockPos.MutableBlockPos pos, double distance, CallbackInfoReturnable<Boolean> cir){
-//        EntityType<?> entitytype = data.type;
-//        boolean spawnPositionOk = SpawnPlacements.isSpawnPositionOk(entitytype, level, pos);
-//        System.out.println("isValidSpawnPostitionForType :" + spawnPositionOk);
-//    }
-
-
-//    @Inject(method = "getRandomPosWithin", at = @At("RETURN"), cancellable = true)
-//    private static void forceSurface(Level level, LevelChunk levelChunk, CallbackInfoReturnable<BlockPos> cir) {
-//        if (level.isClientSide) {
-//            return;
-//        }
-//
-//        BlockPos returnValue = cir.getReturnValue();
-//        MomentManager momentManager = MomentManager.of(level);
-//        for (MomentInstance instance : momentManager.getRunMoments().values()) {
-//            instance.getMoment()
-//                    .filter(moment -> moment.isInArea((ServerLevel) level, returnValue))
-//                    .map(Moment::getMomentDataContext)
-//                    .flatMap(MomentDataContext::entitySpawnSettings)
-//                    .flatMap(EntitySpawnSettingsContext::rule)
-//                    .flatMap(MobSpawnRule::forceSurfaceSpawning)
-//                    .ifPresent(mobSpawnSettingsContext -> {
-//                        Player closestPlayer = level.getNearestPlayer(returnValue.getX(), returnValue.getY(), returnValue.getZ(), -1.0, false);
-//                        if (closestPlayer != null) {
-//                            BlockPos closestPlayerPosition = closestPlayer.blockPosition();
-//                            if (closestPlayerPosition.getY() > level.getHeight(Heightmap.Types.WORLD_SURFACE, closestPlayerPosition.getX(), closestPlayerPosition.getZ())) {
-//                                cir.setReturnValue(new BlockPos(returnValue.getX(), level.getHeight(Heightmap.Types.WORLD_SURFACE, returnValue.getX(), returnValue.getZ()) + 1, returnValue.getZ()));
-//                            }
-//                        }
-//                    });
-//        }
-//    }
-
-//    @ModifyReceiver(method = "spawnMobsForChunkGeneration", at = @At(value = "INVOKE",
-//            target = "Lnet/minecraft/world/level/ServerLevelAccessor;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"))
-//    private static ServerLevelAccessor spawnMobsForChunkGeneration(ServerLevelAccessor serverLevelAccessor, Entity entity) {
-//        MomentManager momentManager = MomentManager.of(serverLevelAccessor.getLevel());
-//        for (MomentInstance instance : momentManager.getRunMoments().values()) {
-//            instance.getMoment()
-//                    .filter(moment -> moment.isInArea(serverLevelAccessor.getLevel(), entity.blockPosition()))
-//                    .ifPresent(moment -> {
-//                        instance.finalizeSpawn(entity);
-//                    });
-//
-//        }
-//        return serverLevelAccessor;
-//    }
-
-//    @Inject(method = "getRandomSpawnMobAt", at = @At("RETURN"), cancellable = true)
-//    private static void getRandomSpawnMobAt(ServerLevel level, StructureManager structureManager, ChunkGenerator generator, MobCategory category, RandomSource random, BlockPos pos, CallbackInfoReturnable<Optional<MobSpawnSettings.SpawnerData>> cir) {
-//        Optional<MobSpawnSettings.SpawnerData> returnValue = cir.getReturnValue();
-//        if (returnValue.isPresent()){
-//            System.out.println(returnValue);
-//        }
-//    }
-
 
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)
     private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
-        if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData) {
+        if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData ownSpawnerData && ownSpawnerData.getMoment() != HeavenDestinyMoment.EMITY_MOMENT) {
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel.getLevel());
             for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
                 if (instance.canSpawnEntity(serverLevel, mob, pos)) {
