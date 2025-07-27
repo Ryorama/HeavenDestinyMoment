@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 
@@ -14,6 +16,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.ClickEvent;
@@ -21,10 +24,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerLevel;
 
-import java.util.UUID;
+import java.util.*;
 import java.lang.reflect.Field;
-import java.util.Optional;
-import java.util.Collection;
 
 public class QueryCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> register() {
@@ -45,7 +46,13 @@ public class QueryCommand {
                                                 .executes(QueryCommand::killAllEnemies))
                                         .then(Commands.argument("enemyUUID", StringArgumentType.string())
                                                 .suggests(SUGGEST_ENEMIES)
-                                                .executes(QueryCommand::killEnemy)))));
+                                                .executes(QueryCommand::killEnemy))
+                                )
+                        )
+                        .then(Commands.literal("kill_entity_recorder")
+                                        .executes(QueryCommand::queryKillEntityRecorder)
+                        )
+                );
     }
 
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_FIELDS = (context, builder) -> {
@@ -265,5 +272,24 @@ public class QueryCommand {
                     Component.translatable("commands.moment.query.enemies.entity_not_found", enemyUuidStr))
                     .create();
         }
+    }
+
+    private static int queryKillEntityRecorder(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        var source = ctx.getSource();
+        String uuidStr = StringArgumentType.getString(ctx, "uuid");
+        MomentInstance instance = MomentCommand.getMomentInstance(ctx, uuidStr);
+        KillEntityRecorderAttachment recorder = instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER);
+        // 总击杀数和总分
+        source.sendSuccess(() -> Component.literal("总击杀数: " + recorder.getTotalKills()), false);
+        source.sendSuccess(() -> Component.literal("总分: " + recorder.getTotalScore()), false);
+        // 按实体类型统计
+        source.sendSuccess(() -> Component.literal("各类型击杀统计:"), false);
+        for (Map.Entry<EntityType<?>, Integer> entry : recorder.getEntityTypeKills().entrySet()) {
+            EntityType<?> type = entry.getKey();
+            Integer count = entry.getValue();
+            int score = recorder.getScoreByEntityType(type);
+            source.sendSuccess(() -> Component.translatable(type.getDescriptionId()).append(Component.literal(" : " + count + " 次, " + score + " 分")), false);
+        }
+        return 1;
     }
 } 
