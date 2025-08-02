@@ -2,7 +2,9 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.DataResult;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
@@ -195,9 +197,14 @@ public abstract class MomentInstance extends AttachmentHolder {
             return HDMRegistries.MOMENT_TYPE.getOptional(resourcelocation).map(momentType -> {
                 try {
                     Tag tag = compoundTag.get("moment");
-                    return momentType.create(compoundTag.getUUID("uuid"), level,
-                            HDMRegistries.MOMENT.byNameCodec().decode(NbtOps.INSTANCE,tag).getOrThrow().getFirst()
-                    );
+                    DataResult<Pair<Moment, Tag>> decode = HDMRegistries.MOMENT.byNameCodec().decode(NbtOps.INSTANCE, tag);
+                    if (decode.isSuccess()) {
+                        Moment moment = decode.getOrThrow().getFirst();
+                        return momentType.create(compoundTag.getUUID("uuid"), level,moment);
+                    } else {
+                        LOGGER.error("MomentInstance has invalid moment data: {}", decode.getOrThrow());
+                        return null;
+                    }
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to create MomentInstance {}", id, throwable);
                     return null;

@@ -39,7 +39,9 @@ public record MomentStateSyncPayload(UUID uuid, MomentState state) implements Cu
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
                 MomentInstance momentInstance = momentInstanceManager.getMomentInstance(uuid);
-                momentInstance.setState(state);
+                if (momentInstance != null){
+                    momentInstance.setState(state);
+                }
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));

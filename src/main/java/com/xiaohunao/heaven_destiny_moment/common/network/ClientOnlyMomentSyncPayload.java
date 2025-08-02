@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -39,23 +40,19 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean 
 
     public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (context.player().isLocalPlayer()) {
-                Level level = context.player().level();
+            Player player = context.player();
+            if (player.isLocalPlayer()) {
+                Level level = player.level();
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
-                if (isRemove && clientOnlyMoment.contains("clear_all_client_moments")) {
+                if (isRemove || clientOnlyMoment.contains("clear_all_client_moments")){
+                    momentInstanceManager.setClientMomentInstance(player,null);
+                    return;
+                }
 
-                    momentInstanceManager.setClientMomentInstance(null);
-                } else {
-                    MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
-
-                    if (!isRemove) {
-                        momentInstanceManager.setClientMomentInstance(momentInstance);
-                    } else {
-                        if (momentInstance != null && momentInstance.isClientOnlyMoment()) {
-                            momentInstanceManager.setClientMomentInstance(null);
-                        }
-                    }
+                MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
+                if (momentInstance != null && momentInstance.isClientOnlyMoment()){
+                    momentInstanceManager.setClientMomentInstance(player,momentInstance);
                 }
             }
         }).exceptionally(e -> {

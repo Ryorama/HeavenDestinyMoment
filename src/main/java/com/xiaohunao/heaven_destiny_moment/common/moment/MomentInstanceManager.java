@@ -355,7 +355,7 @@ public class MomentInstanceManager {
         }
 
         if (instance.isClientOnlyMoment()){
-            setClientMomentInstance(instance);
+            setClientMomentInstance(player,instance);
         }
     }
 
@@ -368,7 +368,7 @@ public class MomentInstanceManager {
 
 
         if (instance.isClientOnlyMoment()){
-            setClientMomentInstance(null);
+            setClientMomentInstance(player,null);
         }
     }
 
@@ -377,13 +377,15 @@ public class MomentInstanceManager {
     public Optional<MomentInstance> getClientMomentInstance() {
         if (!level.isClientSide){
             return Optional.empty();
-
         }
         return Optional.ofNullable(this.clientOnlyMomentInstance);
     }
 
-    public void setClientMomentInstance(MomentInstance momentInstance) {
-        this.clientOnlyMomentInstance = momentInstance;
+    public void setClientMomentInstance(Player player,MomentInstance momentInstance) {
+        if (level.isClientSide){
+            this.clientOnlyMomentInstance = momentInstance;
+        }
+
         if (!level.isClientSide){
             CompoundTag compoundTag = ClientOnlyMomentSyncPayload.CLEAR_ALL_TAG;
             boolean isRemove = true;
@@ -391,7 +393,7 @@ public class MomentInstanceManager {
                 compoundTag = momentInstance.serializeNBT();
                 isRemove = false;
             }
-            PacketDistributor.sendToAllPlayers(new ClientOnlyMomentSyncPayload(compoundTag,isRemove));
+            PacketDistributor.sendToPlayer((ServerPlayer) player,new ClientOnlyMomentSyncPayload(compoundTag,isRemove));
         }
     }
 
