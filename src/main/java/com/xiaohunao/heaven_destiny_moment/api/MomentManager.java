@@ -1,21 +1,16 @@
 package com.xiaohunao.heaven_destiny_moment.api;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
-import com.xiaohunao.xhn_lib.api.data.loader.SimpleDynamicLoader;
-import com.xiaohunao.xhn_lib.common.serialization.DynamicSerializerType;
+import com.xiaohunao.xhn_lib.api.data.loader.BaseDynamicLoader;
+import com.xiaohunao.xhn_lib.common.serialization.IDynamicSerializer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -23,12 +18,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class MomentManager extends SimpleDynamicLoader<Moment> {
+public class MomentManager extends BaseDynamicLoader<Moment> {
     private static final MomentManager INSTANCE = new MomentManager();
     private static final String FOLDER = "heaven_destiny_moment/moment";
 
     private MomentManager() {
-        super(FOLDER, HDMRegistries.MOMENT, DynamicSerializerType.of(IMoment.CODEC));
+        super(FOLDER, HDMRegistries.MOMENT, IDynamicSerializer.of(IMoment.CODEC));
     }
 
     public static MomentManager getInstance(){
