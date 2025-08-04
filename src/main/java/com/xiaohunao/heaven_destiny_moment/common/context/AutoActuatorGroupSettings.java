@@ -15,7 +15,7 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
-import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
+import com.xiaohunao.xhn_lib.common.util.CodecUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -31,7 +31,7 @@ import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
-import com.xiaohunao.heaven_destiny_moment.common.utils.CodecUtils;
+import com.xiaohunao.xhn_lib.common.util.CodecUtils;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
