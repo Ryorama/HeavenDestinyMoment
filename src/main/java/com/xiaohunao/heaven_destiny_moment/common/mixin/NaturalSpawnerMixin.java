@@ -8,11 +8,13 @@ import com.xiaohunao.heaven_destiny_moment.common.context.BiomeEntitySpawnSettin
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
+import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnerDataMomentMixed;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.*;
@@ -137,9 +139,11 @@ public class NaturalSpawnerMixin {
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)
     private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
-        if (spawnerData instanceof BiomeEntitySpawnSettings.OwnSpawnerData ownSpawnerData && ownSpawnerData.getMoment() != HeavenDestinyMoment.EMITY_MOMENT) {
+        System.out.println(spawnerData.type.getDescriptionId());
+
+        if (spawnerData instanceof SpawnerDataMomentMixed ownSpawnerData && ownSpawnerData.heaven_destiny_moment$getMoment() != HeavenDestinyMoment.EMITY_MOMENT) {
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel.getLevel());
-            for (MomentInstance instance : momentInstanceManager.getMomentInstances(ownSpawnerData.getMoment())) {
+            for (MomentInstance instance : momentInstanceManager.getMomentInstances(ownSpawnerData.heaven_destiny_moment$getMoment())) {
                 if (instance.canSpawnEntity(serverLevel, mob, pos)) {
                     instance.addEnemy(mob);
                 } else {
@@ -149,16 +153,3 @@ public class NaturalSpawnerMixin {
         }
     }
 }
-
-
-
-//    @Inject(method = "spawnCategoryForChunk" ,at = @At(value = "HEAD"), cancellable = true)
-//    private static void spawnCategoryForChunk(MobCategory category, ServerLevel level, LevelChunk chunk, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci){
-//        MomentManager momentManager = MomentManager.of(level);
-//        for (MomentInstance<?> instance : momentManager.getImmutableRunMoments().values()) {
-//
-//        }
-//        NaturalSpawner.spawnCategoryForPosition(category, level, chunk, serverPlayer.blockPosition(), filter, callback);
-//        ci.cancel();
-//
-//}

@@ -7,6 +7,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.EntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInfo;
+import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnerDataMomentMixed;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
@@ -77,7 +78,8 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
     public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(Moment moment,MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
         List<MobSpawnSettings.SpawnerData> ownSpawnerDataList = Lists.newArrayList();
         for (MobSpawnSettings.SpawnerData originalSpawnerDatum : originalSpawnerData) {
-            ownSpawnerDataList.add(BiomeEntitySpawnSettings.OwnSpawnerData.ofVanilla(originalSpawnerDatum));
+            SpawnerDataMomentMixed spawnerDataMomentMixed = (SpawnerDataMomentMixed) originalSpawnerDatum;
+            ownSpawnerDataList.add(spawnerDataMomentMixed.heaven_destiny_moment$vanillaSource());
         }
 
 
@@ -89,7 +91,8 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                 .ifPresent(newSpawnerData -> {
                     List<MobSpawnSettings.SpawnerData> newOwnSpawnerDataList = Lists.newArrayList();
                     for (MobSpawnSettings.SpawnerData originalSpawnerDatum : newSpawnerData) {
-                        newOwnSpawnerDataList.add(BiomeEntitySpawnSettings.OwnSpawnerData.of(originalSpawnerDatum,moment));
+                        SpawnerDataMomentMixed spawnerDataMomentMixed = (SpawnerDataMomentMixed) originalSpawnerDatum;
+                        newOwnSpawnerDataList.add(spawnerDataMomentMixed.heaven_destiny_moment$setMoment(moment));
                     }
 
 

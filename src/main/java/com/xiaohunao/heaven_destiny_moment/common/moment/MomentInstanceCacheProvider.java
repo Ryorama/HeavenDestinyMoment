@@ -5,6 +5,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInf
 import com.xiaohunao.heaven_destiny_moment.common.context.reward.IReward;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.biome.MobSpawnSettings;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class MomentInstanceCacheProvider {
     private Boolean isAfterEndClearMonster;
 
     private Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap;
-    private BiomeEntitySpawnSettings.OwnMobSpawnSettings biomeMobSpawnSettings;
+    private MobSpawnSettings biomeMobSpawnSettings;
     private EntitySpawnList entitySpawnListContext;
 
 
@@ -118,7 +119,7 @@ public class MomentInstanceCacheProvider {
         return spawnCategoryMultiplierMap;
     }
 
-    public BiomeEntitySpawnSettings.OwnMobSpawnSettings getBiomeMobSpawnSettings() {
+    public MobSpawnSettings getBiomeMobSpawnSettings() {
         return biomeMobSpawnSettings;
     }
 
