@@ -11,9 +11,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-
 public record DifficultyCondition(Difficulty difficulty) implements ICondition {
     public static final DifficultyCondition PEACEFUL = new DifficultyCondition(Difficulty.PEACEFUL);
     public static final DifficultyCondition EASY = new DifficultyCondition(Difficulty.EASY);

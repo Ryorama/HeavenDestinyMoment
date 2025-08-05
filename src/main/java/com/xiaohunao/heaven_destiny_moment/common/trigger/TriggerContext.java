@@ -2,12 +2,9 @@ package com.xiaohunao.heaven_destiny_moment.common.trigger;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Optional;
 
 public record TriggerContext(ITrigger trigger, List<ICondition> conditions) {
     public static final Codec<TriggerContext> CODEC = RecordCodecBuilder.create(instance -> instance.group(

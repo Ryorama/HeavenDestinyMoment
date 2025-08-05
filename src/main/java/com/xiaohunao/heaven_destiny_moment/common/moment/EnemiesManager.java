@@ -1,7 +1,5 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
-import com.google.common.collect.Maps;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;

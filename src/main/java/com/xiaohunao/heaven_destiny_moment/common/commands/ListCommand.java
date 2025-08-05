@@ -8,11 +8,12 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import java.util.Collection;
+
 import javax.annotation.Nullable;
+import java.util.Collection;
 
 public class ListCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> register() {

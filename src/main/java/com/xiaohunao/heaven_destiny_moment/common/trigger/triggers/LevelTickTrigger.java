@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 
 import com.mojang.serialization.MapCodec;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 
 public class LevelTickTrigger implements ITrigger {

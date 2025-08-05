@@ -3,8 +3,8 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
-import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
+import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierInstance;
 import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierModifier;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
@@ -51,7 +51,7 @@ public class MomentInstanceManager {
     private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
     private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
 
-    //客户端唯一时刻实例 //在服务端中没有作用,只是标记
+    //客户端唯一时刻实例 //在服务端中没有作用
     public MomentInstance clientOnlyMomentInstance = null;
 
 
@@ -194,7 +194,7 @@ public class MomentInstanceManager {
         momentHistoryManager.finishRecord(instance);
 
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
-        if (spawnCategoryMultiplierMap != null) {
+        if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
             spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
                 SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) level;
                 SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(mobCategory);
@@ -395,7 +395,7 @@ public class MomentInstanceManager {
                 compoundTag = momentInstance.serializeNBT();
                 isRemove = false;
             }
-            PacketDistributor.sendToPlayer((ServerPlayer) player,new ClientOnlyMomentSyncPayload(compoundTag,isRemove));
+            PacketDistributor.sendToPlayer((ServerPlayer) player,new ClientOnlyMomentSyncPayload(player.getUUID(),compoundTag,isRemove));
         }
     }
 

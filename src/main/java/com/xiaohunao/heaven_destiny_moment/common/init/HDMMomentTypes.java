@@ -6,7 +6,6 @@ import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.Default
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.RaidInstance;
 import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
 import com.xiaohunao.xhn_lib.api.register.FlexibleRegister;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class HDMMomentTypes {
     public static final FlexibleRegister<MomentType<?>> MOMENT_TYPE = FlexibleRegister.create(HDMRegistries.MOMENT_TYPE, HeavenDestinyMoment.MODID);

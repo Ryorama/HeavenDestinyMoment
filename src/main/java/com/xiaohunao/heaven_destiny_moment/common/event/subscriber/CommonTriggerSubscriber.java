@@ -2,7 +2,6 @@ package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
 import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.LevelTickTrigger;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

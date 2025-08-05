@@ -4,7 +4,6 @@ import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public class MomentRunningRecord {

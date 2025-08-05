@@ -30,12 +30,12 @@ import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnA
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.KillEntityTrigger;
 import com.xiaohunao.xhn_lib.common.util.CodecUtils;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -44,8 +44,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -456,14 +454,14 @@ public abstract class MomentInstance extends AttachmentHolder {
         newPlayers.stream()
                 .filter(player -> !oldPlayers.contains(player))
                 .forEach(player1 -> {
-                    getMomentManager().addPlayerToInstance(player1, this);
                     playerListManager.addPlayer(player1);
+                    getMomentManager().addPlayerToInstance(player1, this);
                 });
         oldPlayers.stream()
                 .filter(player -> !newPlayers.contains(player))
                 .forEach(player1 -> {
-                    getMomentManager().removePlayerToInstance(player1, this);
                     playerListManager.removePlayer(player1);
+                    getMomentManager().removePlayerToInstance(player1, this);
                 });
 
         if (!level.isClientSide){

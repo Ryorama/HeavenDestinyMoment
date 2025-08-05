@@ -2,13 +2,6 @@ package com.xiaohunao.heaven_destiny_moment.common.actuator;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public record ActuatorContext(IActuator actuator,Integer count) {
     public static final Codec<ActuatorContext> CODEC = RecordCodecBuilder.create(instance -> instance.group(

@@ -2,7 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.init;
 
 import com.mojang.serialization.MapCodec;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.*;
+import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.common.*;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.DifficultyCondition;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.level.LevelCondition;

@@ -1,27 +1,20 @@
 package com.xiaohunao.heaven_destiny_moment.common.context;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.StateSettingActuator;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerContext;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.ConditionalTrigger;
 import com.xiaohunao.xhn_lib.common.util.CodecUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public record AutoActuatorGroupSettings(Map<TriggerContext,ActuatorContext> autoActuators) {
     public static final Codec<AutoActuatorGroupSettings> CODEC = CodecUtils.complexKeyMap(

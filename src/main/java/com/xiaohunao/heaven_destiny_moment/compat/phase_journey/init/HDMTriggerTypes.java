@@ -1,10 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.compat.phase_journey.init;
 
-import com.mojang.serialization.MapCodec;
-import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
-import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import com.xiaohunao.heaven_destiny_moment.compat.phase_journey.trigger.PhaseTrigger;
 import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;

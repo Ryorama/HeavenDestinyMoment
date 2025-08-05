@@ -9,7 +9,6 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class MomentInstanceCacheProvider {
     public final Moment moment;

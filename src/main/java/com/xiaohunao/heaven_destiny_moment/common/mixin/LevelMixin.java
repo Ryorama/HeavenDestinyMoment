@@ -3,7 +3,6 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin;
 
 import com.xiaohunao.heaven_destiny_moment.common.mixed.MomentManagerMixed;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

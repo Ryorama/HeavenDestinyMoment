@@ -2,10 +2,8 @@ package com.xiaohunao.heaven_destiny_moment.compat;
 
 import com.xiaohunao.heaven_destiny_moment.compat.champions.MomentRegister;
 import com.xiaohunao.heaven_destiny_moment.compat.phase_journey.PhaseJourneyInit;
-import com.xiaohunao.heaven_destiny_moment.compat.phase_journey.event.PhaseTriggerTriggerSubscriber;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class LoadedCompat {
     public final static boolean KJS = ModList.get().isLoaded("kubejs");

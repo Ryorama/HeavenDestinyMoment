@@ -4,6 +4,7 @@ import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.chat.Component;
@@ -14,9 +15,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean isRemove) implements CustomPacketPayload {
+import java.util.UUID;
+
+public record ClientOnlyMomentSyncPayload(UUID playerUUID, CompoundTag clientOnlyMoment, boolean isRemove) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ClientOnlyMomentSyncPayload> TYPE = new CustomPacketPayload.Type<>(HeavenDestinyMoment.asResource("client_only_moment_sync"));
     public static final StreamCodec<ByteBuf, ClientOnlyMomentSyncPayload> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, ClientOnlyMomentSyncPayload::playerUUID,
             ByteBufCodecs.fromCodec(CompoundTag.CODEC, NbtAccounter::unlimitedHeap), ClientOnlyMomentSyncPayload::clientOnlyMoment,
             ByteBufCodecs.BOOL, ClientOnlyMomentSyncPayload::isRemove,
             ClientOnlyMomentSyncPayload::new
@@ -29,8 +33,8 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean 
         CLEAR_ALL_TAG.putBoolean("clear_all_client_moments", true);
     }
 
-    public static ClientOnlyMomentSyncPayload clearClientMoments() {
-        return new ClientOnlyMomentSyncPayload(CLEAR_ALL_TAG, true);
+    public static ClientOnlyMomentSyncPayload clearClientMoments(UUID playerUUID) {
+        return new ClientOnlyMomentSyncPayload(playerUUID,CLEAR_ALL_TAG, true);
     }
 
     @Override
@@ -44,6 +48,15 @@ public record ClientOnlyMomentSyncPayload(CompoundTag clientOnlyMoment, boolean 
             if (player.isLocalPlayer()) {
                 Level level = player.level();
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+
+                Player playerByUUID = level.getPlayerByUUID(playerUUID);
+                if (playerByUUID != null) {
+                    player = playerByUUID;
+                } else {
+                    HeavenDestinyMoment.LOGGER.warn("Player with UUID {} not found in level {}", playerUUID, level);
+                    return;
+                }
+
 
                 if (isRemove || clientOnlyMoment.contains("clear_all_client_moments")){
                     momentInstanceManager.setClientMomentInstance(player,null);

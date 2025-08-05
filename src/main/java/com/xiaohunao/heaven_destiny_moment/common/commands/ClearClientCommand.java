@@ -2,7 +2,6 @@ package com.xiaohunao.heaven_destiny_moment.common.commands;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -22,12 +21,8 @@ public class ClearClientCommand {
         
         // 发送清理客户端时刻的网络包
         if (player != null) {
-            PacketDistributor.sendToPlayer(player,ClientOnlyMomentSyncPayload.clearClientMoments());
+            PacketDistributor.sendToPlayer(player,ClientOnlyMomentSyncPayload.clearClientMoments(player.getUUID()));
             source.sendSuccess(() -> Component.translatable("commands.moment.clear_only_client.success"), false);
-        } else {
-            // 如果没有玩家（可能是控制台执行），则发送到所有玩家
-            PacketDistributor.sendToAllPlayers(ClientOnlyMomentSyncPayload.clearClientMoments());
-            source.sendSuccess(() -> Component.translatable("commands.moment.clear_only_client.sent_to_all"), false);
         }
         
         return 1;
