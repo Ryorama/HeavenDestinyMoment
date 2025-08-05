@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 import java.util.Map;
 import java.util.Optional;
@@ -22,21 +24,21 @@ public record TipSettings(Optional<Map<MomentState, Holder<SoundEvent>>> soundEv
             Codec.unboundedMap(MomentState.CODEC, ComponentSerialization.CODEC).optionalFieldOf("texts").forGetter(TipSettings::texts)
     ).apply(instance, TipSettings::new));
 
-    public void playTooltip(MomentInstance instance) {
-        if (!instance.getLevel().isClientSide) return;
+    public void playTooltip(Player player,MomentState state) {
+        Level level = player.level();
+        if (!level.isClientSide) return;
 
         texts.ifPresent(texts ->{
-            Component component = texts.getOrDefault(instance.getState(), null);
+            Component component = texts.getOrDefault(state, null);
             if (component != null) {
-                instance.getPlayers().forEach(player -> player.sendSystemMessage(component));
+                player.sendSystemMessage(component);
             }
         });
 
         soundEvents.ifPresent(soundEvents -> {
-            Holder<SoundEvent> soundEvent = soundEvents.getOrDefault(instance.getState(), null);
+            Holder<SoundEvent> soundEvent = soundEvents.getOrDefault(state, null);
             if (soundEvent != null) {
-                instance.getPlayers().forEach(player ->
-                        instance.getLevel().playSound(player, player.blockPosition(), soundEvent.value(), SoundSource.MASTER, 1.0F, 1.0F));
+                level.playSound(player, player.blockPosition(), soundEvent.value(), SoundSource.MASTER, 1.0F, 1.0F);
             }
         });
     }

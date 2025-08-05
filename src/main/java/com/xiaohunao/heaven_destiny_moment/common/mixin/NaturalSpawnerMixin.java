@@ -139,8 +139,6 @@ public class NaturalSpawnerMixin {
     @Inject(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"), cancellable = true)
     private static void spawnCategoryForPosition(MobCategory category, ServerLevel serverLevel, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate filter, NaturalSpawner.AfterSpawnCallback callback, CallbackInfo ci, @Local Mob mob, @Local MobSpawnSettings.SpawnerData spawnerData) {
-        System.out.println(spawnerData.type.getDescriptionId());
-
         if (spawnerData instanceof SpawnerDataMomentMixed ownSpawnerData && ownSpawnerData.heaven_destiny_moment$getMoment() != HeavenDestinyMoment.EMITY_MOMENT) {
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel.getLevel());
             for (MomentInstance instance : momentInstanceManager.getMomentInstances(ownSpawnerData.heaven_destiny_moment$getMoment())) {

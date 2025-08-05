@@ -119,6 +119,10 @@ public abstract class MomentInstance extends AttachmentHolder {
         return moment;
     }
 
+    public MomentInstanceCacheProvider getCacheProvider() {
+        return cacheProvider;
+    }
+
     public void init() {
         initMomentBar();
         initSpawnPosList();
@@ -419,12 +423,11 @@ public abstract class MomentInstance extends AttachmentHolder {
 
     public MomentEvent setState(MomentState state) {
         this.state = state;
-        moment.tipSettings.ifPresent(tip -> tip.playTooltip(this));
-        if (!level.isClientSide){
-            playerListManager.players.forEach(player ->{
+        playerListManager.getPlayers().forEach(player -> {
+            if (!level.isClientSide){
                 PacketDistributor.sendToPlayer((ServerPlayer) player,new MomentStateSyncPayload(uuid,state));
-            });
-        }
+            }
+        });
         return NeoForge.EVENT_BUS.post(MomentEvent.getEventToPost(this, state));
     }
 

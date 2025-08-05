@@ -14,19 +14,25 @@ import java.util.Optional;
 public class MomentInstanceCacheProvider {
     public final Moment moment;
 
+    //TipSettings
+    private TipSettings tipSettings;
+
+
+
     //momentData
     private List<IReward> rewards;
     private EntityTypeScoreTable entityTypeScoreTable;
     private AutoActuatorGroupSettings autoActuatorGroupSettings;
     private EntitySpawnSettings entitySpawnSettings;
 
-
+    //EntitySpawnSettings
     private List<Weighted<List<IEntityInfo>>> entitySpawnList;
     private BiomeEntitySpawnSettings biomeEntitySpawnSettings;
     private MobSpawnRule mobSpawnRule;
     private ISpawnAlgorithm spawnAlgorithm;
     private Boolean isAfterEndClearMonster;
 
+    //BiomeEntitySpawnSettings
     private Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap;
     private MobSpawnSettings biomeMobSpawnSettings;
     private EntitySpawnList entitySpawnListContext;
@@ -38,6 +44,10 @@ public class MomentInstanceCacheProvider {
     }
 
     public void iniCache() {
+        moment.tipSettings.ifPresent(tipSettings -> {
+            this.tipSettings = tipSettings;
+        });
+
         moment.momentData().ifPresent(momentData -> {
             momentData.entityTypeScoreTable().ifPresent(scoreTable -> {
                 this.entityTypeScoreTable = scoreTable;
@@ -77,6 +87,10 @@ public class MomentInstanceCacheProvider {
                 this.isAfterEndClearMonster = entitySpawnSettings.isAfterEndClearMonster();
             });
         });
+    }
+
+    public TipSettings getTipSettings() {
+        return tipSettings;
     }
 
     public List<IReward> getRewards() {

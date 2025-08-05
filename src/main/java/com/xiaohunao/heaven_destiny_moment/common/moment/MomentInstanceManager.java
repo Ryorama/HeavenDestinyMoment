@@ -162,8 +162,10 @@ public class MomentInstanceManager {
         addActuatorRemainingUses(instance);
         momentHistoryManager.addHistory(instance);
 
+        instance.cacheProvider.iniCache();
+
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
-        if (spawnCategoryMultiplierMap != null) {
+        if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
             spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
                 SpawnCategoryMultiplierInstanceMixed spawnCategoryMultiplierInstanceMixed = (SpawnCategoryMultiplierInstanceMixed) level;
                 SpawnCategoryMultiplierInstance multiplierInstance = spawnCategoryMultiplierInstanceMixed.hdm$getMobCategoryMultiplierInstance(mobCategory);

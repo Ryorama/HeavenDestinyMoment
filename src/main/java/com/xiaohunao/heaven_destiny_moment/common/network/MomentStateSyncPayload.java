@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.network;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
@@ -41,6 +42,10 @@ public record MomentStateSyncPayload(UUID uuid, MomentState state) implements Cu
                 MomentInstance momentInstance = momentInstanceManager.getMomentInstance(uuid);
                 if (momentInstance != null){
                     momentInstance.setState(state);
+                    TipSettings tipSettings = momentInstance.getCacheProvider().getTipSettings();
+                    if (tipSettings != null) {
+                        tipSettings.playTooltip(context.player(), state);
+                    }
                 }
             }
         }).exceptionally(e -> {
