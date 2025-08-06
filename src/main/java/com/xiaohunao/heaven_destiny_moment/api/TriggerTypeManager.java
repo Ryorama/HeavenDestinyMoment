@@ -17,6 +17,9 @@ import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayloa
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -132,6 +135,46 @@ public class TriggerTypeManager{
     @FunctionalInterface
     public interface ICanTrigger<T extends ITrigger> {
         boolean canTrigger(T trigger);
+    }
+
+
+    public CompoundTag serializeNBT() {
+        CompoundTag rootTag = new CompoundTag();
+        actuatorRemainingUses.forEach((uuid, actuatorMap) -> {
+            ListTag listTag = new ListTag();
+            actuatorMap.forEach((actuatorContext, remainingUses) -> {
+                CompoundTag actuatorTag = new CompoundTag();
+                actuatorTag.put("actuator", ActuatorContext.CODEC.encodeStart(NbtOps.INSTANCE,actuatorContext).getOrThrow());
+                actuatorTag.putInt("remainingUses", remainingUses);
+                listTag.add(actuatorTag);
+            });
+            rootTag.put(uuid.toString(), listTag);
+        });
+        return rootTag;
+    }
+
+    public void deserializeNBT(CompoundTag compoundTag) {
+        actuatorRemainingUses.clear();
+        if (compoundTag == null) return;
+
+        for (String key : compoundTag.getAllKeys()) {
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(key);
+            } catch (IllegalArgumentException e) {
+                continue; // 如果UUID格式不正确，跳过
+            }
+
+            Map<ActuatorContext, Integer> actuatorMap = Maps.newHashMap();
+            ListTag listTag = compoundTag.getList(key, 10); // 10是CompoundTag的类型ID
+            for (int i = 0; i < listTag.size(); i++) {
+                CompoundTag actuatorTag = listTag.getCompound(i);
+                ActuatorContext actuatorContext = ActuatorContext.CODEC.parse(NbtOps.INSTANCE, actuatorTag.get("actuator")).getOrThrow();
+                int remainingUses = actuatorTag.getInt("remainingUses");
+                actuatorMap.put(actuatorContext, remainingUses);
+            }
+            actuatorRemainingUses.put(uuid, actuatorMap);
+        }
     }
 
 }

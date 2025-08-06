@@ -83,6 +83,8 @@ public class MomentInstanceManager {
             rootTag.put("history", historyTag);
         }
 
+        rootTag.put("triggerTypeManager", triggerTypeManager.serializeNBT());
+
         return rootTag;
     }
 
@@ -100,6 +102,10 @@ public class MomentInstanceManager {
 
         if (compoundTag.contains("history")) {
             momentHistoryManager.deserializeNBT(compoundTag.getList("history", Tag.TAG_COMPOUND));
+        }
+
+        if (compoundTag.contains("triggerTypeManager")) {
+            triggerTypeManager.deserializeNBT(compoundTag.getCompound("triggerTypeManager"));
         }
     }
 
