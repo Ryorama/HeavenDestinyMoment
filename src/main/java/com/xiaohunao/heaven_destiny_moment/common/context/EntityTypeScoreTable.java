@@ -12,7 +12,7 @@ public record EntityTypeScoreTable(Map<EntityType<?>,Integer> killType) {
 
 
     public Integer get(EntityType<?> entityType){
-        return killType.getOrDefault(entityType,1);
+        return killType.getOrDefault(entityType,0);
     }
 
     public static class Builder {
