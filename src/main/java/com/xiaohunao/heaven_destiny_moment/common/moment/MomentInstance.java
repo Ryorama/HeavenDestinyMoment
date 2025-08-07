@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
@@ -84,6 +85,8 @@ public abstract class MomentInstance extends AttachmentHolder {
     protected CompoundTag persistentData = new CompoundTag();
     protected Map<IActuator,KillEntityCondition.RequiredKill> tryRequiredKill = new ConcurrentHashMap<>();
 
+    protected Map<ActuatorContext,Integer> actuatorRemainingUses = Maps.newHashMap();
+
     protected MomentInstance(MomentType<?> type, Level level, Moment moment) {
         this.uuid = UUID.randomUUID();
         this.type = type;
@@ -125,7 +128,18 @@ public abstract class MomentInstance extends AttachmentHolder {
         initMomentBar();
         initSpawnPosList();
         initTryModifyStateRequiredKill();
+        initAutoActuatorGroupSettings();
     }
+
+    public void initAutoActuatorGroupSettings(){
+        AutoActuatorGroupSettings autoActuatorGroupSettings = getCacheProvider().getAutoActuatorGroupSettings();
+        if (autoActuatorGroupSettings != null) {
+            autoActuatorGroupSettings.autoActuators().forEach((triggerContext, actuatorContext) -> {
+                actuatorRemainingUses.put(actuatorContext, actuatorContext.max_executions());
+            });
+        }
+    }
+
 
     public void initMomentBar() {
         moment.barRenderType.ifPresent(iBarRenderType -> this.bar = new MomentBar(uuid, iBarRenderType));
@@ -156,6 +170,36 @@ public abstract class MomentInstance extends AttachmentHolder {
             });
         });
     }
+
+    public Integer getActuatorRemainingUses(ActuatorContext actuatorContext) {
+        for (Map.Entry<ActuatorContext, Integer> entry : actuatorRemainingUses.entrySet()) {
+            ActuatorContext context = entry.getKey();
+            Integer value = entry.getValue();
+            if (context.equals(actuatorContext)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    public void setActuatorRemainingUses(ActuatorContext actuatorContext, int remainingUses) {
+        if (remainingUses == 0) {
+            actuatorRemainingUses.remove(actuatorContext);
+            for (Map.Entry<ActuatorContext, Integer> entry : actuatorRemainingUses.entrySet()) {
+                ActuatorContext context = entry.getKey();
+                Integer value = entry.getValue();
+                if (context.equals(actuatorContext)) {
+                    actuatorRemainingUses.remove(context);
+                    return;
+                }
+            }
+
+
+        } else {
+            actuatorRemainingUses.put(actuatorContext, remainingUses);
+        }
+    }
+
 
     public long getTick() {
         return tick;
@@ -255,6 +299,17 @@ public abstract class MomentInstance extends AttachmentHolder {
                     .ifPresent(tryRequiredKill -> compoundTag.put("tryRequiredKill", tryRequiredKill));
         }
 
+        if (actuatorRemainingUses != null && !actuatorRemainingUses.isEmpty()) {
+            ListTag actuatorListTag = new ListTag();
+            actuatorRemainingUses.forEach((actuatorContext, remainingUses) -> {
+                CompoundTag actuatorTag = new CompoundTag();
+                actuatorTag.put("actuator", ActuatorContext.CODEC.encodeStart(NbtOps.INSTANCE, actuatorContext).getOrThrow());
+                actuatorTag.putInt("remainingUses", remainingUses);
+                actuatorListTag.add(actuatorTag);
+            });
+            compoundTag.put("actuatorRemainingUses", actuatorListTag);
+        }
+
 
         return compoundTag;
     }
@@ -283,6 +338,17 @@ public abstract class MomentInstance extends AttachmentHolder {
                     .decode(NbtOps.INSTANCE, compoundTag.get("tryRequiredKill"))
                     .getOrThrow().getFirst();
             this.tryRequiredKill.putAll(decodedMap);
+        }
+
+        if (compoundTag.contains("actuatorRemainingUses")){
+            this.actuatorRemainingUses.clear();
+            ListTag actuatorListTag = compoundTag.getList("actuatorRemainingUses", Tag.TAG_COMPOUND);
+            for (int i = 0; i < actuatorListTag.size(); i++) {
+                CompoundTag actuatorTag = actuatorListTag.getCompound(i);
+                ActuatorContext actuatorContext = ActuatorContext.CODEC.decode(NbtOps.INSTANCE, actuatorTag.get("actuator")).getOrThrow().getFirst();
+                int remainingUses = actuatorTag.getInt("remainingUses");
+                this.actuatorRemainingUses.put(actuatorContext, remainingUses);
+            }
         }
     }
 

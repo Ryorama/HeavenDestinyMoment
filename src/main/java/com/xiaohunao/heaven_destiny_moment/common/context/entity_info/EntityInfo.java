@@ -16,6 +16,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class EntityInfo implements IEntityInfo {
@@ -101,6 +102,12 @@ public class EntityInfo implements IEntityInfo {
 
     public Optional<IEntityInfo> vehicle() {
         return vehicle;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof EntityInfo that)) return false;
+        return Objects.equals(entityType, that.entityType) && Objects.equals(amount, that.amount) && Objects.equals(weight, that.weight) && Objects.equals(attaches, that.attaches) && Objects.equals(vehicle, that.vehicle) && Objects.equals(portal_cooldown, that.portal_cooldown);
     }
 
 

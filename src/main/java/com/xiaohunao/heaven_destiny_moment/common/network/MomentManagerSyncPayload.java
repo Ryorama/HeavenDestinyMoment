@@ -40,7 +40,10 @@ public record  MomentManagerSyncPayload(CompoundTag runMoment,boolean isRemove) 
                 if (isRemove){
                     momentInstance.ifPresent(instance -> momentInstanceManager.removeMomentInstance(instance));
                 }else {
-                    momentInstance.ifPresent(instance -> momentInstanceManager.addMomentInstance(instance));
+                    momentInstance.ifPresent(instance -> {
+                        instance.getCacheProvider().iniCache();
+                        momentInstanceManager.addMomentInstance(instance);
+                    });
                 }
 
             }

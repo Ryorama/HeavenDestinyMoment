@@ -32,7 +32,6 @@ import java.util.UUID;
 public class TriggerTypeManager{
     private static final TriggerTypeManager INSTANCE = new TriggerTypeManager();
     public final Multimap<TriggerType<?>,Moment> registeredMomentsPerTrigger  = HashMultimap.create();
-    private final Map<UUID,Map<ActuatorContext,Integer>> actuatorRemainingUses  = Maps.newHashMap();
 
     private TriggerTypeManager(){}
 
@@ -83,18 +82,15 @@ public class TriggerTypeManager{
                                 boolean canTrigger = iCanTrigger.canTrigger(typedTrigger);
 
                                 if (allMatch && canTrigger) {
-                                    Integer remainingUses = triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).get(actuatorContext);
+                                    Integer remainingUses = momentInstance.getActuatorRemainingUses(actuatorContext);
 
                                     if (remainingUses != null) {
+
                                         actuatorContext.actuator().execute(momentInstance);
 
                                         // 只有当不是无限使用(-1)时才更新计数
                                         if (remainingUses != -1) {
-                                            if (remainingUses == 1) {
-                                                triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).remove(actuatorContext);
-                                            } else {
-                                                triggerTypeManager.actuatorRemainingUses.get(momentInstance.getID()).put(actuatorContext, remainingUses - 1);
-                                            }
+                                            momentInstance.setActuatorRemainingUses(actuatorContext, remainingUses - 1);
                                         }
                                     }
                                 }
@@ -120,61 +116,9 @@ public class TriggerTypeManager{
         registeredMomentsPerTrigger.put(triggerType, moment);
     }
 
-    public void addActuatorRemainingUses(UUID uuid,ActuatorContext actuatorContext, int remainingUses) {
-        this.actuatorRemainingUses.computeIfAbsent(uuid, k -> Maps.newHashMap()).put(actuatorContext, remainingUses);
-    }
-
-    public void removeActuatorRemainingUses(UUID uuid,ActuatorContext actuatorContext) {
-        this.actuatorRemainingUses.get(uuid).remove(actuatorContext);
-    }
-
-    public void removeActuatorRemainingUses(UUID uuid) {
-        this.actuatorRemainingUses.remove(uuid);
-    }
-
     @FunctionalInterface
     public interface ICanTrigger<T extends ITrigger> {
         boolean canTrigger(T trigger);
-    }
-
-
-    public CompoundTag serializeNBT() {
-        CompoundTag rootTag = new CompoundTag();
-        actuatorRemainingUses.forEach((uuid, actuatorMap) -> {
-            ListTag listTag = new ListTag();
-            actuatorMap.forEach((actuatorContext, remainingUses) -> {
-                CompoundTag actuatorTag = new CompoundTag();
-                actuatorTag.put("actuator", ActuatorContext.CODEC.encodeStart(NbtOps.INSTANCE,actuatorContext).getOrThrow());
-                actuatorTag.putInt("remainingUses", remainingUses);
-                listTag.add(actuatorTag);
-            });
-            rootTag.put(uuid.toString(), listTag);
-        });
-        return rootTag;
-    }
-
-    public void deserializeNBT(CompoundTag compoundTag) {
-        actuatorRemainingUses.clear();
-        if (compoundTag == null) return;
-
-        for (String key : compoundTag.getAllKeys()) {
-            UUID uuid;
-            try {
-                uuid = UUID.fromString(key);
-            } catch (IllegalArgumentException e) {
-                continue; // 如果UUID格式不正确，跳过
-            }
-
-            Map<ActuatorContext, Integer> actuatorMap = Maps.newHashMap();
-            ListTag listTag = compoundTag.getList(key, 10); // 10是CompoundTag的类型ID
-            for (int i = 0; i < listTag.size(); i++) {
-                CompoundTag actuatorTag = listTag.getCompound(i);
-                ActuatorContext actuatorContext = ActuatorContext.CODEC.parse(NbtOps.INSTANCE, actuatorTag.get("actuator")).getOrThrow();
-                int remainingUses = actuatorTag.getInt("remainingUses");
-                actuatorMap.put(actuatorContext, remainingUses);
-            }
-            actuatorRemainingUses.put(uuid, actuatorMap);
-        }
     }
 
 }

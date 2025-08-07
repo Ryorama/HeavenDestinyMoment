@@ -39,7 +39,9 @@ public record KillRequiredSyncPayload(UUID uuid, IActuator actuator, KillEntityC
                 Level level = context.player().level();
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
                 MomentInstance momentInstance = momentInstanceManager.getMomentInstance(uuid);
-                momentInstance.setVictoryRequiredKill(actuator,requiredKill);
+                if (momentInstance != null) {
+                    momentInstance.setVictoryRequiredKill(actuator, requiredKill);
+                }
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));

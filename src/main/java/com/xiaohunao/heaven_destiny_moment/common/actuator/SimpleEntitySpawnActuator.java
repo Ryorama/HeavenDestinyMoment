@@ -10,12 +10,20 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
+import java.util.Objects;
 
-public record SimpleEntitySpawnActuator(IEntityInfo entityInfo, ISpawnAlgorithm spawnAlgorithm) implements IActuator {
+public final class SimpleEntitySpawnActuator implements IActuator {
     public static final MapCodec<SimpleEntitySpawnActuator> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             IEntityInfo.CODEC.fieldOf("entity_info").forGetter(SimpleEntitySpawnActuator::entityInfo),
             ISpawnAlgorithm.CODEC.fieldOf("spawn_algorithm").forGetter(SimpleEntitySpawnActuator::spawnAlgorithm)
     ).apply(instance, SimpleEntitySpawnActuator::new));
+    private final IEntityInfo entityInfo;
+    private final ISpawnAlgorithm spawnAlgorithm;
+
+    public SimpleEntitySpawnActuator(IEntityInfo entityInfo, ISpawnAlgorithm spawnAlgorithm) {
+        this.entityInfo = entityInfo;
+        this.spawnAlgorithm = spawnAlgorithm;
+    }
 
     public static SimpleEntitySpawnActuator of(IEntityInfo entityInfo, ISpawnAlgorithm spawnAlgorithm) {
         return new SimpleEntitySpawnActuator(entityInfo, spawnAlgorithm);
@@ -35,4 +43,22 @@ public record SimpleEntitySpawnActuator(IEntityInfo entityInfo, ISpawnAlgorithm 
     public MapCodec<? extends IActuator> codec() {
         return HDMActuators.SIMPLE_ENTITY_SPAWN_ACTUATOR.get();
     }
+
+    public IEntityInfo entityInfo() {
+        return entityInfo;
+    }
+
+    public ISpawnAlgorithm spawnAlgorithm() {
+        return spawnAlgorithm;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (SimpleEntitySpawnActuator) obj;
+        return Objects.equals(this.entityInfo, that.entityInfo) &&
+                Objects.equals(this.spawnAlgorithm, that.spawnAlgorithm);
+    }
+
 }

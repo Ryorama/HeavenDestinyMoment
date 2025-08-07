@@ -41,18 +41,23 @@ public class MomentInstanceManager {
     private final Level level;
     private final MomentHistoryManager momentHistoryManager = new MomentHistoryManager();
 
+    //时刻对应的映射表
+    private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
+
+
+
     //正在运行的时刻
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
 
     //玩家正在参与的时刻
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
-    //时刻对应的映射表
-    private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
-    private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
-
     //客户端唯一时刻实例 //在服务端中没有作用
     public MomentInstance clientOnlyMomentInstance = null;
+
+//    //实例触发管理器
+//    private final List<>
 
 
     public MomentInstanceManager(Level level) {
@@ -83,7 +88,6 @@ public class MomentInstanceManager {
             rootTag.put("history", historyTag);
         }
 
-        rootTag.put("triggerTypeManager", triggerTypeManager.serializeNBT());
 
         return rootTag;
     }
@@ -102,10 +106,6 @@ public class MomentInstanceManager {
 
         if (compoundTag.contains("history")) {
             momentHistoryManager.deserializeNBT(compoundTag.getList("history", Tag.TAG_COMPOUND));
-        }
-
-        if (compoundTag.contains("triggerTypeManager")) {
-            triggerTypeManager.deserializeNBT(compoundTag.getCompound("triggerTypeManager"));
         }
     }
 
@@ -143,33 +143,17 @@ public class MomentInstanceManager {
         }
     }
 
-    public void addActuatorRemainingUses(MomentInstance instance){
-        instance.getMoment()
-                .momentData()
-                .flatMap(MomentData::autoActuatorGroupSettings)
-                .map(AutoActuatorGroupSettings::autoActuators)
-                .ifPresent(map -> {
-                    map.forEach((triggerContext, actuatorContext) -> {
-                        triggerTypeManager.addActuatorRemainingUses(instance.getID(),actuatorContext, actuatorContext.count());
-                    });
-                });
-    }
-
-    public void removeActuatorRemainingUses(MomentInstance instance){
-        triggerTypeManager.removeActuatorRemainingUses(instance.getID());
-    }
-
 
     public void addMomentInstance(MomentInstance instance) {
         runMoments.put(instance.getID(), instance);
         momentMap.put(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.put(instance.moment, instance);
+        instance.initialize();
 
-        addActuatorRemainingUses(instance);
+
         momentHistoryManager.addHistory(instance);
 
         instance.cacheProvider.iniCache();
-
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
         if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
             spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
@@ -195,7 +179,6 @@ public class MomentInstanceManager {
         runMoments.remove(instance.getID());
         momentMap.remove(instance.getMomentResource(), instance);
         momentInstanceMap.remove(instance.moment, instance);
-        removeActuatorRemainingUses(instance);
 
         momentHistoryManager.finishRecord(instance);
 
@@ -272,8 +255,10 @@ public class MomentInstanceManager {
                 }
             }
 
-            instance.init();
+            //必须先初始化缓存提供者
             instance.cacheProvider.iniCache();
+            instance.init();
+
         } catch (Exception e) {
             LOGGER.error("Exception occurred while creating MomentInstance for moment: {}", momentKey, e);
             return null;
@@ -293,7 +278,6 @@ public class MomentInstanceManager {
         // 完成创建
         try {
             instance.registerTracker();
-            instance.initialize();
             addMomentInstance(instance);
             return instance;
         } catch (Exception e) {
