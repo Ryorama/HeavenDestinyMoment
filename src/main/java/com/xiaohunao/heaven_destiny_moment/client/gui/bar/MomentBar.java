@@ -53,13 +53,17 @@ public class MomentBar {
 
     public void addPlayer(Player player) {
         if (this.players.add(player)) {
-            broadcast(MomentBarSyncPayload::addPlayer);
+            if (!player.level().isClientSide){
+                broadcast(MomentBarSyncPayload::addPlayer);
+            }
         }
     }
 
     public void removePlayer(Player player) {
         if (this.players.remove(player)) {
-            broadcast(MomentBarSyncPayload::removePlayer);
+            if (!player.level().isClientSide){
+                broadcast(MomentBarSyncPayload::removePlayer);
+            }
         }
     }
 

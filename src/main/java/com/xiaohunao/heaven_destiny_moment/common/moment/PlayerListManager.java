@@ -125,7 +125,9 @@ public class PlayerListManager {
             PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
             MomentBar bar = instance.getBar();
             if (bar != null) {
-                bar.addBar();
+                if(!instance.getLevel().isClientSide){
+                    bar.addBar();
+                }
                 for (Player player1 : bar.getPlayers()) {
                     bar.addPlayer(player1);
                 }
