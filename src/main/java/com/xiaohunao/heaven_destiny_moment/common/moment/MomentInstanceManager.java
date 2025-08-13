@@ -56,9 +56,6 @@ public class MomentInstanceManager {
     //客户端唯一时刻实例 //在服务端中没有作用
     public MomentInstance clientOnlyMomentInstance = null;
 
-//    //实例触发管理器
-//    private final List<>
-
 
     public MomentInstanceManager(Level level) {
         this.level = level;
@@ -181,6 +178,9 @@ public class MomentInstanceManager {
         momentInstanceMap.remove(instance.moment, instance);
 
         momentHistoryManager.finishRecord(instance);
+
+        NeoForge.EVENT_BUS.unregister(instance.getEnemiesManager());
+        NeoForge.EVENT_BUS.unregister(instance.getPlayerListManager());
 
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
         if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
@@ -346,7 +346,7 @@ public class MomentInstanceManager {
             instance.bar.addPlayer(player);
         }
 
-        if (instance.isClientOnlyMoment()){
+        if (instance.isClientOnlyMoment() && !level.isClientSide) {
             setClientMomentInstance(player,instance);
         }
     }
@@ -359,7 +359,7 @@ public class MomentInstanceManager {
         }
 
 
-        if (instance.isClientOnlyMoment()){
+        if (instance.isClientOnlyMoment() && !instance.level.isClientSide){
             setClientMomentInstance(player,null);
         }
     }

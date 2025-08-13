@@ -108,32 +108,32 @@ public class PlayerListManager {
         MomentBarOverlay.barMap.clear();
     }
 
-    @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        PlayerInitSync(event.getEntity());
-    }
-
-    @SubscribeEvent
-    public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        PlayerInitSync(event.getEntity());
-    }
-
-    private static void PlayerInitSync(Player player) {
-        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(player.level());
-        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
-            instance.updatePlayers();
-            PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
-            MomentBar bar = instance.getBar();
-            if (bar != null) {
-                if(!instance.getLevel().isClientSide){
-                    bar.addBar();
-                }
-                for (Player player1 : bar.getPlayers()) {
-                    bar.addPlayer(player1);
-                }
-            }
-        }
-    }
+//    @SubscribeEvent
+//    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+//        PlayerInitSync(event.getEntity());
+//    }
+//
+//    @SubscribeEvent
+//    public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+//        PlayerInitSync(event.getEntity());
+//    }
+//
+//    private static void PlayerInitSync(Player player) {
+//        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(player.level());
+//        for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
+//            instance.updatePlayers();
+//            PacketDistributor.sendToPlayer((ServerPlayer)player, new MomentManagerSyncPayload(instance.serializeNBT(),false));
+//            MomentBar bar = instance.getBar();
+//            if (bar != null) {
+//                if(!instance.getLevel().isClientSide){
+//                    bar.addBar();
+//                }
+//                for (Player player1 : bar.getPlayers()) {
+//                    bar.addPlayer(player1);
+//                }
+//            }
+//        }
+//    }
 
     public void addPlayerKillCount(ServerPlayer serverPlayer, LivingEntity livingEntity, DamageSource source, Integer score) {
         if (playerKillRecorders.isEmpty() || !playerKillRecorders.containsKey(serverPlayer.getUUID())){

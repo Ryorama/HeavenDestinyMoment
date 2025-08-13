@@ -50,23 +50,17 @@ public record ClientOnlyMomentSyncPayload(UUID playerUUID, CompoundTag clientOnl
                 MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
                 Player playerByUUID = level.getPlayerByUUID(playerUUID);
-                if (playerByUUID != null) {
-                    player = playerByUUID;
-                } else {
-                    HeavenDestinyMoment.LOGGER.warn("Player with UUID {} not found in level {}", playerUUID, level);
-                    return;
+                if (playerByUUID != null && playerByUUID.equals(player)) {
+                    if (isRemove || clientOnlyMoment.contains("clear_all_client_moments")){
+                        momentInstanceManager.setClientMomentInstance(player,null);
+                        return;
+                    }
+                    MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
+                    if (momentInstance != null && momentInstance.isClientOnlyMoment()){
+                        momentInstanceManager.setClientMomentInstance(player,momentInstance);
+                    }
                 }
 
-
-                if (isRemove || clientOnlyMoment.contains("clear_all_client_moments")){
-                    momentInstanceManager.setClientMomentInstance(player,null);
-                    return;
-                }
-
-                MomentInstance momentInstance = MomentInstance.loadStatic(level, clientOnlyMoment);
-                if (momentInstance != null && momentInstance.isClientOnlyMoment()){
-                    momentInstanceManager.setClientMomentInstance(player,momentInstance);
-                }
             }
         }).exceptionally(e -> {
             context.disconnect(Component.translatable("neoforge.network.invalid_flow", e.getMessage()));
