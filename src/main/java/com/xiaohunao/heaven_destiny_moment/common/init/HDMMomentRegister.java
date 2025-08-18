@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class HDMMomentRegister {
     public static final DeferredRegister<MapCodec<? extends Moment>> MOMENT_CODEC = DeferredRegister.create(HDMRegistries.Keys.MOMENT_CODEC, HeavenDestinyMoment.MODID);
 
-    public static final DeferredHolder<MapCodec<? extends Moment>, MapCodec<Moment>> DEFAULT_MOMENT = MOMENT_CODEC.register("default", () -> DefaultMoment.CODEC);
+    public static final DeferredHolder<MapCodec<? extends Moment>, MapCodec<DefaultMoment>> DEFAULT_MOMENT = MOMENT_CODEC.register("default", () -> DefaultMoment.CODEC);
     public static final DeferredHolder<MapCodec<? extends Moment>, MapCodec<RaidMoment>> RAID_MOMENT = MOMENT_CODEC.register("raid", () -> RaidMoment.CODEC);
 
     public static void register(IEventBus modEventBus){

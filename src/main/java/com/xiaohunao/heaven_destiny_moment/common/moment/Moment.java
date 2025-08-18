@@ -1,10 +1,15 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.Lists;
+import com.mojang.datafixers.util.Function6;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.client.gui.bar.render.IBarRenderType;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.core.BlockPos;
@@ -24,11 +29,9 @@ public abstract class Moment implements IMoment {
     public Optional<ClientSettings> clientSettings = Optional.empty();
     public Optional<List<ITracker>> trackers = Optional.empty();
 
-
     public Moment() {}
 
-    public Moment(Optional<IBarRenderType> renderType, Optional<Area> area, Optional<MomentData> momentData,
-                  Optional<TipSettings> tipSettings, Optional<ClientSettings> clientSettings, Optional<List<ITracker>> trackers) {
+    public Moment(Optional<IBarRenderType> renderType, Optional<Area> area, Optional<MomentData> momentData, Optional<TipSettings> tipSettings, Optional<ClientSettings> clientSettings, Optional<List<ITracker>> trackers) {
         this.barRenderType = renderType;
         this.area = area;
         this.momentData = momentData;
@@ -37,11 +40,10 @@ public abstract class Moment implements IMoment {
         this.trackers = trackers;
     }
 
-
-    public abstract  MomentInstance newMomentInstance(Level level, Moment moment);
+    public abstract MomentInstance newMomentInstance(Level level, Moment moment);
 
     public boolean isInArea(ServerLevel level, BlockPos blockPos) {
-        return area.map(area1 -> area1.matches(level,blockPos)).orElse(true);
+        return area.map(area1 -> area1.matches(level, blockPos)).orElse(true);
     }
 
     public Optional<IBarRenderType> barRenderType() {
@@ -78,18 +80,17 @@ public abstract class Moment implements IMoment {
         return this;
     }
 
-    public Moment setMomentData(Function<MomentData.Builder,MomentData.Builder> momentData) {
+    public Moment setMomentData(Function<MomentData.Builder, MomentData.Builder> momentData) {
         this.momentData = Optional.of(momentData.apply(new MomentData.Builder()).build());
         return this;
     }
 
-
-    public Moment setClientSettings(Function<ClientSettings.Builder,ClientSettings.Builder> clientSettings) {
+    public Moment setClientSettings(Function<ClientSettings.Builder, ClientSettings.Builder> clientSettings) {
         this.clientSettings = Optional.of(clientSettings.apply(new ClientSettings.Builder()).build());
         return this;
     }
 
-    public Moment setTipSettings(Function<TipSettings.Builder,TipSettings.Builder> tipSettings) {
+    public Moment setTipSettings(Function<TipSettings.Builder, TipSettings.Builder> tipSettings) {
         this.tipSettings = Optional.of(tipSettings.apply(new TipSettings.Builder()).build());
         return this;
     }
@@ -101,7 +102,18 @@ public abstract class Moment implements IMoment {
         return this;
     }
 
-    public boolean isClientMomentInstanceOccupied(){
+    public boolean isClientMomentInstanceOccupied() {
         return clientSettings.map(ClientSettings::isPresent).orElse(false);
+    }
+
+    public static <M extends Moment> MapCodec<M> simpleCodec(Function6<Optional<IBarRenderType>, Optional<Area>, Optional<MomentData>, Optional<TipSettings>, Optional<ClientSettings>, Optional<List<ITracker>>, M> factory) {
+        return RecordCodecBuilder.mapCodec(instance -> instance.group(
+                HDMRegistries.BAR_RENDER_TYPE.byNameCodec().optionalFieldOf("bar_render_type").forGetter(Moment::barRenderType),
+                Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
+                MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
+                TipSettings.CODEC.optionalFieldOf("tips").forGetter(Moment::tipSettings),
+                ClientSettings.CODEC.optionalFieldOf("clientSettings").forGetter(Moment::clientSettings),
+                Codec.list(ITracker.CODEC).optionalFieldOf("trackers").forGetter(Moment::trackers)
+        ).apply(instance, factory));
     }
 }
