@@ -370,7 +370,13 @@ public class MomentInstanceManager {
         if (!level.isClientSide){
             return Optional.empty();
         }
-        return Optional.ofNullable(this.clientOnlyMomentInstance);
+
+        if (!runMoments.containsKey(clientOnlyMomentInstance.uuid)){
+            this.clientOnlyMomentInstance = null;
+            return Optional.empty();
+        }
+
+        return Optional.of(this.clientOnlyMomentInstance);
     }
 
     public void setClientMomentInstance(Player player,MomentInstance momentInstance) {
