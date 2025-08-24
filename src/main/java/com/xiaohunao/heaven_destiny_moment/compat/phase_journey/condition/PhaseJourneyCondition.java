@@ -10,37 +10,31 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
-import net.neoforged.neoforge.attachment.AttachmentHolder;
+import org.confluence.phase_journey.common.init.PJAttachments;
 import org.confluence.phase_journey.common.util.PhaseUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
-public record PhaseJourneyCondition(Type type,ResourceLocation phase) implements ICondition {
+public record PhaseJourneyCondition(Type type, ResourceLocation phase) implements ICondition {
     public static final MapCodec<PhaseJourneyCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Type.CODEC.fieldOf("type").forGetter(PhaseJourneyCondition::type),
             ResourceLocation.CODEC.fieldOf("phase").forGetter(PhaseJourneyCondition::phase)
     ).apply(instance, PhaseJourneyCondition::new));
 
-    public static PhaseJourneyCondition of(Type type,ResourceLocation phase){
-        return new PhaseJourneyCondition(type,phase);
+    public static PhaseJourneyCondition of(Type type, ResourceLocation phase) {
+        return new PhaseJourneyCondition(type, phase);
     }
-
 
     @Override
     public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        AttachmentHolder holder = switch (type) {
-            case MOMENT -> instance;
-            case PLAYER -> serverPlayer;
-            case LEVEL -> instance.getLevel();
+        return switch (type) {
+            case MOMENT -> instance.getData(PJAttachments.PHASE).getPhases().contains(phase);
+            case PLAYER -> serverPlayer != null && PhaseUtils.hadPlayerReachedPhase(phase, serverPlayer);
+            case LEVEL -> PhaseUtils.hadLevelFinishedPhase(phase, instance.getLevel());
+            case null -> false;
         };
-
-        if (holder == null) {
-            return false;
-        }
-
-        return PhaseUtils.hasPhase(phase, holder);
     }
 
     @Override
