@@ -2,11 +2,9 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.xiaohunao.heaven_destiny_moment.client.gui.bar.MomentBar;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.network.KillEntityRecorderSyncPayload;
-import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
 import net.minecraft.Util;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -18,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;

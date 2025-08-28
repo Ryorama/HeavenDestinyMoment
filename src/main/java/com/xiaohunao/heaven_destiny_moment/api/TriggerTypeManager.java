@@ -1,9 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.api;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.xiaohunao.heaven_destiny_moment.common.actuator.ActuatorContext;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
 import com.xiaohunao.heaven_destiny_moment.common.context.AutoActuatorGroupSettings;
@@ -17,17 +15,12 @@ import com.xiaohunao.heaven_destiny_moment.common.network.KillRequiredSyncPayloa
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.TriggerType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
 
 public class TriggerTypeManager{
     private static final TriggerTypeManager INSTANCE = new TriggerTypeManager();
