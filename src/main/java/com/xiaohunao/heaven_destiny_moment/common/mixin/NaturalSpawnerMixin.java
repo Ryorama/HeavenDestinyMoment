@@ -9,6 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnerDataMomentMixed;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -45,8 +46,8 @@ public class NaturalSpawnerMixin {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
             Optional.of(instance.getMoment())
-                    .filter(moment -> moment.isInArea(serverLevel, pos))
-                    .flatMap(Moment::momentData)
+//                    .filter(moment -> moment.isInArea(serverLevel, pos))
+                    .flatMap(IMoment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .ifPresent(entitySpawnSettingsContext -> {
                         List<MobSpawnSettings.SpawnerData> unwrap = new ArrayList<>(cir.getReturnValue().unwrap());
@@ -78,8 +79,8 @@ public class NaturalSpawnerMixin {
 
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
             Optional.of(instance.getMoment())
-                    .filter(moment -> moment.isInArea((ServerLevel) level, pos))
-                    .flatMap(Moment::momentData)
+//                    .filter(moment -> moment.isInArea((ServerLevel) level, pos))
+                    .flatMap(IMoment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .ifPresent(entitySpawnSettingsContext -> {
                         MobSpawnSettings mobSettings = cir.getReturnValue().getMobSettings();
@@ -127,8 +128,8 @@ public class NaturalSpawnerMixin {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(serverLevel);
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
             Optional.of(instance.getMoment())
-                    .filter(moment -> moment.isInArea(serverLevel, pos))
-                    .flatMap(Moment::momentData)
+//                    .filter(moment -> moment.isInArea(serverLevel, pos))
+                    .flatMap(IMoment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .flatMap(EntitySpawnSettings::rule)
                     .flatMap(MobSpawnRule::ignoreDistance)

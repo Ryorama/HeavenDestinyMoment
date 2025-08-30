@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.mojang.serialization.JsonOps;
 import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
+import com.xiaohunao.xhn_lib.api.register.holder.FlexibleHolder;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class MomentProvider implements DataProvider {
-    private final Map<FlexibleHolder<Moment,?>, Moment> moments = Maps.newHashMap();
+    private final Map<FlexibleHolder<IMoment,?>, IMoment> moments = Maps.newHashMap();
     private final PackOutput packOutput;
     private final String modId;
     
@@ -52,7 +52,7 @@ public abstract class MomentProvider implements DataProvider {
         return CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]));
     }
 
-    protected void addMoment(FlexibleHolder<Moment,?> holder, Moment moment) {
+    protected void addMoment(FlexibleHolder<IMoment,?> holder, IMoment moment) {
         if (moments.containsKey(holder)) {
             throw new IllegalStateException("Duplicate moment registration: " + holder.getKey().location());
         }

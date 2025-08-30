@@ -4,10 +4,7 @@ import com.google.common.collect.Sets;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentTypes;
-import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentType;
+import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.RaidMoment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -30,20 +27,20 @@ public class RaidInstance extends MomentInstance {
     protected int totalEnemy;
     private int readyTime;
 
-    public RaidInstance(Level level, Moment moment) {
+    public RaidInstance(Level level, IMoment moment) {
         super(HDMMomentTypes.RAID.get(), level, moment);
     }
 
 
-    public RaidInstance(UUID uuid, Level level, Moment moment) {
+    public RaidInstance(UUID uuid, Level level, IMoment moment) {
         super(HDMMomentTypes.RAID.get(), uuid, level, moment);
     }
 
-    public RaidInstance(MomentType<?> type, Level level, Moment moment) {
+    public RaidInstance(MomentType<?> type, Level level, IMoment moment) {
         super(type, level, moment);
     }
 
-    public RaidInstance(MomentType<?> type, UUID uuid, Level level, Moment moment) {
+    public RaidInstance(MomentType<?> type, UUID uuid, Level level, IMoment moment) {
         super(type, uuid, level, moment);
     }
 
@@ -62,7 +59,7 @@ public class RaidInstance extends MomentInstance {
         RaidMoment raidMoment = (RaidMoment) moment;
         this.readyTime = raidMoment.readyTime();
 
-        this.totalWaves = moment.momentData
+        this.totalWaves = moment.momentData()
                 .flatMap(MomentData::entitySpawnSettings)
                 .flatMap(EntitySpawnSettings::entitySpawnList)
                 .map(List::size)
@@ -151,7 +148,7 @@ public class RaidInstance extends MomentInstance {
         }
         ServerLevel serverLevel = (ServerLevel) level;
         if (enemiesManager.isEmpty() && state == MomentState.ONGOING){
-            moment.momentData
+            moment.momentData()
                     .flatMap(MomentData::entitySpawnSettings)
                     .map(entitySpawnSettings -> entitySpawnSettings.spawnList(level, currentWave))
                     .ifPresent(entities -> entities.forEach(entity -> {

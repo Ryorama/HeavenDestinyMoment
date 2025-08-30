@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientMoonSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -30,7 +31,7 @@ public abstract class LevelRendererMixin {
 
         Float moonSize = momentInstanceManager.getClientMomentInstance()
                 .map(MomentInstance::getMoment)
-                .flatMap(Moment::clientSettings)
+                .flatMap(IMoment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonSize)
                 .orElse(null);
@@ -46,7 +47,7 @@ public abstract class LevelRendererMixin {
 
         ResourceLocation moonTexture = momentInstanceManager.getClientMomentInstance()
                 .map(MomentInstance::getMoment)
-                .flatMap(Moment::clientSettings)
+                .flatMap(IMoment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonTexture)
                 .orElse(originaResourceLocation);
@@ -60,7 +61,7 @@ public abstract class LevelRendererMixin {
 
         Integer moonColor = momentInstanceManager.getClientMomentInstance()
                 .map(MomentInstance::getMoment)
-                .flatMap(Moment::clientSettings)
+                .flatMap(IMoment::clientSettings)
                 .flatMap(ClientSettings::clientMoonSettings)
                 .flatMap(ClientMoonSettings::moonColor)
                 .orElse(null);

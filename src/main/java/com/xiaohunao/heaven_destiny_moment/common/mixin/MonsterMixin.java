@@ -4,6 +4,7 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin;
 import com.xiaohunao.heaven_destiny_moment.common.context.EntitySpawnSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MobSpawnRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -27,8 +28,8 @@ public class MonsterMixin {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
         for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
             Optional.of(instance.getMoment())
-                    .filter(moment -> moment.isInArea(level,pos))
-                    .flatMap(Moment::momentData)
+//                    .filter(moment -> moment.isInArea(level,pos))
+                    .flatMap(IMoment::momentData)
                     .flatMap(MomentData::entitySpawnSettings)
                     .flatMap(EntitySpawnSettings::rule)
                     .flatMap(MobSpawnRule::ignoreLightLevel)

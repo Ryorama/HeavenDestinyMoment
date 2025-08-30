@@ -1,9 +1,11 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationRule;
 import com.xiaohunao.heaven_destiny_moment.common.context.*;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.context.reward.IReward;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
+import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 
@@ -11,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MomentInstanceCacheProvider {
-    public final Moment moment;
+    public final IMoment moment;
 
     //TipSettings
     private TipSettings tipSettings;
@@ -37,13 +39,22 @@ public class MomentInstanceCacheProvider {
     private EntitySpawnList entitySpawnListContext;
 
 
+    //autoActuatorGroupSettings
+    private AutomationRule createAutomationRule;
+    private List<AutomationRule> runtimeAutomationRules;
 
-    public MomentInstanceCacheProvider(Moment moment) {
+    //trackers
+    private List<ITracker> trackers;
+
+
+
+    public MomentInstanceCacheProvider(IMoment moment) {
         this.moment = moment;
+        iniCache();
     }
 
     public void iniCache() {
-        moment.tipSettings.ifPresent(tipSettings -> {
+        moment.tipSettings().ifPresent(tipSettings -> {
             this.tipSettings = tipSettings;
         });
 
@@ -58,6 +69,12 @@ public class MomentInstanceCacheProvider {
 
             momentData.autoActuatorGroupSettings().ifPresent(settings -> {
                 this.autoActuatorGroupSettings = settings;
+                settings.createRule().ifPresent(rule -> {
+                    this.createAutomationRule = rule;
+                });
+                settings.runtimeRules().ifPresent(list -> {
+                    this.runtimeAutomationRules = list;
+                });
             });
 
             momentData.entitySpawnSettings().ifPresent(entitySpawnSettings -> {
@@ -85,6 +102,10 @@ public class MomentInstanceCacheProvider {
                 });
                 this.isAfterEndClearMonster = entitySpawnSettings.isAfterEndClearMonster();
             });
+        });
+
+        moment.trackers().ifPresent(trackers -> {
+            this.trackers = trackers;
         });
     }
 
@@ -138,5 +159,17 @@ public class MomentInstanceCacheProvider {
 
     public EntitySpawnList getEntitySpawnListContext() {
         return entitySpawnListContext;
+    }
+
+    public AutomationRule getCreateAutomationRule() {
+        return createAutomationRule;
+    }
+
+    public List<AutomationRule> getRuntimeAutomationRules() {
+        return runtimeAutomationRules;
+    }
+
+    public List<ITracker> getTrackers() {
+        return trackers;
     }
 }

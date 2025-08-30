@@ -2,8 +2,9 @@ package com.xiaohunao.heaven_destiny_moment.common.data.gen.provider;
 
 import com.google.gson.JsonObject;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
+import com.xiaohunao.xhn_lib.api.register.holder.FlexibleHolder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
@@ -36,7 +37,7 @@ public abstract class MomentLanguageProvider extends LanguageProvider {
     }
 
 
-    public void addMomentDefaultBarName(FlexibleHolder<Moment, ?> holder, String en, String zh) {
+    public void addMomentDefaultBarName(FlexibleHolder<IMoment, ?> holder, String en, String zh) {
         String translationKey = HeavenDestinyMoment.asDescriptionId("bar." + holder.getKey().location().toLanguageKey());
         addTranslation(translationKey, en, zh);
     }

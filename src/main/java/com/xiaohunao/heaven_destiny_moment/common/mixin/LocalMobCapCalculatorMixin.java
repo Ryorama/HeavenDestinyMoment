@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.mixin;
 
 import com.xiaohunao.heaven_destiny_moment.common.context.*;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierInstanceMixed;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
@@ -46,8 +47,8 @@ public abstract class LocalMobCapCalculatorMixin {
 
             for (MomentInstance instance : momentInstanceManager.getMomentInstances()) {
                 Boolean aBoolean = Optional.of(instance.getMoment())
-                        .filter(moment -> moment.isInArea((ServerLevel) serverplayer.level(), serverplayer.blockPosition()))
-                        .flatMap(Moment::momentData)
+//                        .filter(moment -> moment.isInArea((ServerLevel) serverplayer.level(), serverplayer.blockPosition()))
+                        .flatMap(IMoment::momentData)
                         .flatMap(MomentData::entitySpawnSettings)
                         .flatMap(EntitySpawnSettings::biomeEntitySpawnSettings)
                         .flatMap(BiomeEntitySpawnSettings::spawnCategoryMultiplier)

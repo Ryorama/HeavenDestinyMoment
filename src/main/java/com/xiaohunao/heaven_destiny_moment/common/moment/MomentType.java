@@ -13,7 +13,7 @@ public class MomentType<T extends MomentInstance> {
     }
 
     @Nullable
-    public T create(UUID uuid, Level level, Moment moment) {
+    public T create(UUID uuid, Level level, IMoment moment) {
         return factory.create(uuid, level, moment);
     }
 
@@ -31,6 +31,6 @@ public class MomentType<T extends MomentInstance> {
 
     @FunctionalInterface
     public interface MomentSupplier<T> {
-        T create(UUID uuid, Level level, Moment moment);
+        T create(UUID uuid, Level level, IMoment moment);
     }
 }
