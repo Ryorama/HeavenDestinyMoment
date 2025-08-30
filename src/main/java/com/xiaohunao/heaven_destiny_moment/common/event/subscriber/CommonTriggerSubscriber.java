@@ -1,8 +1,9 @@
 package com.xiaohunao.heaven_destiny_moment.common.event.subscriber;
 
-import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMTriggerTypes;
-import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.LevelTickTrigger;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationThreadManager;
+import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.triggers.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,10 +27,22 @@ public class CommonTriggerSubscriber {
         }
         ServerLevel serverLevel = (ServerLevel) level;
         for (ServerPlayer serverPlayer : serverLevel.players()) {
-            TriggerTypeManager.trigger(HDMTriggerTypes.RANDOM_LEVEL_TICK.get(), level, trigger -> trigger.canTrigger(level), serverPlayer.blockPosition(), serverPlayer);
-            TriggerTypeManager.trigger(HDMTriggerTypes.LEVEL_TICK.get(), level, LevelTickTrigger::canTrigger, serverPlayer.blockPosition(), serverPlayer);
-            TriggerTypeManager.trigger(HDMTriggerTypes.TIME_PROBABILITY.get(), level, trigger -> trigger.canTrigger(level), serverPlayer.blockPosition(), serverPlayer);
+            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+
+            AutomationContext context = new AutomationContext.Builder(serverLevel)
+                    .addPlayer(serverPlayer)
+                    .addBlockPos(serverPlayer.blockPosition())
+                    .addCurrentDayTime(level.getDayTime())
+                    .addCurrentGameTime(level.getGameTime())
+                    .build();
+
+
+            momentInstanceManager.trigger(RandomLevelTickTrigger.class,context);
+            momentInstanceManager.trigger(LevelTickTrigger.class, context);
+            momentInstanceManager.trigger(TimeProbabilityTrigger.class,context);
         }
+
+        AutomationThreadManager.getInstance().executePendingTasks();
     }
 
     @SubscribeEvent
@@ -38,17 +51,34 @@ public class CommonTriggerSubscriber {
         if (level.isClientSide()) {
             return;
         }
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of((Level) level);
 
-        TriggerTypeManager.trigger(HDMTriggerTypes.BLOCK_BREAK.get(), (Level) level, trigger -> trigger.canTrigger((Level) level, event.getPos()), event.getPos(), (ServerPlayer) event.getPlayer());
+        momentInstanceManager.trigger(BlockBreakTrigger.class,
+                new AutomationContext.Builder((ServerLevel) level)
+                        .addBlock(level.getBlockState(event.getPos()).getBlock())
+                        .build()
+        );
+
+        AutomationThreadManager.getInstance().executePendingTasks();
     }
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide) return;
+        Level level = victim.level();
+        if (level.isClientSide) return;
         ServerPlayer serverPlayer = event.getSource() == null ? null : event.getSource().getEntity() instanceof ServerPlayer player ? player : null;
 
-        TriggerTypeManager.trigger(HDMTriggerTypes.KILL_ANY_ENTITY.get(), victim.level(), trigger -> trigger.canTrigger(victim.getType()), victim.blockPosition(), serverPlayer);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+
+        momentInstanceManager.trigger(KillEntityTrigger.class,
+                        new AutomationContext.Builder(level)
+                        .addEntityType(victim.getType())
+                        .addPlayer(serverPlayer)
+                        .build()
+        );
+
+        AutomationThreadManager.getInstance().executePendingTasks();
     }
 
 }

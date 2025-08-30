@@ -22,9 +22,15 @@ public record KillEntityTrigger(Optional<EntityType<?>> entityType) implements I
     }
 
 
-    public boolean canTrigger(EntityType<?> entityType) {
-        return this.entityType.map(type -> type == entityType)
-                .orElse(true);
+    @Override
+    public boolean canTrigger(AutomationContext context) {
+        if (entityType.isEmpty()){
+            return true;
+        }
+        if (context.getEntityType().isEmpty()) {
+            return false;
+        }
+        return context.getEntityType().get().equals(entityType.get());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 
 import com.mojang.serialization.MapCodec;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 
 public class LevelTickTrigger implements ITrigger {
@@ -12,7 +13,8 @@ public class LevelTickTrigger implements ITrigger {
         return CODEC;
     }
 
-    public boolean canTrigger() {
+    @Override
+    public boolean canTrigger(AutomationContext context) {
         return true;
     }
 }

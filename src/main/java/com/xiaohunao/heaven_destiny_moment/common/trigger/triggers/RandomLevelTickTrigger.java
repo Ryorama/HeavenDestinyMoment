@@ -3,6 +3,7 @@ package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.world.level.Level;
 
@@ -36,4 +37,12 @@ public class RandomLevelTickTrigger implements ITrigger {
         return CODEC;
     }
 
+    @Override
+    public boolean canTrigger(AutomationContext context) {
+        if (context.getLevel() == null) {
+            return false;
+        }
+
+        return context.getLevel().getRandom().nextFloat() > Probability;
+    }
 }

@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentState;
@@ -17,13 +18,10 @@ public record ConditionalTrigger(List<ICondition> conditions) implements ITrigge
             ICondition.CODEC.listOf().fieldOf("conditions").forGetter(ConditionalTrigger::conditions)
     ).apply(instance, ConditionalTrigger::new));
 
-    public boolean canTrigger(MomentInstance instance, @Nullable MomentState tryModifyState, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        for (ICondition condition : conditions) {
-            if (!condition.matches(instance, pos, serverPlayer)) {
-                return false;
-            }
-        }
-        return true;
+
+    @Override
+    public boolean canTrigger(AutomationContext context) {
+        return conditions.stream().allMatch(condition -> condition.matches(context));
     }
 
     public static ConditionalTrigger of(ICondition... conditions) {
