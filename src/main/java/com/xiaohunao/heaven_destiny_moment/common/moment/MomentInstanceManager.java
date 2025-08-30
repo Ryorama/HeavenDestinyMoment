@@ -2,7 +2,14 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.xiaohunao.heaven_destiny_moment.api.TriggerTypeManager;
+import com.mojang.datafixers.util.Pair;
+import com.sun.jna.platform.win32.COM.util.IRawDispatchHandle;
+import com.xiaohunao.heaven_destiny_moment.api.MomentManager;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
+import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationRule;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationThreadManager;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierInstance;
 import com.xiaohunao.heaven_destiny_moment.common.context.SpawnCategoryMultiplierModifier;
@@ -13,7 +20,7 @@ import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnCategoryMultiplierI
 import com.xiaohunao.heaven_destiny_moment.common.network.ClientOnlyMomentSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import com.xiaohunao.heaven_destiny_moment.common.network.MomentManagerSyncPayload;
-import net.minecraft.core.BlockPos;
+import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -34,18 +41,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class MomentInstanceManager {
-
-    private static final TriggerTypeManager triggerTypeManager = TriggerTypeManager.getInstance();
     private static final Logger LOGGER = LoggerFactory.getLogger(MomentInstanceManager.class);
 
     private final Level level;
     private final MomentHistoryManager momentHistoryManager = new MomentHistoryManager();
 
     //时刻对应的映射表
-    private final Multimap<ResourceKey<Moment>,MomentInstance> momentMap = HashMultimap.create();
-    private final Multimap<Moment,MomentInstance> momentInstanceMap = HashMultimap.create();
-
-
+    private final Multimap<ResourceKey<IMoment>,MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<IMoment,MomentInstance> momentInstanceMap = HashMultimap.create();
+    private final Multimap<MomentType<?>,MomentInstance> momentTypeMap = HashMultimap.create();
 
     //正在运行的时刻
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
@@ -95,7 +99,6 @@ public class MomentInstanceManager {
             momentListTag.forEach(momentTag -> {
                 MomentInstance momentInstance = MomentInstance.loadStatic(level, (CompoundTag) momentTag);
                 if (momentInstance != null) {
-                    momentInstance.registerTracker();
                     addMomentInstance(momentInstance);
                 }
             });
@@ -110,12 +113,16 @@ public class MomentInstanceManager {
         return runMoments.get(uuid);
     }
 
-    public Collection<MomentInstance> getMomentInstances(ResourceKey<Moment> location) {
+    public Collection<MomentInstance> getMomentInstances(ResourceKey<IMoment> location) {
         return momentMap.get(location);
     }
 
-    public Collection<MomentInstance> getMomentInstances(Moment moment) {
+    public Collection<MomentInstance> getMomentInstances(IMoment moment) {
         return momentInstanceMap.get(moment);
+    }
+
+    public Collection<MomentInstance> getMomentInstances(MomentType<?> type) {
+        return momentTypeMap.get(type);
     }
 
     public Collection<MomentInstance> getMomentInstances() {
@@ -133,7 +140,6 @@ public class MomentInstanceManager {
 
             if (instance.state == MomentState.END) {
                 instance.end();
-                instance.unregisterTracker();
                 removeMomentInstance(instance);
             }
             instance.baseTick();
@@ -145,12 +151,21 @@ public class MomentInstanceManager {
         runMoments.put(instance.getID(), instance);
         momentMap.put(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.put(instance.moment, instance);
+        momentTypeMap.put(instance.getType(), instance);
         instance.initialize();
-
 
         momentHistoryManager.addHistory(instance);
 
-        instance.cacheProvider.iniCache();
+        instance.getPlayers().forEach(player -> {
+            if (instance.isClientOnlyMoment() && !level.isClientSide) {
+                setClientMomentInstance(player,instance);
+            }
+        });
+
+        if (instance.cacheProvider.getTrackers() != null) {
+            instance.cacheProvider.getTrackers().forEach(NeoForge.EVENT_BUS::register);
+        }
+
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
         if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
             spawnCategoryMultiplierMap.forEach((mobCategory, multiplierModifier) -> {
@@ -174,13 +189,25 @@ public class MomentInstanceManager {
 
     public void removeMomentInstance(MomentInstance instance) {
         runMoments.remove(instance.getID());
-        momentMap.remove(instance.getMomentResource(), instance);
+        momentMap.remove(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.remove(instance.moment, instance);
+        momentTypeMap.remove(instance.getType(), instance);
 
         momentHistoryManager.finishRecord(instance);
 
         NeoForge.EVENT_BUS.unregister(instance.getEnemiesManager());
         NeoForge.EVENT_BUS.unregister(instance.getPlayerListManager());
+
+        if (instance.cacheProvider.getTrackers() != null) {
+            instance.cacheProvider.getTrackers().forEach(NeoForge.EVENT_BUS::unregister);
+        }
+
+
+        instance.getPlayers().forEach(player -> {
+            if (instance.isClientOnlyMoment() && !level.isClientSide) {
+                setClientMomentInstance(player,null);
+            }
+        });
 
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
         if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
@@ -201,7 +228,7 @@ public class MomentInstanceManager {
 
         if (!level.isClientSide){
             ServerLevel serverLevel = (ServerLevel) level;
-            instance.getMoment().momentData.flatMap(MomentData::entitySpawnSettings).ifPresent(entitySpawnSettings -> {
+            instance.getMoment().momentData().flatMap(MomentData::entitySpawnSettings).ifPresent(entitySpawnSettings -> {
                 if (entitySpawnSettings.isAfterEndClearMonster()){
                     instance.killAllEnemies(serverLevel);
                 }
@@ -218,14 +245,19 @@ public class MomentInstanceManager {
         }
     }
 
+    public MomentInstance createMomentInstanceRun(MomentInstanceBuilder builder){
+        MomentInstance instance = createMomentInstance(builder);
+        if (instance != null && validateConditions(instance, builder)){
+            addMomentInstance(instance);
+        }
+        return instance;
+    }
+
+
+
     public MomentInstance createMomentInstance(MomentInstanceBuilder builder) {
-        Moment moment = builder.getMoment();
-        Level level = builder.getLevel();
-        BlockPos pos = builder.getPos();
-        ServerPlayer serverPlayer = builder.getServerPlayer();
+        IMoment moment = builder.getMoment();
         Consumer<MomentInstance> modifier = builder.getModifier();
-        boolean isCheckConditions = builder.isCheckConditions();
-        List<ICondition> specialConditions = builder.getSpecialConditions();
 
         if (moment == null) {
             LOGGER.error("Attempted to create MomentInstance with null Moment");
@@ -255,8 +287,6 @@ public class MomentInstanceManager {
                 }
             }
 
-            //必须先初始化缓存提供者
-            instance.cacheProvider.iniCache();
             instance.init();
 
         } catch (Exception e) {
@@ -265,40 +295,25 @@ public class MomentInstanceManager {
         }
 
         try {
-            instance.updatePlayers();
+            instance.getPlayerListManager().updatePlayers();
         } catch (Exception e) {
             LOGGER.error("Failed to update players for MomentInstance", e);
         }
-
-        // 条件验证
-        if (!validateConditions(instance, pos, serverPlayer, isCheckConditions, specialConditions, momentKey)) {
-            return null;
-        }
-
-        // 完成创建
-        try {
-            instance.registerTracker();
-            addMomentInstance(instance);
-            return instance;
-        } catch (Exception e) {
-            LOGGER.error("Failed to initialize or register MomentInstance", e);
-            return null;
-        }
+        return instance;
     }
 
 
-    private boolean validateConditions(MomentInstance instance,
-                                       BlockPos pos, ServerPlayer serverPlayer,
-                                       boolean isCheckConditions, List<ICondition> specialConditions,
-                                       ResourceLocation momentKey) {
+
+    private boolean validateConditions(MomentInstance instance,MomentInstanceBuilder builder) {
         // 默认条件检查
+        AutomationContext context = builder.getContext();
         boolean conditionMatch = true;
         boolean canCreate = true;
 
-        if (isCheckConditions) {
-            conditionMatch = instance.checkGeneralConditions(pos, serverPlayer);
+        if (builder.isCheckConditions()) {
+            conditionMatch = instance.checkGeneralConditions(context);
             try {
-                canCreate = instance.canCreate(getRunMoments(), level, pos, serverPlayer);
+                canCreate = instance.canCreate(context);
             } catch (Exception e) {
                 LOGGER.error("Exception during canCreate check for MomentInstance", e);
                 return false;
@@ -306,28 +321,19 @@ public class MomentInstanceManager {
         }
 
         // 特殊条件检查
-        boolean specialConditionsPass = checkSpecialConditions(specialConditions, instance, pos, serverPlayer, momentKey);
+        boolean specialConditionsPass = checkSpecialConditions(builder.getSpecialConditions(), context);
 
         return canCreate && conditionMatch && specialConditionsPass;
     }
 
-    private boolean checkSpecialConditions(List<ICondition> specialConditions, MomentInstance instance,
-                                           BlockPos pos, ServerPlayer serverPlayer, ResourceLocation momentKey) {
+    private boolean checkSpecialConditions(List<ICondition> specialConditions, AutomationContext automationContext) {
         if (specialConditions == null || specialConditions.isEmpty()) {
             return true;
         }
 
         for (int i = 0; i < specialConditions.size(); i++) {
             ICondition condition = specialConditions.get(i);
-            try {
-                if (!condition.matches(instance, pos, serverPlayer)) {
-                    LOGGER.debug("Special condition {} failed at index {} for moment: {}",
-                            condition.getClass().getSimpleName(), i, momentKey);
-                    return false;
-                }
-            } catch (Exception e) {
-                LOGGER.error("Exception while checking special condition at index {} for moment: {}: {}",
-                        i, momentKey, condition.getClass().getSimpleName(), e);
+            if (!condition.matches(automationContext)) {
                 return false;
             }
         }
@@ -335,9 +341,12 @@ public class MomentInstanceManager {
     }
 
 
-    public boolean hasMoment(ResourceKey<Moment> key) {
+    public boolean hasMoment(ResourceKey<IMoment> key) {
         return momentMap.containsKey(key);
     }
+
+
+
 
     public void addPlayerToInstance(Player player, MomentInstance instance) {
         UUID uuid = player.getUUID();
@@ -346,7 +355,7 @@ public class MomentInstanceManager {
             instance.bar.addPlayer(player);
         }
 
-        if (instance.isClientOnlyMoment() && !level.isClientSide) {
+        if (instance.isInitialized() && instance.isClientOnlyMoment() && !level.isClientSide) {
             setClientMomentInstance(player,instance);
         }
     }
@@ -359,7 +368,7 @@ public class MomentInstanceManager {
         }
 
 
-        if (instance.isClientOnlyMoment() && !instance.level.isClientSide){
+        if (instance.isInitialized() && instance.isClientOnlyMoment() && !instance.level.isClientSide){
             setClientMomentInstance(player,null);
         }
     }
@@ -397,6 +406,50 @@ public class MomentInstanceManager {
 
     public Collection<MomentInstance> getPlayerMoments(ServerPlayer player) {
         return playerMoments.get(player.getUUID());
+    }
+
+    public <T extends ITrigger> void trigger(Class<T> triggerClass, AutomationContext context) {
+        final Level level = context.getLevel();
+
+        // 将触发器处理提交到线程池
+        AutomationThreadManager.getInstance().submitTask(() -> {
+            try {
+                // 获取规则（这部分可以在工作线程中执行）
+                Collection<Pair<IMoment, AutomationRule>> createRules =
+                        MomentManager.getInstance().getRulesTriggerType(triggerClass);
+
+                for (Pair<IMoment, AutomationRule> rulePair : createRules) {
+                    IMoment moment = rulePair.getFirst();
+                    AutomationRule rule = rulePair.getSecond();
+
+                    MomentInstance momentInstance = MomentInstanceBuilder.create(moment, context);
+                    AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
+
+                    if (rule.trigger().map(trigger -> trigger.canTrigger(context1)).orElse(true)) {
+                        IActuator actuator = rule.actuator();
+                        if (actuator instanceof CreateMomentInstanceActuator) {
+                            // 需要在主线程执行的操作
+                            final MomentInstance finalMomentInstance = momentInstance;
+                            AutomationThreadManager.getInstance().addPendingTask(() -> {
+                                MomentInstanceManager.of(level).addMomentInstance(finalMomentInstance);
+                            });
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error processing trigger {}", triggerClass.getSimpleName(), e);
+            }
+        });
+
+
+
+
+
+        // 处理运行中的时刻
+        runMoments.values().forEach(momentInstance -> {
+            AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
+            momentInstance.triggerManager.trigger(triggerClass, context1);
+        });
     }
 
 }

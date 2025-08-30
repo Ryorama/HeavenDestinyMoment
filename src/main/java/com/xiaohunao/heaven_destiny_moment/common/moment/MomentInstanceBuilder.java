@@ -1,9 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,39 +12,21 @@ import java.util.function.Consumer;
 
 public class MomentInstanceBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(MomentInstanceBuilder.class);
-    private final Moment moment;
-    private final Level level;
-
-    private BlockPos pos;
-    private ServerPlayer serverPlayer;
+    private final IMoment moment;
+    private final AutomationContext context;
     private Consumer<MomentInstance> modifier;
     private boolean checkConditions = true;
     private final List<ICondition> specialConditions = new ArrayList<>();
     
-    private MomentInstanceBuilder(Level level,Moment moment) {
+    private MomentInstanceBuilder(IMoment moment, AutomationContext context) {
         this.moment = Objects.requireNonNull(moment, "Moment cannot be null");
-        this.level = Objects.requireNonNull(level, "Level cannot be null");
+        this.context = Objects.requireNonNull(context, "context cannot be null");
     }
     
-    public static MomentInstanceBuilder builder(Level level,Moment moment) {
-        return new MomentInstanceBuilder(level,moment);
+    public static MomentInstanceBuilder builder(IMoment moment, AutomationContext context) {
+        return new MomentInstanceBuilder(moment,context);
     }
-    
-    public MomentInstanceBuilder pos(BlockPos pos) {
-        this.pos = pos;
-        return this;
-    }
-    
-    public MomentInstanceBuilder player(ServerPlayer player) {
-        this.serverPlayer = player;
-        return this;
-    }
-    
-    public MomentInstanceBuilder modifier(Consumer<MomentInstance> modifier) {
-        this.modifier = modifier;
-        return this;
-    }
-    
+
     public MomentInstanceBuilder skipConditions() {
         this.checkConditions = false;
         return this;
@@ -69,49 +49,38 @@ public class MomentInstanceBuilder {
         return this;
     }
 
+    public MomentInstanceBuilder modify(Consumer<MomentInstance> modifier) {
+        this.modifier = modifier;
+        return this;
+    }
+
+    public AutomationContext getContext() {
+        return context;
+    }
+
+    public MomentInstance buildRun() {
+        MomentInstanceManager manager = MomentInstanceManager.of(context.getLevel());
+        return manager.createMomentInstanceRun(this);
+    }
     public MomentInstance build() {
-        MomentInstanceManager manager = MomentInstanceManager.of(level);
+        MomentInstanceManager manager = MomentInstanceManager.of(context.getLevel());
         return manager.createMomentInstance(this);
     }
 
-    public Moment getMoment() { return moment; }
-    public Level getLevel() { return level; }
-    public BlockPos getPos() { return pos; }
-    public ServerPlayer getServerPlayer() { return serverPlayer; }
+    public IMoment getMoment() { return moment; }
     public Consumer<MomentInstance> getModifier() { return modifier; }
     public boolean isCheckConditions() { return checkConditions; }
     public List<ICondition> getSpecialConditions() { return new ArrayList<>(specialConditions); }
 
-    public static MomentInstance create(Level level, Moment moment) {
-        return builder(level, moment).build();
+    public static MomentInstance createRun(IMoment moment, AutomationContext context) {
+        return builder(moment,context).buildRun();
     }
 
-    public static MomentInstance create(Level level, Moment moment, BlockPos pos) {
-        return builder(level, moment).pos(pos).build();
+    public static MomentInstance skipConditionsExceptRun(IMoment moment, AutomationContext context, ICondition... specialConditions) {
+        return builder(moment,context).addSpecialConditions(specialConditions).buildRun();
     }
 
-    public static MomentInstance create(Level level, Moment moment, ServerPlayer player) {
-        return builder(level, moment).player(player).build();
+    public static MomentInstance create(IMoment moment, AutomationContext context) {
+        return builder(moment,context).build();
     }
-
-    public static MomentInstance create(Level level, Moment moment,BlockPos pos, ServerPlayer player) {
-        return builder(level, moment).player(player).pos(pos).build();
-    }
-
-    public static MomentInstance skipConditionsExcept(Level level, Moment moment,ICondition... specialConditions) {
-        return builder(level, moment).addSpecialConditions(specialConditions).build();
-    }
-
-    public static MomentInstance skipConditionsExcept(Level level, Moment moment, BlockPos pos,ICondition... specialConditions) {
-        return builder(level, moment).pos(pos).addSpecialConditions(specialConditions).build();
-    }
-
-    public static MomentInstance skipConditionsExcept(Level level, Moment moment, ServerPlayer player,ICondition... specialConditions) {
-        return builder(level, moment).player(player).addSpecialConditions(specialConditions).build();
-    }
-
-    public static MomentInstance skipConditionsExcept(Level level, Moment moment,BlockPos pos, ServerPlayer player,ICondition... specialConditions) {
-        return builder(level, moment).player(player).pos(pos).addSpecialConditions(specialConditions).build();
-    }
-
 }
