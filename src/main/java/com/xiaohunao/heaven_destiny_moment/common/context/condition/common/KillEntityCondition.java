@@ -5,32 +5,30 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
+import com.xiaohunao.heaven_destiny_moment.common.function.MomentKillEntityConditionDifficultyScalingFunction;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMAttachments;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.PlayerListManager;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType,
                                   Optional<Integer> requiredTotalCount,
                                   Optional<Integer> requiredTotalScore,
                                   Optional<Map<EntityType<?>, Integer>> requiredKillCounts,
                                   Optional<Map<EntityType<?>, Integer>> requiredKillScores,
-                                  Optional<BiFunction<Integer, Difficulty, Integer>> difficultyScaling,
-                                  Optional<BiFunction<Integer, Integer, Integer>> playerCountScaling) implements ICondition {
+                                  Optional<MomentKillEntityConditionDifficultyScalingFunction> momentKillEntityConditionDifficultyScalingFunction) implements ICondition {
 
     public static final MapCodec<KillEntityCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             KillEntityRecorderAttachment.KillType.CODEC.fieldOf("kill_type").forGetter(KillEntityCondition::killType),
@@ -38,8 +36,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
             Codec.INT.optionalFieldOf("required_total_score").forGetter(KillEntityCondition::requiredTotalScore),
             Codec.unboundedMap(BuiltInRegistries.ENTITY_TYPE.byNameCodec(), Codec.INT).optionalFieldOf("required_kill_counts").forGetter(KillEntityCondition::requiredKillCounts),
             Codec.unboundedMap(BuiltInRegistries.ENTITY_TYPE.byNameCodec(), Codec.INT).optionalFieldOf("required_kill_scores").forGetter(KillEntityCondition::requiredKillScores),
-            HDMRegistries.DIFFICULTY_SCALING.byNameCodec().optionalFieldOf("difficulty_scaling").forGetter(KillEntityCondition::difficultyScaling),
-            HDMRegistries.PLAYER_COUNT_SCALING.byNameCodec().optionalFieldOf("player_count_scaling").forGetter(KillEntityCondition::playerCountScaling)
+            HDMRegistries.MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.byNameCodec().optionalFieldOf("moment_kill_entity_condition_difficulty_scaling_function").forGetter(KillEntityCondition::momentKillEntityConditionDifficultyScalingFunction)
     ).apply(instance, KillEntityCondition::new));
 
     @Override
@@ -178,15 +175,8 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
         int playerCount = instance.getPlayers().size();
 
         // 应用难度缩放
-        if (difficultyScaling.isPresent()) {
-            value = difficultyScaling.get().apply(value, difficulty);
-        }
-
-
-        
-        // 应用玩家数量缩放
-        if (playerCountScaling.isPresent()) {
-            value = playerCountScaling.get().apply(value, playerCount);
+        if (momentKillEntityConditionDifficultyScalingFunction.isPresent()) {
+            value = momentKillEntityConditionDifficultyScalingFunction.get().scale(value, instance);
         }
         
         return value;
@@ -208,8 +198,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
         private Integer requiredTotalScore = null;
         private Map<EntityType<?>, Integer> requiredKillCounts = null;
         private Map<EntityType<?>, Integer> requiredKillScores = null;
-        private BiFunction<Integer, Difficulty, Integer> difficultyScaling = null;
-        private BiFunction<Integer, Integer, Integer> playerCountScaling = null;
+        private MomentKillEntityConditionDifficultyScalingFunction momentKillEntityConditionDifficultyScalingFunction = null;
 
 
         public Builder(KillEntityRecorderAttachment.KillType killType) {
@@ -279,23 +268,14 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
 
         /**
          * 设置难度缩放函数的ID
-         * @param difficultyScaling 难度缩放函数
+         * @param momentKillEntityConditionDifficultyScalingFunction 难度缩放函数
          * @return this builder
          */
-        public Builder withDifficultyScaling(BiFunction<Integer, Difficulty, Integer> difficultyScaling) {
-            this.difficultyScaling = difficultyScaling;
+        public Builder withDifficultyScaling(MomentKillEntityConditionDifficultyScalingFunction momentKillEntityConditionDifficultyScalingFunction) {
+            this.momentKillEntityConditionDifficultyScalingFunction = momentKillEntityConditionDifficultyScalingFunction;
             return this;
         }
 
-        /**
-         * 设置玩家数量缩放函数的ID
-         * @param playerCountScaling 玩家数量缩放函数
-         * @return this builder
-         */
-        public Builder withPlayerCountScaling(BiFunction<Integer, Integer, Integer> playerCountScaling) {
-            this.playerCountScaling = playerCountScaling;
-            return this;
-        }
 
         /**
          * 直接设置所有需要的特定实体类型的击杀数要求
@@ -354,8 +334,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
                     Optional.ofNullable(requiredTotalScore),
                     Optional.ofNullable(requiredKillCounts),
                     Optional.ofNullable(requiredKillScores),
-                    Optional.ofNullable(difficultyScaling),
-                    Optional.ofNullable(playerCountScaling)
+                    Optional.ofNullable(momentKillEntityConditionDifficultyScalingFunction)
             );
         }
 
