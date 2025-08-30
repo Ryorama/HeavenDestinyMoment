@@ -64,7 +64,7 @@ public record MomentBarSyncPayload(MomentBar bar,  SyncType syncType) implements
                 }
                 case UPDATE_PROGRESS -> {
                     if (momentBar != null) {
-                        momentBar.updateProgress(bar.getProgress());
+                        momentBar.updateProgress(context.player().level(),bar.getProgress());
                     }
                 }
                 case ADD_PLAYER -> {

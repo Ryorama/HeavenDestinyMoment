@@ -9,6 +9,7 @@ import com.xiaohunao.heaven_destiny_moment.common.network.MomentBarSyncPayload;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Set;
@@ -44,10 +45,12 @@ public class MomentBar {
         this.color = color;
     }
 
-    public void updateProgress(float progress) {
+    public void updateProgress(Level level,float progress) {
         if (progress != this.progress) {
             this.progress = progress;
-            broadcast(MomentBarSyncPayload::updateProgress);
+            if (!level.isClientSide) {
+                broadcast(MomentBarSyncPayload::updateProgress);
+            }
         }
     }
 
