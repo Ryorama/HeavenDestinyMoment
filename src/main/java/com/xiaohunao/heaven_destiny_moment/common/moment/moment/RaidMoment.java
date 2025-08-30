@@ -55,7 +55,30 @@ public class RaidMoment extends Moment {
     }
 
     @Override
-    public MapCodec<? extends Moment> codec() {
-        return HDMMomentRegister.RAID_MOMENT.get();
+    public MapCodec<RaidMoment> codec() {
+        return CODEC;
+    }
+
+    public static class Builder extends MomentBuilder<RaidMoment> {
+        protected int readyTime = 100;
+
+        public Builder readyTime(int readyTime) {
+            this.readyTime = readyTime;
+            return this;
+        }
+
+        @Override
+        public RaidMoment build() {
+            return new RaidMoment(
+                    new DefaultMoment(
+                        Optional.ofNullable(barRenderType),
+                        Optional.ofNullable(momentData),
+                        Optional.ofNullable(tipSettings),
+                        Optional.ofNullable(clientSettings),
+                        Optional.ofNullable(trackers)
+                    ),
+                    readyTime
+            );
+        }
     }
 }

@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.EntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.context.entity_info.IEntityInfo;
 import com.xiaohunao.heaven_destiny_moment.common.mixed.SpawnerDataMomentMixed;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.ISpawnAlgorithm;
 import com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm.OpenAreaSpawnAlgorithm;
@@ -21,33 +22,33 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> entitySpawnList, Optional<BiomeEntitySpawnSettings> biomeEntitySpawnSettings, Optional<MobSpawnRule> rule, Optional<ISpawnAlgorithm> spawnAlgorithm,Boolean isAfterEndClearMonster) {
+public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> entitySpawnList, Optional<BiomeEntitySpawnSettings> biomeEntitySpawnSettings, Optional<MobSpawnRule> rule, Optional<ISpawnAlgorithm> spawnAlgorithm, Boolean isAfterEndClearMonster) {
+
     private static final Random RANDOM = new Random();
 
-    public static final Codec<EntitySpawnSettings> CODEC = RecordCodecBuilder.create(builder ->
-            builder.group(
+    public static final Codec<EntitySpawnSettings> CODEC = RecordCodecBuilder.create(builder
+                    -> builder.group(
                     Codec.list(Weighted.codec(Codec.list(IEntityInfo.CODEC))).optionalFieldOf("entity_spawn_list").forGetter(EntitySpawnSettings::entitySpawnList),
                     BiomeEntitySpawnSettings.CODEC.optionalFieldOf("biome_entity_Spawn_settings").forGetter(EntitySpawnSettings::biomeEntitySpawnSettings),
                     MobSpawnRule.CODEC.optionalFieldOf("spawn_rule").forGetter(EntitySpawnSettings::rule),
                     ISpawnAlgorithm.CODEC.optionalFieldOf("spawn_algorithm").forGetter(EntitySpawnSettings::spawnAlgorithm),
-                    Codec.BOOL.optionalFieldOf("isAfterEndClearMonster",false).forGetter(EntitySpawnSettings::isAfterEndClearMonster)
+                    Codec.BOOL.optionalFieldOf("isAfterEndClearMonster", false).forGetter(EntitySpawnSettings::isAfterEndClearMonster)
             ).apply(builder, EntitySpawnSettings::new)
     );
 
-    public List<Entity> spawnList(Level level, int wave){
+    public List<Entity> spawnList(Level level, int wave) {
         List<Entity> list = Lists.newArrayList();
 
         entitySpawnList.ifPresent(entitySpawnList -> {
             Weighted<List<IEntityInfo>> listWeighted = entitySpawnList.get(wave);
 
-            listWeighted.getRandomWeighted().forEach(infoList-> {
+            listWeighted.getRandomWeighted().forEach(infoList -> {
                 Weighted.Builder<IEntityInfo> builder = new Weighted.Builder<>();
                 infoList.forEach(entityInfo -> {
-                    if (entityInfo instanceof EntityInfo){
+                    if (entityInfo instanceof EntityInfo) {
                         builder.add(entityInfo, ((EntityInfo) entityInfo).weight().orElse(1));
                     }
                 });
-
 
                 int sum = infoList.stream()
                         .filter(entityInfo -> entityInfo instanceof EntityInfo)
@@ -62,7 +63,7 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     int weight;
                     if (entityInfo.weight().isPresent()) {
                         weight = entityInfo.weight().get();
-                    }else {
+                    } else {
                         weight = 1;
                     }
 
@@ -75,13 +76,12 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
         return list;
     }
 
-    public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(Moment moment,MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
+    public WeightedRandomList<MobSpawnSettings.SpawnerData> adjustmentBiomeEntitySpawnSettings(IMoment moment, MobCategory mobCategory, List<MobSpawnSettings.SpawnerData> originalSpawnerData) {
         List<MobSpawnSettings.SpawnerData> ownSpawnerDataList = Lists.newArrayList();
         for (MobSpawnSettings.SpawnerData originalSpawnerDatum : originalSpawnerData) {
             SpawnerDataMomentMixed spawnerDataMomentMixed = (SpawnerDataMomentMixed) originalSpawnerDatum;
             ownSpawnerDataList.add(spawnerDataMomentMixed.heaven_destiny_moment$vanillaSource());
         }
-
 
         biomeEntitySpawnSettings.flatMap(BiomeEntitySpawnSettings::biomeMobSpawnSettings)
                 .map(mobSpawnSettings -> {
@@ -94,7 +94,6 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                         SpawnerDataMomentMixed spawnerDataMomentMixed = (SpawnerDataMomentMixed) originalSpawnerDatum;
                         newOwnSpawnerDataList.add(spawnerDataMomentMixed.heaven_destiny_moment$setMoment(moment));
                     }
-
 
                     boolean allowOriginal = rule.flatMap(MobSpawnRule::allowOriginalBiomeSpawnSettings).orElse(true);
                     if (allowOriginal) {
@@ -129,29 +128,36 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
     private void applyBlackOrWhiteListFilter(List<MobSpawnSettings.SpawnerData> spawnerData) {
         biomeEntitySpawnSettings.flatMap(BiomeEntitySpawnSettings::entitySpawnListContext)
                 .ifPresent(list -> {
-                    Predicate<MobSpawnSettings.SpawnerData> filterPredicate = data ->
-                            list.contains(data.type) && list.isBlackList().isPresent() && list.isBlackList().get();
+                    Predicate<MobSpawnSettings.SpawnerData> filterPredicate = data
+                            -> list.contains(data.type) && list.isBlackList().isPresent() && list.isBlackList().get();
                     spawnerData.removeIf(filterPredicate);
                 });
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EntitySpawnSettings> {
+
         private List<Weighted<List<IEntityInfo>>> entitySpawnList;
         private BiomeEntitySpawnSettings biomeEntitySpawnSettings;
         private MobSpawnRule rule;
         private ISpawnAlgorithm spawnAlgorithm = OpenAreaSpawnAlgorithm.DEFAULT;
         private boolean isAfterEndClearMonster = false;
 
-        public Builder biomeEntitySpawnSettings(Function<BiomeEntitySpawnSettings.Builder,BiomeEntitySpawnSettings.Builder> biomeEntitySpawnSettings) {
-            this.biomeEntitySpawnSettings = biomeEntitySpawnSettings.apply(new BiomeEntitySpawnSettings.Builder()).build();
+        public Builder biomeEntitySpawnSettings(Function<BiomeEntitySpawnSettings.Builder, BiomeEntitySpawnSettings.Builder> biomeEntitySpawnSettings) {
+            BiomeEntitySpawnSettings.Builder builder = new BiomeEntitySpawnSettings.Builder();
+            if (this.biomeEntitySpawnSettings != null) {
+                builder = builder.converter(this.biomeEntitySpawnSettings);
+            }
+            this.biomeEntitySpawnSettings = biomeEntitySpawnSettings.apply(builder).build();
+
+
             return this;
         }
 
         public Builder entitySpawnList(Weighted.RandomType randomType, Function<Weighted.Builder<List<IEntityInfo>>, Weighted.Builder<List<IEntityInfo>>> weightedEntityInfo) {
-            if (entitySpawnList == null){
+            if (entitySpawnList == null) {
                 entitySpawnList = Lists.newArrayList();
             }
-            Weighted.Builder<List<IEntityInfo>> builder = new Weighted.Builder<>();
+            Weighted.Builder<List<IEntityInfo>>builder = new Weighted.Builder<>();
             builder.randomType(randomType);
 
             Collections.addAll(entitySpawnList, weightedEntityInfo.apply(builder).build());
@@ -163,23 +169,29 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
         }
 
 
-        public Builder rule(Function<MobSpawnRule.Builder,MobSpawnRule.Builder> rule){
-            this.rule = rule.apply(new MobSpawnRule.Builder()).build();
+        public Builder rule(Function<MobSpawnRule.Builder, MobSpawnRule.Builder> rule) {
+            MobSpawnRule.Builder builder = new MobSpawnRule.Builder();
+            if (this.rule != null) {
+                builder = builder.converter(this.rule);
+            }
+            this.rule = rule.apply(builder).build();
             return this;
         }
 
-        public Builder spawnAlgorithm(ISpawnAlgorithm spawnAlgorithm){
+
+        public Builder spawnAlgorithm(ISpawnAlgorithm spawnAlgorithm) {
             this.spawnAlgorithm = spawnAlgorithm;
             return this;
         }
 
-        public Builder afterEndClearMonster(){
+
+        public Builder afterEndClearMonster () {
             this.isAfterEndClearMonster = true;
             return this;
         }
 
 
-        public EntitySpawnSettings build() {
+        public EntitySpawnSettings build () {
             return new EntitySpawnSettings(
                     Optional.ofNullable(entitySpawnList),
                     Optional.ofNullable(biomeEntitySpawnSettings),
@@ -188,7 +200,17 @@ public record EntitySpawnSettings(Optional<List<Weighted<List<IEntityInfo>>>> en
                     isAfterEndClearMonster
             );
         }
+
+        @Override
+        public Builder converter (EntitySpawnSettings entitySpawnSettings){
+            Builder builder = new Builder();
+            entitySpawnSettings.entitySpawnList.ifPresent(list -> builder.entitySpawnList = list);
+            entitySpawnSettings.biomeEntitySpawnSettings.ifPresent(settings -> builder.biomeEntitySpawnSettings = settings);
+            entitySpawnSettings.rule.ifPresent(rule -> builder.rule = rule);
+            entitySpawnSettings.spawnAlgorithm.ifPresent(algorithm -> builder.spawnAlgorithm = algorithm);
+            builder.isAfterEndClearMonster = entitySpawnSettings.isAfterEndClearMonster;
+            return builder;
+        }
+
     }
-
-
 }

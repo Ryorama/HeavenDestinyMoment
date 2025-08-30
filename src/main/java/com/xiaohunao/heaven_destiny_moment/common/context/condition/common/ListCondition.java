@@ -28,6 +28,6 @@ public record ListCondition(List<ICondition> conditions) implements ICondition {
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.LIST.get();
+        return CODEC;
     }
 }

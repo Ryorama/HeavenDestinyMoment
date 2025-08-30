@@ -40,10 +40,10 @@ public record EquipmentAttachable(Weighted<Pair<IEquippableSlot, ItemStack>> equ
 
     @Override
     public MapCodec<? extends IAttachable> codec() {
-        return HDMContextRegister.EQUIPMENT_ATTACHABLE.get();
+        return CODEC;
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EquipmentAttachable> {
         private Weighted.Builder<Pair<IEquippableSlot, ItemStack>> equipments;
         protected Map<EquipmentSlot, Float> canDropEquippable;
 
@@ -130,6 +130,20 @@ public record EquipmentAttachable(Weighted<Pair<IEquippableSlot, ItemStack>> equ
             }
             this.canDropEquippable.put(slot, chance);
             return this;
+        }
+
+        @Override
+        public Builder converter(EquipmentAttachable equipmentAttachable) {
+            Builder builder = new Builder();
+            builder.equipments = new Weighted.Builder<>();
+            builder.equipments.converter(equipmentAttachable.equipments());
+            equipmentAttachable.canDropEquippable().ifPresent(dropMap -> {
+                if (builder.canDropEquippable == null) {
+                    builder.canDropEquippable = Maps.newHashMap();
+                }
+                builder.canDropEquippable.putAll(dropMap);
+            });
+            return builder;
         }
     }
 }

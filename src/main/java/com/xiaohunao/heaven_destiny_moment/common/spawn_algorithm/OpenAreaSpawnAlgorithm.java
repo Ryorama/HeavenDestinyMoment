@@ -111,7 +111,7 @@ public record OpenAreaSpawnAlgorithm(int maxTry, int range, int verticalSearchRa
 
     @Override
     public MapCodec<? extends ISpawnAlgorithm> codec() {
-        return HDMContextRegister.OPEN_AREA_SPAWN_ALGORITHM.get();
+        return CODEC;
     }
 
     public static class Builder {

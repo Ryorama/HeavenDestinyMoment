@@ -29,4 +29,11 @@ public record ConditionalTrigger(List<ICondition> conditions) implements ITrigge
     public static ConditionalTrigger of(ICondition... conditions) {
         return new ConditionalTrigger(List.of(conditions));
     }
+
+    @Override
+    public MapCodec<? extends ITrigger> codec() {
+        return CODEC;
+    }
+
+
 }

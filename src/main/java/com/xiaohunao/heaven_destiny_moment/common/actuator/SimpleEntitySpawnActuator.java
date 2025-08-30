@@ -41,7 +41,7 @@ public final class SimpleEntitySpawnActuator implements IActuator {
 
     @Override
     public MapCodec<? extends IActuator> codec() {
-        return HDMActuators.SIMPLE_ENTITY_SPAWN_ACTUATOR.get();
+        return CODEC;
     }
 
     public IEntityInfo entityInfo() {

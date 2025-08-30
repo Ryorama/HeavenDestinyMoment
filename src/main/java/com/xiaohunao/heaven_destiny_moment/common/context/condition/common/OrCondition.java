@@ -33,7 +33,7 @@ public record OrCondition(ICondition or, List<ICondition> trueCondition, List<IC
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.OR_CONDITION.get();
+        return CODEC;
     }
 
 

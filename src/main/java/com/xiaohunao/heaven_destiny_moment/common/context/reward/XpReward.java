@@ -5,7 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.callback.CallbackSerializable;
 import com.xiaohunao.heaven_destiny_moment.common.callback.callback.RewardCallback;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.entity.player.Player;
 
@@ -33,14 +33,14 @@ public class XpReward extends Reward {
 
     @Override
     public MapCodec<? extends IReward> codec() {
-        return HDMContextRegister.XP_REWARD.get();
+        return CODEC;
     }
 
     public int xp() {
         return xp;
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<XpReward> {
         private final int xp;
         private RewardCallback rewardCallback;
 
@@ -55,6 +55,13 @@ public class XpReward extends Reward {
         public Builder rewardCallback(RewardCallback rewardCallback){
             this.rewardCallback = rewardCallback;
             return this;
+        }
+
+        @Override
+        public Builder converter(XpReward xpReward) {
+            Builder builder = new Builder(xpReward.xp());
+            xpReward.getRewardCallback().ifPresent(callback -> builder.rewardCallback = (RewardCallback) callback);
+            return builder;
         }
     }
 }

@@ -25,6 +25,6 @@ public record InvertCondition(ICondition condition) implements ICondition{
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.INVERT.get();
+        return CODEC;
     }
 }

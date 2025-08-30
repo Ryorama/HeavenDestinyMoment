@@ -117,10 +117,10 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.LOCATION_CONDITION.get();
+        return CODEC;
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<LocationCondition> {
         private MinMaxBounds.Doubles x;
         private MinMaxBounds.Doubles y;
         private MinMaxBounds.Doubles z;
@@ -251,6 +251,25 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
         public Builder setCanSeeSky(boolean canSeeSky) {
             this.canSeeSky = Optional.of(canSeeSky);
             return this;
+        }
+
+        @Override
+        public Builder converter(LocationCondition locationCondition) {
+            Builder builder = new Builder();
+            locationCondition.position().ifPresent(pos -> {
+                builder.x = pos.x();
+                builder.y = pos.y();
+                builder.z = pos.z();
+            });
+            locationCondition.biomes().ifPresent(biomes -> builder.biomes = Optional.of(new ArrayList<>(biomes)));
+            locationCondition.structures().ifPresent(structures -> builder.structures = Optional.of(new ArrayList<>(structures)));
+            locationCondition.dimension().ifPresent(dimension -> builder.dimension = Optional.of(new ArrayList<>(dimension)));
+            locationCondition.smokey().ifPresent(smokey -> builder.smokey = Optional.of(smokey));
+            locationCondition.light().ifPresent(light -> builder.light = Optional.of(light));
+            locationCondition.block().ifPresent(block -> builder.block = Optional.of(block));
+            locationCondition.fluid().ifPresent(fluid -> builder.fluid = Optional.of(fluid));
+            locationCondition.canSeeSky().ifPresent(canSeeSky -> builder.canSeeSky = Optional.of(canSeeSky));
+            return builder;
         }
     }
 

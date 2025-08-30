@@ -16,8 +16,8 @@ public record ModLoadedCondition(String modid) implements ICondition {
             Codec.STRING.fieldOf("modid").forGetter(ModLoadedCondition::modid)
     ).apply(instance, ModLoadedCondition::new));
 
-    public static ModLoadedCondition of(String heavenDestinyMoment) {
-        return new ModLoadedCondition(heavenDestinyMoment);
+    public static ModLoadedCondition of(String modid) {
+        return new ModLoadedCondition(modid);
     }
 
     @Override
@@ -27,6 +27,6 @@ public record ModLoadedCondition(String modid) implements ICondition {
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.MOD_LOADED_CONDITION.get();
+        return CODEC;
     }
 }

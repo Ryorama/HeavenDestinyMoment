@@ -36,6 +36,6 @@ public record DifficultyCondition(Difficulty difficulty) implements ICondition {
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.DIFFICULTY.get();
+        return CODEC;
     }
 }

@@ -34,6 +34,21 @@ public class DefaultMoment extends Moment {
 
     @Override
     public MapCodec<? extends DefaultMoment> codec() {
-        return HDMMomentRegister.DEFAULT_MOMENT.get();
+        return CODEC;
+    }
+
+
+
+    public static class Builder extends MomentBuilder<DefaultMoment> {
+        @Override
+        public DefaultMoment build() {
+            return new DefaultMoment(
+                    Optional.ofNullable(barRenderType),
+                    Optional.ofNullable(momentData),
+                    Optional.ofNullable(tipSettings),
+                    Optional.ofNullable(clientSettings),
+                    Optional.ofNullable(trackers)
+            );
+        }
     }
 }

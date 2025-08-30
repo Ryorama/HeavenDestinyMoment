@@ -20,7 +20,7 @@ public record LocationArea(LocationCondition locationCondition) implements Area 
 
     @Override
     public MapCodec<? extends Area> codec() {
-        return HDMContextRegister.LOCATION_AREA.get();
+        return CODEC;
     }
 
     @Override

@@ -43,7 +43,7 @@ public record TipSettings(Optional<Map<MomentState, Holder<SoundEvent>>> soundEv
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<TipSettings> {
         private Map<MomentState, Component> texts;
         private Map<MomentState, Holder<SoundEvent>> soundEvents;
 
@@ -83,5 +83,22 @@ public record TipSettings(Optional<Map<MomentState, Holder<SoundEvent>>> soundEv
             return new TipSettings(Optional.ofNullable(soundEvents), Optional.ofNullable(texts));
         }
 
+        @Override
+        public Builder converter(TipSettings tipSettings) {
+            Builder builder = new Builder();
+            tipSettings.soundEvents.ifPresent(events -> {
+                if (builder.soundEvents == null) {
+                    builder.soundEvents = Maps.newHashMap();
+                }
+                builder.soundEvents.putAll(events);
+            });
+            tipSettings.texts.ifPresent(texts -> {
+                if (builder.texts == null) {
+                    builder.texts = Maps.newHashMap();
+                }
+                builder.texts.putAll(texts);
+            });
+            return builder;
+        }
     }
 }

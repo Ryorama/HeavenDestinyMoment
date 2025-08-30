@@ -32,19 +32,32 @@ public record TimeProbabilityTrigger(TimeCondition timeCondition, float probabil
         return nextFloat < probability;
     }
 
-    public static TimeProbabilityTrigger exactly(long value, float probability) {
-        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(value), Optional.of(value)), probability);
+    public static TimeProbabilityTrigger atMost(long max, double probability) {
+        return new TimeProbabilityTrigger(new TimeCondition(Optional.empty(), Optional.of(max)), Optional.of(probability), Optional.empty());
     }
 
-    public static TimeProbabilityTrigger between(long min, long max, float probability) {
-        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(min), Optional.of(max)), probability);
+
+
+    public static TimeProbabilityTrigger exactly(long value, MomentProbabilityFunction probabilityFunction) {
+        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(value), Optional.of(value)), Optional.empty(), Optional.of(probabilityFunction));
     }
 
-    public static TimeProbabilityTrigger atLeast(long min, float probability) {
-        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(min), Optional.empty()), probability);
+    public static TimeProbabilityTrigger between(long min, long max, MomentProbabilityFunction probabilityFunction) {
+        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(min), Optional.of(max)), Optional.empty(), Optional.of(probabilityFunction));
     }
 
-    public static TimeProbabilityTrigger atMost(long max, float probability) {
-        return new TimeProbabilityTrigger(new TimeCondition(Optional.empty(), Optional.of(max)), probability);
+    public static TimeProbabilityTrigger atLeast(long min, MomentProbabilityFunction probabilityFunction) {
+        return new TimeProbabilityTrigger(new TimeCondition(Optional.of(min), Optional.empty()), Optional.empty(), Optional.of(probabilityFunction));
+    }
+
+    public static TimeProbabilityTrigger atMost(long max, MomentProbabilityFunction probabilityFunction) {
+        return new TimeProbabilityTrigger(new TimeCondition(Optional.empty(), Optional.of(max)), Optional.empty(), Optional.of(probabilityFunction));
+    }
+
+
+
+    @Override
+    public MapCodec<? extends ITrigger> codec() {
+        return CODEC;
     }
 }

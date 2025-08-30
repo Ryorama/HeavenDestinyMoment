@@ -27,7 +27,7 @@ public record LevelRunningTimeCondition(Optional<Long> min, Optional<Long> max) 
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.LEVEL_RUNNING_TIME.get();
+        return CODEC;
     }
 
     public static LevelRunningTimeCondition exactly(long value) {

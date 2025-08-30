@@ -69,7 +69,7 @@ public record TimeCondition(Optional<Long> min, Optional<Long> max) implements I
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.TIME_CONDITION.get();
+        return CODEC;
     }
 
 }

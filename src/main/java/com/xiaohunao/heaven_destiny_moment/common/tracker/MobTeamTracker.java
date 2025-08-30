@@ -36,6 +36,6 @@ public class MobTeamTracker extends Tracker{
 
     @Override
     public MapCodec<? extends ITracker> codec(){
-        return HDMContextRegister.MOB_TEAM_TRACKER.get();
+        return CODEC;
     }
 }

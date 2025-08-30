@@ -33,7 +33,7 @@ public record EntitySpawnList(Optional<List<EntityType<?>>> entityTypes, Optiona
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EntitySpawnList> {
         private List<EntityType<?>> entityTypes;
         private List<TagKey<EntityType<?>>> tagKeys;
         private Boolean isBlackList;
@@ -60,6 +60,25 @@ public record EntitySpawnList(Optional<List<EntityType<?>>> entityTypes, Optiona
         public Builder isBlackList(boolean isBlackList){
             this.isBlackList = isBlackList;
             return this;
+        }
+
+        @Override
+        public Builder converter(EntitySpawnList entitySpawnList) {
+            Builder builder = new Builder();
+            entitySpawnList.entityTypes.ifPresent(types -> {
+                if (builder.entityTypes == null) {
+                    builder.entityTypes = Lists.newArrayList();
+                }
+                builder.entityTypes.addAll(types);
+            });
+            entitySpawnList.tagKeys.ifPresent(keys -> {
+                if (builder.tagKeys == null) {
+                    builder.tagKeys = Lists.newArrayList();
+                }
+                builder.tagKeys.addAll(keys);
+            });
+            entitySpawnList.isBlackList.ifPresent(blackList -> builder.isBlackList = blackList);
+            return builder;
         }
     }
 }

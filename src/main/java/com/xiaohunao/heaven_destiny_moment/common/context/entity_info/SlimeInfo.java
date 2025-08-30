@@ -46,7 +46,7 @@ public class SlimeInfo extends EntityInfo{
 
     @Override
     public MapCodec<? extends IEntityInfo> codec() {
-        return HDMContextRegister.SLIME_INFO.get();
+        return CODEC;
     }
 
     public Integer size() {

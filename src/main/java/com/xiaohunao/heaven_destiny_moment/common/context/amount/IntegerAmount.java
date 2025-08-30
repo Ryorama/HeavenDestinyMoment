@@ -18,6 +18,6 @@ public record IntegerAmount(int amount) implements IAmount {
     }
     @Override
     public MapCodec<? extends IAmount> codec() {
-        return HDMContextRegister.INTEGER_AMOUNT.get();
+        return CODEC;
     }
 }

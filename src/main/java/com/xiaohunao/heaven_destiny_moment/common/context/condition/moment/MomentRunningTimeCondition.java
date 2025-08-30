@@ -34,7 +34,7 @@ public record MomentRunningTimeCondition(Optional<Long> min, Optional<Long> max)
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.MOMENT_RUNNING_TIME.get();
+        return CODEC;
     }
 
     public static MomentRunningTimeCondition exactly(long value) {

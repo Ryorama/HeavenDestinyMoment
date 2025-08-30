@@ -25,7 +25,7 @@ public final class StateSettingActuator implements IActuator {
 
     @Override
     public MapCodec<? extends IActuator> codec() {
-        return HDMActuators.STATE_SETTING_ACTUATOR.get();
+        return CODEC;
     }
 
     @Override

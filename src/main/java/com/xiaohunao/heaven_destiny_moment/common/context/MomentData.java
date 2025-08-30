@@ -24,11 +24,21 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<AutoActuatorG
     public static final MomentData EMPTY = new MomentData(Optional.empty(),Optional.empty(),Optional.empty(),Optional.empty());
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<MomentData>{
         private List<IReward> rewards;
         private AutoActuatorGroupSettings autoActuatorGroupSettings;
         private EntitySpawnSettings entitySpawnSettings;
         private EntityTypeScoreTable entityTypeScoreTable;
+
+        @Override
+        public Builder converter(MomentData momentData) {
+            Builder builder = new Builder();
+            momentData.rewards.ifPresent(rewards -> builder.rewards = rewards);
+            momentData.autoActuatorGroupSettings.ifPresent(settings -> builder.autoActuatorGroupSettings = settings);
+            momentData.entitySpawnSettings.ifPresent(settings -> builder.entitySpawnSettings = settings);
+            momentData.entityTypeScoreTable.ifPresent(scoreTable -> builder.entityTypeScoreTable = scoreTable);
+            return builder;
+        }
 
 
         public MomentData build() {
@@ -43,21 +53,33 @@ public record MomentData(Optional<List<IReward>> rewards, Optional<AutoActuatorG
             return this;
         }
 
-
         public Builder autoActuatorGroupSettings(Function<AutoActuatorGroupSettings.Builder, AutoActuatorGroupSettings.Builder> autoActuatorGroupSettings){
-            this.autoActuatorGroupSettings = autoActuatorGroupSettings.apply(new AutoActuatorGroupSettings.Builder()).build();
+            AutoActuatorGroupSettings.Builder builder = new AutoActuatorGroupSettings.Builder();
+            if (this.autoActuatorGroupSettings != null) {
+                builder = builder.converter(this.autoActuatorGroupSettings);
+            }
+            this.autoActuatorGroupSettings = autoActuatorGroupSettings.apply(builder).build();
             return this;
         }
+
 
         public Builder entitySpawnSettings(Function<EntitySpawnSettings.Builder, EntitySpawnSettings.Builder> entitySpawnSettings){
-            this.entitySpawnSettings = entitySpawnSettings.apply(new EntitySpawnSettings.Builder()).build();
+            EntitySpawnSettings.Builder builder = new EntitySpawnSettings.Builder();
+            if (this.entitySpawnSettings != null) {
+                builder = builder.converter(this.entitySpawnSettings);
+            }
+            this.entitySpawnSettings = entitySpawnSettings.apply(builder).build();
             return this;
         }
+
 
         public Builder entityTypeScoreTable(Function<EntityTypeScoreTable.Builder,EntityTypeScoreTable.Builder> entityTypeScoreTable) {
-            this.entityTypeScoreTable = entityTypeScoreTable.apply(new EntityTypeScoreTable.Builder()).build();
+            EntityTypeScoreTable.Builder builder = new EntityTypeScoreTable.Builder();
+            if (this.entityTypeScoreTable != null) {
+                builder = builder.converter(this.entityTypeScoreTable);
+            }
+            this.entityTypeScoreTable = entityTypeScoreTable.apply(builder).build();
             return this;
         }
-
     }
 }

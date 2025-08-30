@@ -64,7 +64,7 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.PLAYER_CONDITION.get();
+        return CODEC;
     }
 
 
@@ -111,6 +111,7 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
                                   TriFunction<MomentInstance, BlockPos, ServerPlayer, Boolean> function);
     }
 
+    public static class Builder implements IBuilderConverter<PlayerCondition> {
 
     public static class Builder {
         private final Type type;
@@ -139,7 +140,22 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
         }
 
         public PlayerCondition build() {
-            return new PlayerCondition(type, Optional.ofNullable(playerPredicate), Optional.ofNullable(entityPredicate),Optional.ofNullable(attributePredicate));
+            return new PlayerCondition(type,
+                    Optional.ofNullable(playerPredicate),
+                    Optional.ofNullable(entityPredicate),
+                    Optional.ofNullable(attributePredicate),
+                    Optional.ofNullable(subConditions)
+            );
+        }
+
+        @Override
+        public Builder converter(PlayerCondition playerCondition) {
+            Builder builder = new Builder(playerCondition.type());
+            playerCondition.playerPredicate().ifPresent(predicate -> builder.playerPredicate = predicate);
+            playerCondition.entityPredicate().ifPresent(predicate -> builder.entityPredicate = predicate);
+            playerCondition.attributePredicate().ifPresent(predicate -> builder.attributePredicate = predicate);
+            playerCondition.subConditions().ifPresent(conditions -> builder.subConditions = conditions);
+            return builder;
         }
     }
 }

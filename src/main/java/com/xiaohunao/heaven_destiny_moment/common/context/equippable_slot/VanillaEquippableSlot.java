@@ -30,7 +30,7 @@ public record VanillaEquippableSlot(EquipmentSlot slot) implements IEquippableSl
 
     @Override
     public MapCodec<? extends IEquippableSlot> codec() {
-        return HDMContextRegister.VANILLA_EQUIPPABLE_SLOT.get();
+        return CODEC;
     }
 
     @Override

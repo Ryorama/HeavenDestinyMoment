@@ -4,8 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.callback.CallbackSerializable;
 import com.xiaohunao.heaven_destiny_moment.common.callback.callback.RewardCallback;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.Weighted;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
@@ -31,7 +31,7 @@ public class EffectReward extends Reward {
 
     @Override
     public MapCodec<? extends IReward> codec() {
-        return HDMContextRegister.EFFECT_REWARD.get();
+        return CODEC;
     }
 
     public Weighted<MobEffectInstance> effects() {
@@ -39,7 +39,7 @@ public class EffectReward extends Reward {
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EffectReward> {
         private final Weighted.Builder<MobEffectInstance> builder = new Weighted.Builder<>();
         private RewardCallback rewardCallback;
 
@@ -64,6 +64,14 @@ public class EffectReward extends Reward {
         public Builder rewardCallback(RewardCallback rewardCallback){
             this.rewardCallback = rewardCallback;
             return this;
+        }
+
+        @Override
+        public Builder converter(EffectReward effectReward) {
+            Builder builder = new Builder();
+            builder.builder.converter(effectReward.effects());
+            effectReward.getRewardCallback().ifPresent(callback -> builder.rewardCallback = (RewardCallback) callback);
+            return builder;
         }
     }
 }

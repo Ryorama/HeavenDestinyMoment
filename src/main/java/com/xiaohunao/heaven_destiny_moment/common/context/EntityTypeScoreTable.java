@@ -15,7 +15,7 @@ public record EntityTypeScoreTable(Map<EntityType<?>,Integer> killType) {
         return killType.getOrDefault(entityType,0);
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EntityTypeScoreTable> {
         private final Map<EntityType<?>,Integer> killType = Maps.newHashMap();
 
         public EntityTypeScoreTable build() {
@@ -27,5 +27,11 @@ public record EntityTypeScoreTable(Map<EntityType<?>,Integer> killType) {
             return this;
         }
 
+        @Override
+        public Builder converter(EntityTypeScoreTable entityTypeScoreTable) {
+            Builder builder = new Builder();
+            builder.killType.putAll(entityTypeScoreTable.killType);
+            return builder;
+        }
     }
 }

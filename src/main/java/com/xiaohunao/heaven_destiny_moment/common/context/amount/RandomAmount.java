@@ -15,6 +15,10 @@ public record RandomAmount(int min, int max) implements IAmount {
 
     private static final Random rand = new Random();
 
+    public static RandomAmount of(int min, int max) {
+        return new RandomAmount(min, max);
+    }
+
     @Override
     public int getAmount() {
         int newMax = Math.max(this.max, this.min);
@@ -22,6 +26,6 @@ public record RandomAmount(int min, int max) implements IAmount {
     }
     @Override
     public MapCodec<? extends IAmount> codec() {
-        return HDMContextRegister.RANDOM_AMOUNT.get();
+        return CODEC;
     }
 }

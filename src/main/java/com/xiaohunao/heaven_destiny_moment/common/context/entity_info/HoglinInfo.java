@@ -46,7 +46,7 @@ public class HoglinInfo extends EntityInfo{
 
     @Override
     public MapCodec<? extends IEntityInfo> codec() {
-        return HDMContextRegister.HOGLIN_INFO.get();
+        return CODEC;
     }
 
     public boolean immuneZombification() {

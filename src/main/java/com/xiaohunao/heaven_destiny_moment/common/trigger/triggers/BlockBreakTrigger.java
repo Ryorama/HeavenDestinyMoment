@@ -22,4 +22,11 @@ public record BlockBreakTrigger(Block block) implements ITrigger {
         if (pos == null) return false;
         return level.getBlockState(pos).getBlock() == block;
     }
+
+    @Override
+    public MapCodec<? extends ITrigger> codec() {
+        return CODEC;
+    }
+
+
 }

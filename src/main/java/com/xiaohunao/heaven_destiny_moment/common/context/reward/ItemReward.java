@@ -36,14 +36,14 @@ public class ItemReward extends Reward {
 
     @Override
     public MapCodec<? extends IReward> codec() {
-        return HDMContextRegister.ITEM_REWARD.get();
+        return CODEC;
     }
 
     public Weighted<ItemStack> items() {
         return items;
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<ItemReward> {
         private final Weighted.Builder<ItemStack> builder = new Weighted.Builder<>();
         private RewardCallback rewardCallback;
 
@@ -81,7 +81,13 @@ public class ItemReward extends Reward {
             return this;
         }
 
-
+        @Override
+        public Builder converter(ItemReward itemReward) {
+            Builder builder = new Builder();
+            builder.builder.converter(itemReward.items());
+            itemReward.getRewardCallback().ifPresent(callback -> builder.rewardCallback = (RewardCallback) callback);
+            return builder;
+        }
     }
 
 }

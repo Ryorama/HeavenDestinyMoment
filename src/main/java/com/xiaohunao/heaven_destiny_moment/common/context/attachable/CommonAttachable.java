@@ -36,10 +36,10 @@ public record CommonAttachable(Optional<Weighted<MobEffectInstance>> effects, Op
 
     @Override
     public MapCodec<? extends IAttachable> codec() {
-        return HDMContextRegister.COMMON_ATTACHABLE.get();
+        return CODEC;
     }
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<CommonAttachable> {
         private final Weighted.Builder<MobEffectInstance> effects = new Weighted.Builder<>();
         private final Weighted.Builder<AttributeElement> attributes = new Weighted.Builder<>();
 
@@ -73,6 +73,14 @@ public record CommonAttachable(Optional<Weighted<MobEffectInstance>> effects, Op
         public Builder addAttribute(Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation operation,int weight){
             attributes.add(new AttributeElement(attribute,new AttributeModifier(id,amount,operation)),weight);
             return this;
+        }
+
+        @Override
+        public Builder converter(CommonAttachable commonAttachable) {
+            Builder builder = new Builder();
+            commonAttachable.effects().ifPresent(effects -> builder.effects.converter(effects));
+            commonAttachable.attributes().ifPresent(attributes -> builder.attributes.converter(attributes));
+            return builder;
         }
     }
 }

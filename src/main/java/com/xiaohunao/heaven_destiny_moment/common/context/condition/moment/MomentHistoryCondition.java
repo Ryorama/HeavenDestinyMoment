@@ -45,6 +45,6 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.MOMENT_HISTORY_TIME.get();
+        return CODEC;
     }
 }

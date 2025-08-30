@@ -30,4 +30,10 @@ public class RandomLevelTickTrigger implements ITrigger {
     public boolean canTrigger(Level level) {
         return level.getRandom().nextFloat() > Probability;
     }
+
+    @Override
+    public MapCodec<? extends ITrigger> codec() {
+        return CODEC;
+    }
+
 }

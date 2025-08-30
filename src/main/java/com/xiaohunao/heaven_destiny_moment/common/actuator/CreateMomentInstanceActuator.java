@@ -9,7 +9,7 @@ public record CreateMomentInstanceActuator() implements IActuator {
 
     @Override
     public MapCodec<? extends IActuator> codec() {
-        return HDMActuators.CREATE_MOMENT_INSTANCE_ACTUATOR.get();
+        return CODEC;
     }
 
     @Override

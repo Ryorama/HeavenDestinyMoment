@@ -27,6 +27,13 @@ public record KillEntityTrigger(Optional<EntityType<?>> entityType) implements I
                 .orElse(true);
     }
 
+    @Override
+    public MapCodec<? extends ITrigger> codec() {
+        return CODEC;
+    }
+
+
+
 
 }
 

@@ -19,7 +19,7 @@ public record ClientMoonSettings(Optional<Integer> moonColor, Optional<Float> mo
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<ClientMoonSettings> {
         private Integer moonColor;
         private Float moonSize;
         private ResourceLocation moonTexture;
@@ -39,6 +39,15 @@ public record ClientMoonSettings(Optional<Integer> moonColor, Optional<Float> mo
         public Builder moonTexture(ResourceLocation moonTexture) {
             this.moonTexture = moonTexture;
             return this;
+        }
+
+        @Override
+        public Builder converter(ClientMoonSettings clientMoonSettings) {
+            Builder builder = new Builder();
+            clientMoonSettings.moonColor.ifPresent(color -> builder.moonColor = color);
+            clientMoonSettings.moonSize.ifPresent(size -> builder.moonSize = size);
+            clientMoonSettings.moonTexture.ifPresent(texture -> builder.moonTexture = texture);
+            return builder;
         }
     }
 }

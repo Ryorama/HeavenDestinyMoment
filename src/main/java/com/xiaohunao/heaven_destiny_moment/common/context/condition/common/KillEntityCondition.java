@@ -187,7 +187,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.KILL_ENTITY_CONDITION.get();
+        return CODEC;
     }
 
     public static KillEntityCondition.Builder builder(KillEntityRecorderAttachment.KillType killType) {
@@ -195,7 +195,7 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<KillEntityCondition> {
         private final KillEntityRecorderAttachment.KillType killType;
         private Integer requiredTotalCount = null;
         private Integer requiredTotalScore = null;

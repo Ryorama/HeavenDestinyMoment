@@ -18,7 +18,7 @@ public record MobSpawnRule(Optional<Boolean> allowOriginalBiomeSpawnSettings, Op
             ).apply(builder, MobSpawnRule::new)
     );
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<MobSpawnRule> {
         private Boolean allowOriginalBiomeSpawnSettings;
         private Boolean forceSurfaceSpawning;
         private Boolean slimesSpawnEverywhere;
@@ -48,6 +48,16 @@ public record MobSpawnRule(Optional<Boolean> allowOriginalBiomeSpawnSettings, Op
             return new MobSpawnRule(Optional.ofNullable(allowOriginalBiomeSpawnSettings), Optional.ofNullable(slimesSpawnEverywhere),
                     Optional.ofNullable(ignoreLightLevel), Optional.ofNullable(ignoreDistance)
             );
+        }
+
+        @Override
+        public Builder converter(MobSpawnRule mobSpawnRule) {
+            Builder builder = new Builder();
+            mobSpawnRule.allowOriginalBiomeSpawnSettings.ifPresent(allow -> builder.allowOriginalBiomeSpawnSettings = allow);
+            mobSpawnRule.slimesSpawnEverywhere.ifPresent(slimes -> builder.slimesSpawnEverywhere = slimes);
+            mobSpawnRule.ignoreLightLevel.ifPresent(ignore -> builder.ignoreLightLevel = ignore);
+            mobSpawnRule.ignoreDistance.ifPresent(ignore -> builder.ignoreDistance = ignore);
+            return builder;
         }
     }
 }

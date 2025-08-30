@@ -26,6 +26,6 @@ public class WorldUniqueMomentCondition implements ICondition {
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.WORLD_UNIQUE_MOMENT.get();
+        return CODEC;
     }
 }

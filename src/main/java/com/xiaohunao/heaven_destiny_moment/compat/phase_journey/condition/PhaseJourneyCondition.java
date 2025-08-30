@@ -39,7 +39,7 @@ public record PhaseJourneyCondition(Type type, ResourceLocation phase) implement
 
     @Override
     public MapCodec<? extends ICondition> codec() {
-        return HDMConditions.PHASE_JOURNEY.get();
+        return CODEC;
     }
 
     public enum Type implements StringRepresentable {

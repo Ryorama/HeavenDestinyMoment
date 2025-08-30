@@ -4,11 +4,11 @@ import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IntegerAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.RandomAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.attachable.IAttachable;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -77,7 +77,7 @@ public class EntityInfo implements IEntityInfo {
 
     @Override
     public MapCodec<? extends IEntityInfo> codec() {
-        return HDMContextRegister.ENTITY_INFO.get();
+        return CODEC;
     }
 
     public EntityType<?> entityType() {
@@ -111,7 +111,7 @@ public class EntityInfo implements IEntityInfo {
     }
 
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<EntityInfo> {
         protected EntityType<?> entityType;
         protected IAmount amount = new IntegerAmount(1);
         protected List<IAttachable> attaches;
@@ -164,6 +164,22 @@ public class EntityInfo implements IEntityInfo {
 
         public IEntityInfo build() {
             return new EntityInfo(entityType, Optional.ofNullable(amount), Optional.ofNullable(weight), Optional.ofNullable(attaches), Optional.ofNullable(vehicle), Optional.ofNullable(portal_cooldown));
+        }
+
+        @Override
+        public Builder converter(EntityInfo entityInfo) {
+            Builder builder = new Builder(entityInfo.entityType());
+            entityInfo.amount().ifPresent(amount -> builder.amount = amount);
+            entityInfo.weight().ifPresent(weight -> builder.weight = weight);
+            entityInfo.attaches().ifPresent(attaches -> {
+                if (builder.attaches == null) {
+                    builder.attaches = Lists.newArrayList();
+                }
+                builder.attaches.addAll(attaches);
+            });
+            entityInfo.vehicle().ifPresent(vehicle -> builder.vehicle = vehicle);
+            entityInfo.portal_cooldown().ifPresent(cooldown -> builder.portal_cooldown = cooldown);
+            return builder;
         }
     }
 }

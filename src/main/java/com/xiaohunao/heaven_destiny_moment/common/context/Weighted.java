@@ -105,7 +105,7 @@ public record Weighted<T>(RandomType type,int totalWeight, List<WeightedEntry.Wr
         );
     }
 
-    public static class Builder<T> {
+    public static class Builder<T> implements IBuilderConverter<Weighted<T>> {
         private final List<WeightedEntry.Wrapper<T>> list = Lists.newArrayList();
         private RandomType type = RandomType.ALL;
 
@@ -121,6 +121,14 @@ public record Weighted<T>(RandomType type,int totalWeight, List<WeightedEntry.Wr
 
         public Weighted<T> build(){
             return new Weighted<>(type,calculateTotalWeight(list), list);
+        }
+
+        @Override
+        public Builder<T> converter(Weighted<T> weighted) {
+            Builder<T> builder = new Builder<>();
+            builder.type = weighted.type();
+            builder.list.addAll(weighted.list());
+            return builder;
         }
     }
 }

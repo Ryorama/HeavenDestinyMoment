@@ -17,7 +17,8 @@ public record BiomeEntitySpawnSettings(Optional<MobSpawnSettings> biomeMobSpawnS
             EntitySpawnList.CODEC.optionalFieldOf("entitySpawnListContext").forGetter(BiomeEntitySpawnSettings::entitySpawnListContext)
     ).apply(builder, BiomeEntitySpawnSettings::new));
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<BiomeEntitySpawnSettings> {
+
         private MobSpawnSettings biomeMobSpawnSettings;
         private Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplier;
         private EntitySpawnList entitySpawnList;
@@ -27,7 +28,16 @@ public record BiomeEntitySpawnSettings(Optional<MobSpawnSettings> biomeMobSpawnS
         }
 
         public Builder biomeMobSpawnSettings(Function<MobSpawnSettings.Builder, MobSpawnSettings.Builder> biomeMobSpawnSettings) {
-            this.biomeMobSpawnSettings = biomeMobSpawnSettings.apply(new MobSpawnSettings.Builder()).build();
+            MobSpawnSettings.Builder builder = new MobSpawnSettings.Builder();
+            if (this.biomeMobSpawnSettings != null) {
+                builder = mobSpawnSettingsConverter(this.biomeMobSpawnSettings);
+            }
+            this.biomeMobSpawnSettings = biomeMobSpawnSettings.apply(builder).build();
+            return this;
+        }
+
+        public Builder biomeMobSpawnSettings(MobSpawnSettings biomeMobSpawnSettings) {
+            this.biomeMobSpawnSettings = biomeMobSpawnSettings;
             return this;
         }
 
@@ -39,9 +49,52 @@ public record BiomeEntitySpawnSettings(Optional<MobSpawnSettings> biomeMobSpawnS
             return this;
         }
 
-        public Builder entitySpawnListContext(Function<EntitySpawnList.Builder, EntitySpawnList.Builder> entitySpawnListContext) {
-            this.entitySpawnList = entitySpawnListContext.apply(new EntitySpawnList.Builder()).build();
+        public Builder spawnCategoryMultiplier(Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplier) {
+            if (this.spawnCategoryMultiplier == null) {
+                this.spawnCategoryMultiplier = Maps.newHashMap();
+            }
+            this.spawnCategoryMultiplier.putAll(spawnCategoryMultiplier);
             return this;
         }
+
+        public Builder entitySpawnListContext(Function<EntitySpawnList.Builder, EntitySpawnList.Builder> entitySpawnListContext) {
+            EntitySpawnList.Builder builder = new EntitySpawnList.Builder();
+            if (this.entitySpawnList != null) {
+                builder = builder.converter(this.entitySpawnList);
+            }
+            this.entitySpawnList = entitySpawnListContext.apply(builder).build();
+            return this;
+        }
+
+        public Builder entitySpawnListContext(EntitySpawnList entitySpawnList) {
+            this.entitySpawnList = entitySpawnList;
+            return this;
+        }
+
+        @Override
+        public Builder converter(BiomeEntitySpawnSettings biomeEntitySpawnSettings) {
+            Builder builder = new Builder();
+            biomeEntitySpawnSettings.biomeMobSpawnSettings.ifPresent(settings -> builder.biomeMobSpawnSettings = settings);
+            biomeEntitySpawnSettings.spawnCategoryMultiplier.ifPresent(multiplier -> {
+                if (builder.spawnCategoryMultiplier == null) {
+                    builder.spawnCategoryMultiplier = Maps.newHashMap();
+                }
+                builder.spawnCategoryMultiplier.putAll(multiplier);
+            });
+            biomeEntitySpawnSettings.entitySpawnListContext.ifPresent(list -> builder.entitySpawnList = list);
+            return builder;
+        }
+    }
+
+    public static MobSpawnSettings.Builder mobSpawnSettingsConverter(MobSpawnSettings entitySpawnSettings) {
+        MobSpawnSettings.Builder builder = new MobSpawnSettings.Builder();
+        entitySpawnSettings.spawners.forEach((category, spawners) -> {
+            spawners.unwrap().forEach(spawnerData -> builder.addSpawn(category, spawnerData));
+        });
+        entitySpawnSettings.mobSpawnCosts.forEach(((entityType, mobSpawnCost) -> {
+            builder.addMobCharge(entityType, mobSpawnCost.charge(),mobSpawnCost.energyBudget());
+        }));
+        builder.creatureGenerationProbability(entitySpawnSettings.getCreatureProbability());
+        return builder;
     }
 }

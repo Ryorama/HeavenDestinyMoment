@@ -34,7 +34,7 @@ public record ConditionGroup(
     public static final GameRules.Key<GameRules.BooleanValue> RULE_MOMENT_DEBUG =
             GameRules.register("momentDebug", GameRules.Category.MISC, GameRules.BooleanValue.create(false));
 
-    public static class Builder {
+    public static class Builder implements IBuilderConverter<ConditionGroup> {
         private Pair<Boolean, List<ICondition>> create;
         private List<ICondition> victory;
         private List<ICondition> lose;
@@ -72,6 +72,16 @@ public record ConditionGroup(
             }
             conditions.addAll(List.of(condition));
             return conditions;
+        }
+
+        @Override
+        public Builder converter(ConditionGroup conditionGroup) {
+            Builder builder = new Builder();
+            conditionGroup.create.ifPresent(create -> builder.create = create);
+            conditionGroup.victory.ifPresent(victory -> builder.victory = new ArrayList<>(victory));
+            conditionGroup.lose.ifPresent(lose -> builder.lose = new ArrayList<>(lose));
+            conditionGroup.end.ifPresent(end -> builder.end = new ArrayList<>(end));
+            return builder;
         }
     }
 }
