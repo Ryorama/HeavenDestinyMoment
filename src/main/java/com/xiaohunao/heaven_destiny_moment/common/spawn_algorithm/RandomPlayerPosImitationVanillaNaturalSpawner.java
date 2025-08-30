@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.common.spawn_algorithm;
 
 import com.mojang.serialization.MapCodec;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -30,7 +29,7 @@ public class RandomPlayerPosImitationVanillaNaturalSpawner implements ISpawnAlgo
 
     @Override
     public MapCodec<? extends ISpawnAlgorithm> codec() {
-        return HDMContextRegister.RANDOM_PLAYER_POS_IMITATION_VANILLA_NATURAL_SPAWNER.get();
+        return CODEC;
     }
 
     public BlockPos getRandomSpawnPos(Level level, Player player) {
