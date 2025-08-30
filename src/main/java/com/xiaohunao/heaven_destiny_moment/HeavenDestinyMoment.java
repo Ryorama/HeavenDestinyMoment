@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.xiaohunao.heaven_destiny_moment.client.gui.hud.MomentBarOverlay;
 import com.xiaohunao.heaven_destiny_moment.common.commands.MomentCommand;
 import com.xiaohunao.heaven_destiny_moment.common.init.*;
+import com.xiaohunao.heaven_destiny_moment.common.moment.IMoment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.compat.LoadedCompat;
@@ -31,30 +32,25 @@ public class HeavenDestinyMoment {
     public static final String MODID = "heaven_destiny_moment";
     public static final Logger LOGGER = LoggerFactory.getLogger("HeavenDestinyMoment");
 
-    public static final Moment EMITY_MOMENT = new Moment() {
+    public static final IMoment EMITY_MOMENT = new Moment() {
         @Override
-        public MomentInstance newMomentInstance(Level level, Moment moment) {
+        public MomentInstance newMomentInstance(Level level, IMoment moment) {
             return null;
         }
 
         @Override
-        public MapCodec<? extends Moment> codec() {
+        public MapCodec<? extends IMoment> codec() {
             return null;
         }
     };
 
     public HeavenDestinyMoment(IEventBus modEventBus, ModContainer modContainer) {
-        HDMTriggerTypes.TRIGGER_TYPE.register(modEventBus);
+        HDMMapCodecRegisters.register(modEventBus);
+
         HDMMomentTypes.MOMENT_TYPE.register(modEventBus);
         HDMBarRenderTypes.BAR_RENDER_TYPE.register(modEventBus);
-        HDMScalingFunctions.PLAYER_COUNT_SCALING.register(modEventBus);
-        HDMScalingFunctions.DIFFICULTY_SCALING.register(modEventBus);
-        HDMConditions.CONDITION_CODEC.register(modEventBus);
+        HDMScalingFunctions.MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.register(modEventBus);
         HDMAttachments.ATTACHMENT_TYPES.register(modEventBus);
-
-        HDMActuators.ACTUATOR_CODEC.register(modEventBus);
-        HDMMomentRegister.register(modEventBus);
-        HDMContextRegister.register(modEventBus);
         LoadedCompat.register(modEventBus);
 
         modEventBus.addListener(HDMRegistries::registerRegistries);

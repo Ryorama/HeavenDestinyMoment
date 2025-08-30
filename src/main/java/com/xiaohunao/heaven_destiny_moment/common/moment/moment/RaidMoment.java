@@ -7,46 +7,34 @@ import com.xiaohunao.heaven_destiny_moment.client.gui.bar.render.IBarRenderType;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMMomentRegister;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
-import com.xiaohunao.heaven_destiny_moment.common.moment.Moment;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
+import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import com.xiaohunao.heaven_destiny_moment.common.moment.area.Area;
 import com.xiaohunao.heaven_destiny_moment.common.moment.moment.instance.RaidInstance;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
-public class RaidMoment extends Moment {
+public class RaidMoment extends DefaultMoment {
     public static final MapCodec<RaidMoment> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            HDMRegistries.BAR_RENDER_TYPE.byNameCodec().optionalFieldOf("bar_render_type").forGetter(Moment::barRenderType),
-            Area.CODEC.optionalFieldOf("area").forGetter(Moment::area),
-            MomentData.CODEC.optionalFieldOf("moment_data_context").forGetter(Moment::momentData),
-            TipSettings.CODEC.optionalFieldOf("tips").forGetter(Moment::tipSettings),
-            ClientSettings.CODEC.optionalFieldOf("clientSettings").forGetter(Moment::clientSettings),
-            Codec.list(ITracker.CODEC).optionalFieldOf("trackers").forGetter(Moment::trackers),
+            DefaultMoment.CODEC.forGetter(raidMoment -> raidMoment),
             Codec.INT.optionalFieldOf("readyTime",100).forGetter(RaidMoment::readyTime)
     ).apply(instance, RaidMoment::new));
 
-    protected final int readyTime;
 
-    public RaidMoment() {
-        super();
-        this.readyTime = 100;
-    }
+    private final int readyTime;
 
-    public RaidMoment(Optional<IBarRenderType> renderType, Optional<Area> area, Optional<MomentData> momentDataContext,
-                      Optional<TipSettings> tipSettingsContext, Optional<ClientSettings> clientSettings,Optional<List<ITracker>> trackers,
-                      int readyTime) {
-        super(renderType, area, momentDataContext, tipSettingsContext, clientSettings,trackers);
+    public RaidMoment(DefaultMoment moment, int readyTime) {
+        super(moment.barRenderType, moment.momentData, moment.tipSettings, moment.clientSettings, moment.trackers);
         this.readyTime = readyTime;
     }
 
-
     @Override
-    public MomentInstance newMomentInstance(Level level, Moment moment) {
+    public MomentInstance newMomentInstance(Level level, IMoment moment) {
         return new RaidInstance(level,moment);
     }
 

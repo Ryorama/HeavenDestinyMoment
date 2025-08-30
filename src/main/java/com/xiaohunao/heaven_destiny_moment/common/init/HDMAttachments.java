@@ -2,8 +2,8 @@ package com.xiaohunao.heaven_destiny_moment.common.init;
 
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.attachment.KillEntityRecorderAttachment;
-import com.xiaohunao.xhn_lib.api.register.FlexibleHolder;
-import com.xiaohunao.xhn_lib.api.register.FlexibleRegister;
+import com.xiaohunao.xhn_lib.api.register.holder.FlexibleHolder;
+import com.xiaohunao.xhn_lib.api.register.register.FlexibleRegister;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
