@@ -34,7 +34,7 @@ public record MomentUpdatePlayersPayload(UUID uuid) implements CustomPacketPaylo
 
                 MomentInstance momentInstance = momentInstanceManager.getMomentInstance(uuid);
                 if (momentInstance != null){
-                    momentInstance.updatePlayers();
+                    momentInstance.getPlayerListManager().updatePlayers();
                 }
             }
         }).exceptionally(e -> {

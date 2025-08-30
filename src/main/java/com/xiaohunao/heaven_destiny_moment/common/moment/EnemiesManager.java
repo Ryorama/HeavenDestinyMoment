@@ -13,6 +13,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -24,12 +25,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EnemiesManager {
-    private final UUID instanceUUID;
-
+    private final MomentInstance instance;
     private final Map<UUID, EnemyEntry> enemyMap = new ConcurrentHashMap<>();
 
-    public EnemiesManager(UUID instanceUUID) {
-        this.instanceUUID = instanceUUID;
+    public EnemiesManager(MomentInstance momentInstance) {
+        this.instance = momentInstance;
         NeoForge.EVENT_BUS.register(this);
     }
 
@@ -274,7 +274,7 @@ public class EnemiesManager {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onEntityDeath(LivingDeathEvent event) {
         Level level = event.getEntity().level();
         DamageSource source = event.getSource();
@@ -285,11 +285,8 @@ public class EnemiesManager {
         UUID uuid = event.getEntity().getUUID();
         if (enemyMap.containsKey(uuid)) {
             removeEnemy(uuid);
-            MomentInstance momentInstance = MomentInstanceManager.of(level).getMomentInstance(instanceUUID);
-            if (momentInstance != null) {
-                momentInstance.addKillCount(event.getEntity(), event.getSource());
-                momentInstance.livingDeath(event.getEntity(), event.getSource());
-            }
+            instance.addKillCount(event.getEntity(), event.getSource());
+            instance.livingDeath(event.getEntity(), event.getSource());
         }
     }
 
