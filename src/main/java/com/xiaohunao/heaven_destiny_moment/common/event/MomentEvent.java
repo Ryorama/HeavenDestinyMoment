@@ -64,7 +64,7 @@ public abstract class MomentEvent extends Event {
         }
     }
 
-    public static MomentEvent getEventToPost(MomentInstance momentInstance, MomentState state) {
+    public static MomentEvent getEvent(MomentInstance momentInstance, MomentState state) {
         return switch (state) {
             case UNINITIALIZED -> null;
             case READY -> new Ready(momentInstance);
