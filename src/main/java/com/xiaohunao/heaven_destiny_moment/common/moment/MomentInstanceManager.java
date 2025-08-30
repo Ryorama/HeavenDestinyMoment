@@ -411,39 +411,41 @@ public class MomentInstanceManager {
     public <T extends ITrigger> void trigger(Class<T> triggerClass, AutomationContext context) {
         final Level level = context.getLevel();
 
-        // 将触发器处理提交到线程池
-        AutomationThreadManager.getInstance().submitTask(() -> {
-            try {
-                // 获取规则（这部分可以在工作线程中执行）
-                Collection<Pair<IMoment, AutomationRule>> createRules =
-                        MomentManager.getInstance().getRulesTriggerType(triggerClass);
+//        // 将触发器处理提交到线程池
+//        AutomationThreadManager.getInstance().submitTask(() -> {
+//            try {
+//
+//            } catch (Exception e) {
+//                LOGGER.error("Error processing trigger {}", triggerClass.getSimpleName(), e);
+//            }
+//        });
 
-                for (Pair<IMoment, AutomationRule> rulePair : createRules) {
-                    IMoment moment = rulePair.getFirst();
-                    AutomationRule rule = rulePair.getSecond();
+// 获取规则（这部分可以在工作线程中执行）
+        Collection<Pair<IMoment, AutomationRule>> createRules =
+                MomentManager.getInstance().getRulesTriggerType(triggerClass);
 
-                    MomentInstance momentInstance = MomentInstanceBuilder.create(moment, context);
-                    AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
+        for (Pair<IMoment, AutomationRule> rulePair : createRules) {
+            IMoment moment = rulePair.getFirst();
+            AutomationRule rule = rulePair.getSecond();
 
-                    if (rule.trigger().map(trigger -> trigger.canTrigger(context1)).orElse(true)) {
-                        IActuator actuator = rule.actuator();
-                        if (actuator instanceof CreateMomentInstanceActuator) {
-                            // 需要在主线程执行的操作
-                            final MomentInstance finalMomentInstance = momentInstance;
-                            AutomationThreadManager.getInstance().addPendingTask(() -> {
-                                MomentInstanceManager.of(level).addMomentInstance(finalMomentInstance);
-                            });
+            MomentInstanceBuilder builder = MomentInstanceBuilder.builder(moment, context);
+            MomentInstance momentInstance = MomentInstanceBuilder.create(moment, context);
+            AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
+
+            if (rule.trigger().map(trigger -> trigger.canTrigger(context1)).orElse(true)) {
+                IActuator actuator = rule.actuator();
+                if (actuator instanceof CreateMomentInstanceActuator) {
+                    // 需要在主线程执行的操作
+                    final MomentInstance finalMomentInstance = momentInstance;
+
+                    AutomationThreadManager.getInstance().addPendingTask(() -> {
+                        if (validateConditions(finalMomentInstance, builder)){
+                            addMomentInstance(finalMomentInstance);
                         }
-                    }
+                    });
                 }
-            } catch (Exception e) {
-                LOGGER.error("Error processing trigger {}", triggerClass.getSimpleName(), e);
             }
-        });
-
-
-
-
+        }
 
         // 处理运行中的时刻
         runMoments.values().forEach(momentInstance -> {
