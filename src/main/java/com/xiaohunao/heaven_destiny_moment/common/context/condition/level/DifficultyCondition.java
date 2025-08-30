@@ -2,8 +2,8 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition.level;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -26,12 +26,8 @@ public record DifficultyCondition(Difficulty difficulty) implements ICondition {
     }
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        MinecraftServer server = instance.getLevel().getServer();
-        if (server != null){
-            return difficulty.equals(server.getWorldData().getDifficulty());
-        }
-        return false;
+    public boolean matches(AutomationContext context) {
+        return context.getDifficulty().isPresent() && context.getDifficulty().get() == difficulty;
     }
 
     @Override

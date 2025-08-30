@@ -4,8 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -62,9 +62,12 @@ public record TimeCondition(Optional<Long> min, Optional<Long> max) implements I
     }
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        Level level = instance.getLevel();
-        return this.matches(level.getDayTime() % 24000);
+    public boolean matches(AutomationContext context) {
+        if (context.getCurrentDayTime().isEmpty()){
+            return  false;
+        }
+
+        return this.matches(context.getCurrentDayTime().get() % 24000);
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.attachable.IAttachable;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMContextRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -46,7 +45,7 @@ public class PiglinInfo extends EntityInfo{
 
     @Override
     public MapCodec<? extends IEntityInfo> codec() {
-        return HDMContextRegister.PIGLIN_INFO.get();
+        return CODEC;
     }
 
     public boolean immuneZombification() {

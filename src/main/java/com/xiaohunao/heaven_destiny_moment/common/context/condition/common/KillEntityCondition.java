@@ -43,42 +43,49 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
     ).apply(instance, KillEntityCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        PlayerListManager playerListManager = instance.getPlayerListManager();
-        RequiredKill requiredKill = getKillRecord(instance);
+    public boolean matches(AutomationContext context) {
+        if (context.getMomentInstance().isPresent()) {
+            MomentInstance instance = context.getMomentInstance().get();
+            PlayerListManager playerListManager = instance.getPlayerListManager();
+            RequiredKill requiredKill = getKillRecord(instance);
 
-        switch (killType){
-            case MOMENT -> {
-                return matchesKillEntityRecorder(instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER), requiredKill);
-            }
-            case MOMENT_PLAYER_ANY -> {
-                if (!playerListManager.isEmpty()){
-                    for (Player player : playerListManager.getPlayers()) {
-                        if (matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
-                            return true;
+            switch (killType){
+                case MOMENT -> {
+                    return matchesKillEntityRecorder(instance.getData(HDMAttachments.MOMENT_KILL_ENTITY_RECORDER), requiredKill);
+                }
+                case MOMENT_PLAYER_ANY -> {
+                    if (!playerListManager.isEmpty()){
+                        for (Player player : playerListManager.getPlayers()) {
+                            if (matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
+                                return true;
+                            }
                         }
                     }
                 }
-            }
-            case MOMENT_PLAYER_ALL -> {
-                if (!playerListManager.isEmpty()) {
-                    for (Player player : playerListManager.getPlayers()) {
-                        if (!matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
-                            return false;
+                case MOMENT_PLAYER_ALL -> {
+                    if (!playerListManager.isEmpty()) {
+                        for (Player player : playerListManager.getPlayers()) {
+                            if (!matchesKillEntityRecorder(playerListManager.getKillRecorder(player.getUUID()), requiredKill)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                }
+                case MOMENT_PLAYER -> {
+                    if (context.getPlayer().isPresent()) {
+                        Player player = context.getPlayer().get();
+                        if (player instanceof ServerPlayer serverPlayer && playerListManager.containsPlayer(serverPlayer)) {
+                            return matchesKillEntityRecorder(playerListManager.getKillRecorder(serverPlayer.getUUID()), requiredKill);
                         }
                     }
-                    return true;
                 }
-            }
-            case MOMENT_PLAYER -> {
-                if (serverPlayer != null && playerListManager.containsPlayer(serverPlayer)) {
-                    return matchesKillEntityRecorder(playerListManager.getKillRecorder(serverPlayer.getUUID()), requiredKill);
+                default -> {
+                    return false;
                 }
-            }
-            default -> {
-                return false;
             }
         }
+
         return false;
     }
 
@@ -351,6 +358,27 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
                     Optional.ofNullable(playerCountScaling)
             );
         }
+
+        @Override
+        public Builder converter(KillEntityCondition killEntityCondition) {
+            Builder builder = new Builder(killEntityCondition.killType());
+            killEntityCondition.requiredTotalCount().ifPresent(count -> builder.requiredTotalCount = count);
+            killEntityCondition.requiredTotalScore().ifPresent(score -> builder.requiredTotalScore = score);
+            killEntityCondition.requiredKillCounts().ifPresent(counts -> {
+                if (builder.requiredKillCounts == null) {
+                    builder.requiredKillCounts = new HashMap<>();
+                }
+                builder.requiredKillCounts.putAll(counts);
+            });
+            killEntityCondition.requiredKillScores().ifPresent(scores -> {
+                if (builder.requiredKillScores == null) {
+                    builder.requiredKillScores = new HashMap<>();
+                }
+                builder.requiredKillScores.putAll(scores);
+            });
+            killEntityCondition.momentKillEntityConditionDifficultyScalingFunction().ifPresent(scaling -> builder.momentKillEntityConditionDifficultyScalingFunction = scaling);
+            return builder;
+        }
     }
 
     public record RequiredKill(int totalKills, int totalScore, Map<EntityType<?>, Integer> entityTypeKills, Map<EntityType<?>, Integer> entityTypeScores) {
@@ -361,4 +389,6 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
                 Codec.unboundedMap(BuiltInRegistries.ENTITY_TYPE.byNameCodec(), Codec.INT).fieldOf("entityTypeScores").forGetter(RequiredKill::entityTypeScores)
         ).apply(instance, RequiredKill::new));
     }
+
+
 }

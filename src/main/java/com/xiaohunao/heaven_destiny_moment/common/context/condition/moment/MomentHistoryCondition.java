@@ -2,11 +2,11 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition.moment;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.IntegerAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.amount.RandomAmount;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.moment.*;
 import net.minecraft.core.BlockPos;
@@ -30,16 +30,18 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
     }
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(AutomationContext context) {
         int amount = time.getAmount();
-        long gameTime = instance.getLevel().getGameTime();
+        if (context.getCurrentGameTime().isEmpty()){
+            return  false;
+        }
 
-        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(instance.getLevel());
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(context.getLevel());
         MomentHistoryManager momentHistoryManager = momentInstanceManager.getMomentHistoryManager();
         List<MomentRunningRecord> history = momentHistoryManager.getHistory(momentType);
 
         return history.stream().allMatch(momentRunningRecord
-                -> gameTime - momentRunningRecord.getEndTime() > amount
+                -> context.getCurrentGameTime().get() - momentRunningRecord.getEndTime() > amount
         );
     }
 

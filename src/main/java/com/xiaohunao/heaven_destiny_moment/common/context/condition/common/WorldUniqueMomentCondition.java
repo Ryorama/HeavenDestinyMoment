@@ -1,27 +1,30 @@
 package com.xiaohunao.heaven_destiny_moment.common.context.condition.common;
 
 import com.mojang.serialization.MapCodec;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class WorldUniqueMomentCondition implements ICondition {
     public static final WorldUniqueMomentCondition DEFAULT = new WorldUniqueMomentCondition();
     public static MapCodec<WorldUniqueMomentCondition> CODEC = MapCodec.unit(DEFAULT);
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(instance.getLevel());
-        for (MomentInstance momentInstance : momentInstanceManager.getMomentInstances()) {
-            if (momentInstance.getClass() == instance.getClass()) {
-                return false;
-            }
+    public boolean matches(AutomationContext context) {
+        if (context.getMomentInstance().isPresent()) {
+            Level level = context.getLevel();
+            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+            Collection<MomentInstance> momentInstances = momentInstanceManager.getMomentInstances(context.getMomentInstance().get().getType());
+            return momentInstances.isEmpty();
         }
-        return true;
+        return  false;
     }
 
     @Override

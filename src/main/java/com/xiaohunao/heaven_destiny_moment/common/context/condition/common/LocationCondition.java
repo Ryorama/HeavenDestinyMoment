@@ -4,8 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -45,10 +47,16 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
     ).apply(instance, LocationCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        if (pos != null && instance.getLevel() instanceof ServerLevel serverLevel){
-           return matches(serverLevel,pos);
+    public boolean matches(AutomationContext context) {
+        if (context.getBlockPos().isPresent()) {
+            Level level = context.getLevel();
+            BlockPos blockPos = context.getBlockPos().get();
+
+            if (level instanceof ServerLevel serverLevel) {
+                return matches(serverLevel, blockPos);
+            }
         }
+
         return false;
     }
 

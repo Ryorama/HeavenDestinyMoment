@@ -3,9 +3,8 @@ package com.xiaohunao.heaven_destiny_moment.compat.phase_journey.condition;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
-import com.xiaohunao.heaven_destiny_moment.compat.phase_journey.init.HDMConditions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,11 +27,11 @@ public record PhaseJourneyCondition(Type type, ResourceLocation phase) implement
     }
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
+    public boolean matches(AutomationContext context) {
         return switch (type) {
-            case MOMENT -> instance.getData(PJAttachments.PHASE).getPhases().contains(phase);
-            case PLAYER -> serverPlayer != null && PhaseUtils.hadPlayerReachedPhase(phase, serverPlayer);
-            case LEVEL -> PhaseUtils.hadLevelFinishedPhase(phase, instance.getLevel());
+            case MOMENT -> context.getMomentInstance().isPresent() && context.getMomentInstance().get().getData(PJAttachments.PHASE).getPhases().contains(phase);
+            case PLAYER -> context.getPlayer().isPresent() && PhaseUtils.hadPlayerReachedPhase(phase, context.getPlayer().get());
+            case LEVEL -> context.getLevel() != null && PhaseUtils.hadLevelFinishedPhase(phase, context.getLevel());
             case null -> false;
         };
     }

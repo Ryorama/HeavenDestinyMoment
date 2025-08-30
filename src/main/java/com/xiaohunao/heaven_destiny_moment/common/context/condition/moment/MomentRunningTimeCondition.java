@@ -3,14 +3,15 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition.moment;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentHistoryManager;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentRunningRecord;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -22,8 +23,13 @@ public record MomentRunningTimeCondition(Optional<Long> min, Optional<Long> max)
     ).apply(instance, MomentRunningTimeCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        Level level = instance.getLevel();
+    public boolean matches(AutomationContext context) {
+        if(context.getMomentInstance().isEmpty()){
+            return false;
+        }
+        Level level = context.getLevel();
+        MomentInstance instance = context.getMomentInstance().get();
+
         MomentRunningRecord activeRecords = MomentHistoryManager.of(level).getActiveRecords(instance.getType(), instance.getID());
         if (activeRecords != null){
             long runningTime = level.getGameTime() - activeRecords.getCreateTime();

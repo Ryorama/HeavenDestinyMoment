@@ -2,8 +2,10 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition.common;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
+import com.xiaohunao.heaven_destiny_moment.common.init.HDMMapCodecRegisters;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,11 +21,11 @@ public record OrCondition(ICondition or, List<ICondition> trueCondition, List<IC
     ).apply(instance, OrCondition::new));
 
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        if (or.matches(instance, pos, serverPlayer)) {
-            return trueCondition.stream().allMatch(condition -> condition.matches(instance, pos, serverPlayer));
+    public boolean matches(AutomationContext context) {
+        if (or.matches(context)) {
+            return trueCondition.stream().allMatch(condition -> condition.matches(context));
         } else {
-            return falseCondition.stream().allMatch(condition -> condition.matches(instance, pos, serverPlayer));
+            return falseCondition.stream().allMatch(condition -> condition.matches(context));
         }
     }
 

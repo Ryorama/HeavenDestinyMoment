@@ -1,16 +1,18 @@
 package com.xiaohunao.heaven_destiny_moment.common.context;
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 
-import java.util.Map;
-import java.util.Optional;
-
 public record BiomeEntitySpawnSettings(Optional<MobSpawnSettings> biomeMobSpawnSettings, Optional<Map<MobCategory, SpawnCategoryMultiplierModifier>> spawnCategoryMultiplier, Optional<EntitySpawnList> entitySpawnListContext) {
+
     public static final Codec<BiomeEntitySpawnSettings> CODEC = RecordCodecBuilder.create(builder -> builder.group(
             MobSpawnSettings.CODEC.codec().optionalFieldOf("biome_mob_spawn_settings").forGetter(BiomeEntitySpawnSettings::biomeMobSpawnSettings),
             Codec.unboundedMap(MobCategory.CODEC, SpawnCategoryMultiplierModifier.CODEC).optionalFieldOf("spawn_category_multiplier").forGetter(BiomeEntitySpawnSettings::spawnCategoryMultiplier),

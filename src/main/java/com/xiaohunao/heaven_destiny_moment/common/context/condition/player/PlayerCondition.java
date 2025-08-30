@@ -3,8 +3,9 @@ package com.xiaohunao.heaven_destiny_moment.common.context.condition.player;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
+import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMConditions;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.predicate.AttributePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
@@ -16,48 +17,62 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
+public record PlayerCondition(Type type,
+                              Optional<PlayerPredicate> playerPredicate,
+                              Optional<EntityPredicate> entityPredicate,
+                              Optional<AttributePredicate> attributePredicate,
+                              Optional<List<ICondition>> subConditions
+) implements ICondition {
 
-public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredicate, Optional<EntityPredicate> entityPredicate, Optional<AttributePredicate> attributePredicate) implements ICondition {
     public static final MapCodec<PlayerCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Type.CODEC.fieldOf("player_type").forGetter(PlayerCondition::type),
             PlayerPredicate.CODEC.codec().optionalFieldOf("player").forGetter(PlayerCondition::playerPredicate),
             EntityPredicate.CODEC.optionalFieldOf("entity").forGetter(PlayerCondition::entityPredicate),
-             AttributePredicate.CODEC.codec().optionalFieldOf("attribute").forGetter(PlayerCondition::attributePredicate)
+            AttributePredicate.CODEC.codec().optionalFieldOf("attribute").forGetter(PlayerCondition::attributePredicate),
+            ICondition.CODEC.listOf().optionalFieldOf("sub_conditions").forGetter(PlayerCondition::subConditions)
     ).apply(instance, PlayerCondition::new));
-
-
 
     public static Builder builder(Type type) {
         return new Builder(type);
     }
 
-
     @Override
-    public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer) {
-        if (playerPredicate.isEmpty() && entityPredicate.isEmpty()) {
+    public boolean matches(AutomationContext context) {
+        if (playerPredicate.isEmpty() && entityPredicate.isEmpty() && attributePredicate.isEmpty()) {
             return false;
         }
-        
-        return type.matches(instance, pos, serverPlayer, (inst, p, player) -> {
-            ServerLevel level = (ServerLevel) inst.getLevel();
-            boolean playerResult = playerPredicate.map(pred -> 
-                    pred.matches(player, level, player.getEyePosition())).orElse(true);
-            
-            boolean entityResult = entityPredicate.map(pred -> 
-                    pred.matches(level, player.position(), player)).orElse(true);
 
-            boolean attributeResult = attributePredicate.map(attrPred ->
-                    attrPred.matches(player,level,null)).orElse(true);
+        return type.matches(context, (context1) -> {
+            if (context1.getPlayer().isEmpty()){
+                return false;
+            }
 
-                    
+            Player player = context1.getPlayer().get();
+            ServerLevel level = (ServerLevel) context1.getLevel();
+
+            boolean playerResult = playerPredicate.map(pred
+                    -> pred.matches(player, level, player.getEyePosition())).orElse(true);
+
+            boolean entityResult = entityPredicate.map(pred
+                    -> pred.matches(level, player.position(), player)).orElse(true);
+
+            boolean attributeResult = attributePredicate.map(attrPred
+                    -> attrPred.matches(player, level, null)).orElse(true);
+
+            boolean subConditionsResult = subConditions.map(conditions
+                    -> conditions.stream().allMatch(cond -> cond.matches(context1))).orElse(true);
+
             return playerResult && entityResult && attributeResult;
         });
     }
@@ -67,37 +82,38 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
         return CODEC;
     }
 
-
-
     public enum Type implements StringRepresentable {
         SINGLE {
             @Override
-            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,
-                                  TriFunction<MomentInstance, BlockPos, ServerPlayer, Boolean> function) {
-                return function.apply(instance, pos, serverPlayer);
+            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
+                return function.apply(context);
             }
         },
-
         GLOBAL {
             @Override
-            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,
-                                  TriFunction<MomentInstance, BlockPos, ServerPlayer, Boolean> function) {
-                return !instance.getLevel().isClientSide && 
-                        instance.getPlayers().stream().allMatch(player -> 
-                                function.apply(instance, pos, (ServerPlayer) player));
+            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
+                if (context.getMomentInstance().isEmpty()) {
+                    return false;
+                }
+                MomentInstance instance = context.getMomentInstance().get();
+
+                return !instance.getLevel().isClientSide
+                        && instance.getPlayers().stream().allMatch(player
+                                -> function.apply(context));
             }
         },
-
         ANY {
             @Override
-            public boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,
-                                  TriFunction<MomentInstance, BlockPos, ServerPlayer, Boolean> function) {
-                return !instance.getLevel().isClientSide && 
-                        instance.getPlayers().stream().anyMatch(player -> 
-                                function.apply(instance, pos, (ServerPlayer) player));
+            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
+                if (context.getMomentInstance().isEmpty()) {
+                    return false;
+                }
+                MomentInstance momentInstance = context.getMomentInstance().get();
+                return !momentInstance.getLevel().isClientSide
+                        && momentInstance.getPlayers().stream().anyMatch(player
+                                -> function.apply(context));
             }
         };
-
 
         public static final Codec<Type> CODEC = StringRepresentable.fromEnum(Type::values);
 
@@ -107,35 +123,53 @@ public record PlayerCondition(Type type, Optional<PlayerPredicate> playerPredica
             return name().toLowerCase(Locale.ROOT);
         }
 
-        public abstract boolean matches(MomentInstance instance, @Nullable BlockPos pos, @Nullable ServerPlayer serverPlayer,
-                                  TriFunction<MomentInstance, BlockPos, ServerPlayer, Boolean> function);
+        public abstract boolean matches(AutomationContext context,
+                Function<AutomationContext,Boolean> function);
     }
 
     public static class Builder implements IBuilderConverter<PlayerCondition> {
 
-    public static class Builder {
         private final Type type;
-        private PlayerPredicate playerPredicate = null;
-        private EntityPredicate entityPredicate = null;
-        private AttributePredicate attributePredicate = null;
+        private PlayerPredicate playerPredicate;
+        private EntityPredicate entityPredicate;
+        private AttributePredicate attributePredicate;
+        private List<ICondition> subConditions;
 
         public Builder(Type type) {
             this.type = type;
         }
 
-
-        public Builder playerPredicate(Function<PlayerPredicate.Builder,PlayerPredicate.Builder> playerPredicate) {
-            this.playerPredicate = playerPredicate.apply(new PlayerPredicate.Builder()).build();
+        public Builder playerPredicate(Function<PlayerPredicate.Builder, PlayerPredicate.Builder> playerPredicate) {
+            PlayerPredicate.Builder builder = new PlayerPredicate.Builder();
+            if (this.playerPredicate != null) {
+                // 这里需要PlayerPredicate.Builder也实现IBuilderConverter接口
+                // 但由于这是Minecraft原版类，我们无法修改，所以保持原样
+            }
+            this.playerPredicate = playerPredicate.apply(builder).build();
             return this;
         }
 
-        public Builder entityPredicate(Function<EntityPredicate.Builder,EntityPredicate.Builder> entityPredicate) {
-            this.entityPredicate = entityPredicate.apply(new EntityPredicate.Builder()).build();
+        public Builder entityPredicate(Function<EntityPredicate.Builder, EntityPredicate.Builder> entityPredicate) {
+            EntityPredicate.Builder builder = new EntityPredicate.Builder();
+            if (this.entityPredicate != null) {
+                // 这里需要EntityPredicate.Builder也实现IBuilderConverter接口
+                // 但由于这是Minecraft原版类，我们无法修改，所以保持原样
+            }
+            this.entityPredicate = entityPredicate.apply(builder).build();
             return this;
         }
 
         public Builder attributePredicate(Holder<Attribute> attribute, AttributePredicate.ValueType type, MinMaxBounds.Doubles value) {
             this.attributePredicate = new AttributePredicate(attribute, type, value);
+            return this;
+        }
+
+        public Builder subConditions(ICondition... conditions) {
+            if (this.subConditions == null) {
+                this.subConditions = List.of(conditions);
+            }else {
+                this.subConditions = this.subConditions.stream().toList();
+            }
             return this;
         }
 

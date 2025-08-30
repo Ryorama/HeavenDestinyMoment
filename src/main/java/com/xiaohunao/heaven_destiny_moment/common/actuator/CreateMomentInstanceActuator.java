@@ -1,7 +1,6 @@
 package com.xiaohunao.heaven_destiny_moment.common.actuator;
 
 import com.mojang.serialization.MapCodec;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMActuators;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 
 public record CreateMomentInstanceActuator() implements IActuator {

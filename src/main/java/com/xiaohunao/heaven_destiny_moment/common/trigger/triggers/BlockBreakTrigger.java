@@ -2,6 +2,7 @@ package com.xiaohunao.heaven_destiny_moment.common.trigger.triggers;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.trigger.ITrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,9 +19,10 @@ public record BlockBreakTrigger(Block block) implements ITrigger {
         return new BlockBreakTrigger(block);
     }
 
-    public boolean canTrigger(Level level, BlockPos pos) {
-        if (pos == null) return false;
-        return level.getBlockState(pos).getBlock() == block;
+
+    @Override
+    public boolean canTrigger(AutomationContext context) {
+        return context.getBlock().map(block -> block.equals(this.block)).orElse(false);
     }
 
     @Override
