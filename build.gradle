@@ -119,13 +119,17 @@ repositories {
     maven { url "https://maven.architectury.dev/" }
 }
 
+boolean shouldJarJar = false
 
 dependencies {
     compileOnly "curse.maven:champions-unofficial-1074990:6086086"
     compileOnly(project(":PhaseJourney"))
 
-//    implementation jarJar(project(":XHN-Lib"))
-    implementation(jarJar(group: 'com.xiaohunao', name: 'xhn_lib', version: '1.21.1-0.0.2'))
+    if (shouldJarJar) {
+        implementation(jarJar(group: 'com.xiaohunao', name: 'xhn_lib', version: '1.21.1-0.0.2'))
+    } else {
+        implementation(group: 'com.xiaohunao', name: 'xhn_lib', version: '1.21.1-0.0.2')
+    }
 
     api("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
     interfaceInjectionData("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
