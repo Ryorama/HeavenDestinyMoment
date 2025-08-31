@@ -62,7 +62,7 @@ public class HDMScalingFunctions {
 
 
     public static final FlexibleHolder<MomentKillEntityConditionDifficultyScalingFunction, ?> PLAYER_COUNT_LINEAR =
-            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("playerCount_linear", () ->
+            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("player_count_linear", () ->
                 (baseValue, momentInstance) -> {
                     int playerCount = momentInstance.getPlayers().size();
                     int count = Math.max(1, playerCount);
@@ -72,7 +72,7 @@ public class HDMScalingFunctions {
             );
 
     public static final FlexibleHolder<MomentKillEntityConditionDifficultyScalingFunction, ?> PLAYER_COUNT_SQRT =
-            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("playerCount_sqrt", () ->
+            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("player_count_sqrt", () ->
                 (baseValue, momentInstance) -> {
                     int playerCount = momentInstance.getPlayers().size();
                     int count = Math.max(1, playerCount);
@@ -83,7 +83,7 @@ public class HDMScalingFunctions {
 
 
     public static final FlexibleHolder<MomentKillEntityConditionDifficultyScalingFunction, ?> PLAYER_COUNT_LOGARITHMIC =
-            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("playerCount_logarithmic", () ->
+            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("player_count_logarithmic", () ->
                 (baseValue, momentInstance) -> {
                     int playerCount = momentInstance.getPlayers().size();
                     int count = Math.max(1, playerCount);
@@ -93,7 +93,7 @@ public class HDMScalingFunctions {
             );
 
     public static final FlexibleHolder<MomentKillEntityConditionDifficultyScalingFunction, ?> PLAYER_COUNT_MULTIPLY =
-            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("playerCount_multiply", () ->
+            MOMENT_KILL_ENTITY_CONDITION_DIFFICULTY_SCALING_FUNCTION.registerStatic("player_count_multiply", () ->
                     (baseValue, momentInstance) -> {
                         int playerCount = momentInstance.getPlayers().size();
                         int count = Math.max(1, playerCount);
