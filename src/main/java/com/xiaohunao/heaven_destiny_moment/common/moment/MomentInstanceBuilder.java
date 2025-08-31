@@ -18,7 +18,7 @@ public class MomentInstanceBuilder {
     private boolean checkConditions = true;
     private final List<ICondition> specialConditions = new ArrayList<>();
     
-    private MomentInstanceBuilder(IMoment moment, AutomationContext context) {
+    MomentInstanceBuilder(IMoment moment, AutomationContext context) {
         this.moment = Objects.requireNonNull(moment, "Moment cannot be null");
         this.context = Objects.requireNonNull(context, "context cannot be null");
     }
