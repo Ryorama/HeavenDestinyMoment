@@ -6,8 +6,6 @@ import com.xiaohunao.heaven_destiny_moment.client.gui.bar.render.IBarRenderType;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.MomentData;
 import com.xiaohunao.heaven_destiny_moment.common.context.TipSettings;
-import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.init.HDMMapCodecRegisters;
 import com.xiaohunao.heaven_destiny_moment.common.init.HDMRegistries;
 import com.xiaohunao.heaven_destiny_moment.common.tracker.ITracker;
 import com.xiaohunao.xhn_lib.common.codec.ICodec;
@@ -19,7 +17,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface IMoment extends ICodec<IMoment> {
-    Codec<IMoment> CODEC = Codec.lazyInitialized(HDMRegistries.MOMENT_CODEC::byNameCodec).dispatch(IMoment::codec, Function.identity());
+    Codec<IMoment> CODEC = Codec.lazyInitialized(() -> {
+        return HDMRegistries.MOMENT_CODEC.byNameCodec(); // 必须在Supplier里延迟加载，不能使用方法引用
+    }).dispatch(IMoment::codec, Function.identity());
 
     MapCodec<? extends IMoment> codec();
 
