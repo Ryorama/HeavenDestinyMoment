@@ -30,7 +30,6 @@ public class EnemiesManager {
 
     public EnemiesManager(MomentInstance momentInstance) {
         this.instance = momentInstance;
-        NeoForge.EVENT_BUS.register(this);
     }
 
 

@@ -162,9 +162,10 @@ public class MomentInstanceManager {
             }
         });
 
-        if (instance.cacheProvider.getTrackers() != null) {
-            instance.cacheProvider.getTrackers().forEach(NeoForge.EVENT_BUS::register);
+        if (!level.isClientSide){
+            instance.eventBusRegister();
         }
+
 
         Map<MobCategory, SpawnCategoryMultiplierModifier> spawnCategoryMultiplierMap = instance.cacheProvider.getSpawnCategoryMultiplierMap();
         if (spawnCategoryMultiplierMap != null && !level.isClientSide) {
@@ -198,9 +199,7 @@ public class MomentInstanceManager {
         NeoForge.EVENT_BUS.unregister(instance.getEnemiesManager());
         NeoForge.EVENT_BUS.unregister(instance.getPlayerListManager());
 
-        if (instance.cacheProvider.getTrackers() != null) {
-            instance.cacheProvider.getTrackers().forEach(NeoForge.EVENT_BUS::unregister);
-        }
+        instance.eventBusUnregister();
 
 
         instance.getPlayers().forEach(player -> {

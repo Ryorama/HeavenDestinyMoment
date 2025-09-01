@@ -90,6 +90,22 @@ public abstract class MomentInstance extends AttachmentHolder {
         this.momentInstanceManager = null;
     }
 
+
+    public void eventBusRegister(){
+        List<Object> listeners = Lists.newArrayList(enemiesManager,playerListManager);
+        listeners.addAll(cacheProvider.getTrackers() != null ? cacheProvider.getTrackers() : Lists.newArrayList());
+        listeners.forEach(NeoForge.EVENT_BUS::register);
+    }
+
+    public void eventBusUnregister(){
+        List<Object> listeners = Lists.newArrayList(enemiesManager,playerListManager);
+        listeners.addAll(cacheProvider.getTrackers() != null ? cacheProvider.getTrackers() : Lists.newArrayList());
+        listeners.forEach(NeoForge.EVENT_BUS::unregister);
+    }
+
+
+
+
     protected MomentInstanceManager getMomentManager() {
         if (this.momentInstanceManager == null) {
             return MomentInstanceManager.of(level);

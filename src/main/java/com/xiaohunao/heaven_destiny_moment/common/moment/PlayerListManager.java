@@ -38,8 +38,6 @@ public class PlayerListManager {
     public PlayerListManager(MomentInstance momentInstance) {
         this.instance = momentInstance;
         this.momentInstanceManager = MomentInstanceManager.of(momentInstance.getLevel());
-
-        NeoForge.EVENT_BUS.register(this);
     }
 
     public void updatePlayers() {
@@ -158,6 +156,7 @@ public class PlayerListManager {
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         PlayerInitSync(event.getEntity());
+        System.out.println("PlayerLoggedInEvent");
     }
 
     @SubscribeEvent

@@ -32,7 +32,8 @@ public class MomentManagerSavedData extends SavedData{
     @Override
     @NotNull
     public CompoundTag save(@NotNull CompoundTag compoundTag, @NotNull HolderLookup.Provider provider) {
-        return Objects.requireNonNullElseGet(((MomentManagerMixed) level).heaven_destiny_moment$getMomentManager().serializeNBT(), CompoundTag::new);
+        CompoundTag tag = ((MomentManagerMixed) level).heaven_destiny_moment$getMomentManager().serializeNBT();
+        return Objects.requireNonNullElseGet(tag, CompoundTag::new);
     }
 
     @Override
