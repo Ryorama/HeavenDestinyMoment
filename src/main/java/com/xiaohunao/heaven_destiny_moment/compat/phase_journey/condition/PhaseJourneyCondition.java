@@ -18,7 +18,7 @@ import java.util.Locale;
 
 public record PhaseJourneyCondition(Type type, ResourceLocation phase) implements ICondition {
     public static final MapCodec<PhaseJourneyCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Type.CODEC.fieldOf("type").forGetter(PhaseJourneyCondition::type),
+            Type.CODEC.fieldOf("phase_type").forGetter(PhaseJourneyCondition::type),
             ResourceLocation.CODEC.fieldOf("phase").forGetter(PhaseJourneyCondition::phase)
     ).apply(instance, PhaseJourneyCondition::new));
 
