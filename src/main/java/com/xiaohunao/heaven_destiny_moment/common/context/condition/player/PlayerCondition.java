@@ -11,17 +11,13 @@ import com.xiaohunao.heaven_destiny_moment.common.predicate.AttributePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.advancements.critereon.PlayerPredicate;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
@@ -49,31 +45,24 @@ public record PlayerCondition(Type type,
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (playerPredicate.isEmpty() && entityPredicate.isEmpty() && attributePredicate.isEmpty()) {
+        if (playerPredicate.isEmpty() && entityPredicate.isEmpty() && attributePredicate.isEmpty() && subConditions.isEmpty()) {
             return false;
         }
 
-        return type.matches(context, (context1) -> {
-            if (context1.getPlayer().isEmpty()){
-                return false;
-            }
-
-            Player player = context1.getPlayer().get();
-            ServerLevel level = (ServerLevel) context1.getLevel();
-
+        return type.matches(context, player -> {
             boolean playerResult = playerPredicate.map(pred
-                    -> pred.matches(player, level, player.getEyePosition())).orElse(true);
+                    -> pred.matches(player, (ServerLevel) player.level(), player.getEyePosition())).orElse(true);
 
             boolean entityResult = entityPredicate.map(pred
-                    -> pred.matches(level, player.position(), player)).orElse(true);
+                    -> pred.matches((ServerLevel) player.level(), player.position(), player)).orElse(true);
 
             boolean attributeResult = attributePredicate.map(attrPred
-                    -> attrPred.matches(player, level, null)).orElse(true);
+                    -> attrPred.matches(player, (ServerLevel) player.level(), null)).orElse(true);
 
             boolean subConditionsResult = subConditions.map(conditions
-                    -> conditions.stream().allMatch(cond -> cond.matches(context1))).orElse(true);
+                    -> conditions.stream().allMatch(cond -> cond.matches(context))).orElse(true);
 
-            return playerResult && entityResult && attributeResult;
+            return playerResult && entityResult && attributeResult && subConditionsResult;
         });
     }
 
@@ -85,33 +74,40 @@ public record PlayerCondition(Type type,
     public enum Type implements StringRepresentable {
         SINGLE {
             @Override
-            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
-                return function.apply(context);
+            public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
+                if (context.getPlayer().isEmpty() || !(context.getPlayer().get() instanceof ServerPlayer serverPlayer)){
+                    return false;
+                }
+                return function.apply(serverPlayer);
             }
         },
-        GLOBAL {
+        ALL {
             @Override
-            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
+            public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
                 if (context.getMomentInstance().isEmpty()) {
                     return false;
                 }
                 MomentInstance instance = context.getMomentInstance().get();
 
                 return !instance.getLevel().isClientSide
-                        && instance.getPlayers().stream().allMatch(player
-                                -> function.apply(context));
+                        && instance.getPlayers().stream()
+                        .filter(player -> player instanceof ServerPlayer)
+                        .map(player -> (ServerPlayer) player)
+                        .allMatch(function::apply);
             }
         },
         ANY {
             @Override
-            public boolean matches(AutomationContext context, Function<AutomationContext,Boolean> function) {
+            public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
                 if (context.getMomentInstance().isEmpty()) {
                     return false;
                 }
                 MomentInstance momentInstance = context.getMomentInstance().get();
                 return !momentInstance.getLevel().isClientSide
-                        && momentInstance.getPlayers().stream().anyMatch(player
-                                -> function.apply(context));
+                        && momentInstance.getPlayers().stream()
+                        .filter(player -> player instanceof ServerPlayer)
+                        .map(player -> (ServerPlayer) player)
+                        .anyMatch(function::apply);
             }
         };
 
@@ -124,7 +120,7 @@ public record PlayerCondition(Type type,
         }
 
         public abstract boolean matches(AutomationContext context,
-                Function<AutomationContext,Boolean> function);
+                Function<ServerPlayer,Boolean> function);
     }
 
     public static class Builder implements IBuilderConverter<PlayerCondition> {

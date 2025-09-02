@@ -34,10 +34,10 @@ public record TimeProbabilityTrigger(TimeCondition timeCondition, Optional<Doubl
 
     @Override
     public boolean canTrigger(AutomationContext context) {
-        if (context.getLevel() == null) {
+        if (context.getCurrentDayTime().isEmpty()) {
             return false;
         }
-        boolean timeMatches = timeCondition.matches(context.getLevel().getDayTime() % 24000);
+        boolean timeMatches = timeCondition.matches(context.getCurrentDayTime().get() % 24000);
 
         if (!timeMatches) {
             return false;
@@ -48,6 +48,9 @@ public record TimeProbabilityTrigger(TimeCondition timeCondition, Optional<Doubl
             double modifiedProbability = probabilityFunction.get().getProbability(context.getLevel());
             return nextFloat < modifiedProbability;
         } else {
+            if (base_probability.isPresent()){
+                System.out.println(base_probability.get() + " " + nextFloat);
+            }
             return base_probability.isPresent() && nextFloat < base_probability.get();
         }
 

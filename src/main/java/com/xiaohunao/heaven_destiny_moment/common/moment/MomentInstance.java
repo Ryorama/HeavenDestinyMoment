@@ -526,7 +526,14 @@ public abstract class MomentInstance extends AttachmentHolder {
                     .flatMap(MomentData::autoActuatorGroupSettings)
                     .flatMap(AutoActuatorGroupSettings::createRule)
                     .flatMap(AutomationRule::conditions)
-                    .map(conditions -> conditions.stream().allMatch(condition -> condition.matches(context))).orElse(false);
+                    .map(conditions -> conditions.stream().allMatch(condition -> {
+                        boolean matches = condition.matches(context);
+                        if (!matches){
+                            LOGGER.debug("{}matches Condition not met: {}",HDMRegistries.MOMENT.getKey(moment), condition);
+                        }
+
+                        return matches;
+                    })).orElse(false);
         } catch (Exception e) {
             LOGGER.error("Exception occurred while checking conditions for MomentInstance", e);
             return false;
