@@ -3,7 +3,6 @@ package com.xiaohunao.heaven_destiny_moment.common.moment;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Pair;
-import com.sun.jna.platform.win32.COM.util.IRawDispatchHandle;
 import com.xiaohunao.heaven_destiny_moment.api.MomentManager;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.CreateMomentInstanceActuator;
 import com.xiaohunao.heaven_destiny_moment.common.actuator.IActuator;
@@ -47,9 +46,9 @@ public class MomentInstanceManager {
     private final MomentHistoryManager momentHistoryManager = new MomentHistoryManager();
 
     //时刻对应的映射表
-    private final Multimap<ResourceKey<IMoment>,MomentInstance> momentMap = HashMultimap.create();
-    private final Multimap<IMoment,MomentInstance> momentInstanceMap = HashMultimap.create();
-    private final Multimap<MomentType<?>,MomentInstance> momentTypeMap = HashMultimap.create();
+    private final Multimap<ResourceKey<IMoment>, MomentInstance> momentMap = HashMultimap.create();
+    private final Multimap<IMoment, MomentInstance> momentInstanceMap = HashMultimap.create();
+    private final Multimap<MomentType<?>, MomentInstance> momentTypeMap = HashMultimap.create();
 
     //正在运行的时刻
     private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
@@ -78,7 +77,8 @@ public class MomentInstanceManager {
         if (!runMoments.isEmpty()) {
             ListTag momentListTag = new ListTag();
             runMoments.values().forEach(momentInstance -> {
-                CompoundTag momentTag = momentInstance.serializeNBT();;
+                CompoundTag momentTag = momentInstance.serializeNBT();
+                ;
                 momentListTag.add(momentTag);
             });
             rootTag.put("runMoments", momentListTag);
@@ -158,11 +158,11 @@ public class MomentInstanceManager {
 
         instance.getPlayers().forEach(player -> {
             if (instance.isClientOnlyMoment() && !level.isClientSide) {
-                setClientMomentInstance(player,instance);
+                setClientMomentInstance(player, instance);
             }
         });
 
-        if (!level.isClientSide){
+        if (!level.isClientSide) {
             instance.eventBusRegister();
         }
 
@@ -181,7 +181,7 @@ public class MomentInstanceManager {
         }
 
         if (!level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),false));
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(), false));
             if (instance.getBar() != null) {
                 instance.getBar().addBar();
             }
@@ -204,7 +204,7 @@ public class MomentInstanceManager {
 
         instance.getPlayers().forEach(player -> {
             if (instance.isClientOnlyMoment() && !level.isClientSide) {
-                setClientMomentInstance(player,null);
+                setClientMomentInstance(player, null);
             }
         });
 
@@ -225,33 +225,31 @@ public class MomentInstanceManager {
             removePlayerToInstance(player, instance);
         });
 
-        if (!level.isClientSide){
+        if (!level.isClientSide) {
             ServerLevel serverLevel = (ServerLevel) level;
             instance.getMoment().momentData().flatMap(MomentData::entitySpawnSettings).ifPresent(entitySpawnSettings -> {
-                if (entitySpawnSettings.isAfterEndClearMonster()){
+                if (entitySpawnSettings.isAfterEndClearMonster()) {
                     instance.killAllEnemies(serverLevel);
                 }
             });
         }
 
 
-
         if (!level.isClientSide) {
-            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(),true));
+            PacketDistributor.sendToAllPlayers(new MomentManagerSyncPayload(instance.serializeNBT(), true));
             if (instance.bar != null) {
                 PacketDistributor.sendToAllPlayers(MomentBarSyncPayload.removeBar(instance.bar));
             }
         }
     }
 
-    public MomentInstance createMomentInstanceRun(MomentInstanceBuilder builder){
+    public MomentInstance createMomentInstanceRun(MomentInstanceBuilder builder) {
         MomentInstance instance = createMomentInstance(builder);
-        if (instance != null && validateConditions(instance, builder)){
+        if (instance != null && validateConditions(instance, builder)) {
             addMomentInstance(instance);
         }
         return instance;
     }
-
 
 
     public MomentInstance createMomentInstance(MomentInstanceBuilder builder) {
@@ -302,8 +300,7 @@ public class MomentInstanceManager {
     }
 
 
-
-    private boolean validateConditions(MomentInstance instance,MomentInstanceBuilder builder) {
+    private boolean validateConditions(MomentInstance instance, MomentInstanceBuilder builder) {
         // 默认条件检查
         AutomationContext context = builder.getContext();
         boolean conditionMatch = true;
@@ -345,41 +342,38 @@ public class MomentInstanceManager {
     }
 
 
-
-
     public void addPlayerToInstance(Player player, MomentInstance instance) {
         UUID uuid = player.getUUID();
         playerMoments.put(uuid, instance);
-        if(instance.bar != null){
+        if (instance.bar != null) {
             instance.bar.addPlayer(player);
         }
 
         if (instance.isInitialized() && instance.isClientOnlyMoment() && !level.isClientSide) {
-            setClientMomentInstance(player,instance);
+            setClientMomentInstance(player, instance);
         }
     }
 
     public void removePlayerToInstance(Player player, MomentInstance instance) {
         UUID uuid = player.getUUID();
-        playerMoments.remove(uuid,instance);
-        if(instance.bar != null){
+        playerMoments.remove(uuid, instance);
+        if (instance.bar != null) {
             instance.bar.removePlayer(player);
         }
 
 
-        if (instance.isInitialized() && instance.isClientOnlyMoment() && !instance.level.isClientSide){
-            setClientMomentInstance(player,null);
+        if (instance.isInitialized() && instance.isClientOnlyMoment() && !instance.level.isClientSide) {
+            setClientMomentInstance(player, null);
         }
     }
 
 
-
     public Optional<MomentInstance> getClientMomentInstance() {
-        if (!level.isClientSide){
+        if (!level.isClientSide) {
             return Optional.empty();
         }
 
-        if (clientOnlyMomentInstance != null && !runMoments.containsKey(clientOnlyMomentInstance.uuid)){
+        if (clientOnlyMomentInstance != null && !runMoments.containsKey(clientOnlyMomentInstance.uuid)) {
             this.clientOnlyMomentInstance = null;
             return Optional.empty();
         }
@@ -387,19 +381,19 @@ public class MomentInstanceManager {
         return Optional.ofNullable(this.clientOnlyMomentInstance);
     }
 
-    public void setClientMomentInstance(Player player,MomentInstance momentInstance) {
-        if (level.isClientSide){
+    public void setClientMomentInstance(Player player, MomentInstance momentInstance) {
+        if (level.isClientSide) {
             this.clientOnlyMomentInstance = momentInstance;
         }
 
-        if (!level.isClientSide){
+        if (!level.isClientSide) {
             CompoundTag compoundTag = ClientOnlyMomentSyncPayload.CLEAR_ALL_TAG;
             boolean isRemove = true;
             if (momentInstance != null) {
                 compoundTag = momentInstance.serializeNBT();
                 isRemove = false;
             }
-            PacketDistributor.sendToPlayer((ServerPlayer) player,new ClientOnlyMomentSyncPayload(player.getUUID(),compoundTag,isRemove));
+            PacketDistributor.sendToPlayer((ServerPlayer) player, new ClientOnlyMomentSyncPayload(player.getUUID(), compoundTag, isRemove));
         }
     }
 
@@ -408,14 +402,11 @@ public class MomentInstanceManager {
     }
 
     public <T extends ITrigger> void trigger(Class<T> triggerClass, AutomationContext context) {
-        final Level level = context.getLevel();
-
         // 将触发器处理提交到线程池
         AutomationThreadManager.getInstance().submitTask(() -> {
             try {
                 // 获取规则（这部分可以在工作线程中执行）
-                Collection<Pair<IMoment, AutomationRule>> createRules =
-                        MomentManager.getInstance().getRulesTriggerType(triggerClass);
+                Collection<Pair<IMoment, AutomationRule>> createRules = MomentManager.getInstance().getRulesTriggerType(triggerClass);
 
                 for (Pair<IMoment, AutomationRule> rulePair : createRules) {
                     IMoment moment = rulePair.getFirst();
@@ -430,7 +421,7 @@ public class MomentInstanceManager {
                         if (actuator instanceof CreateMomentInstanceActuator) {
                             // 需要在主线程执行的操作
                             AutomationThreadManager.getInstance().addPendingTask(() -> {
-                                if (validateConditions(momentInstance, new MomentInstanceBuilder(moment, context1))){
+                                if (validateConditions(momentInstance, new MomentInstanceBuilder(moment, context1))) {
                                     addMomentInstance(momentInstance);
                                 }
                             });

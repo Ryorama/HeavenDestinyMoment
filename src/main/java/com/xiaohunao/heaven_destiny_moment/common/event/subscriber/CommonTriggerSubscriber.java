@@ -20,11 +20,8 @@ public class CommonTriggerSubscriber {
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Pre event) {
         Level level = event.getLevel();
+        if (level.isClientSide) return;
 
-
-        if (level.isClientSide()) {
-            return;
-        }
         ServerLevel serverLevel = (ServerLevel) level;
         for (ServerPlayer serverPlayer : serverLevel.players()) {
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
@@ -36,10 +33,9 @@ public class CommonTriggerSubscriber {
                     .addCurrentGameTime(level.getGameTime())
                     .build();
 
-
-            momentInstanceManager.trigger(RandomLevelTickTrigger.class,context);
+            momentInstanceManager.trigger(RandomLevelTickTrigger.class, context);
             momentInstanceManager.trigger(LevelTickTrigger.class, context);
-            momentInstanceManager.trigger(TimeProbabilityTrigger.class,context);
+            momentInstanceManager.trigger(TimeProbabilityTrigger.class, context);
         }
 
         AutomationThreadManager.getInstance().executePendingTasks();
@@ -48,9 +44,8 @@ public class CommonTriggerSubscriber {
     @SubscribeEvent
     public static void onBreakEvent(BlockEvent.BreakEvent event) {
         LevelAccessor level = event.getLevel();
-        if (level.isClientSide()) {
-            return;
-        }
+        if (level.isClientSide()) return;
+
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of((Level) level);
 
         momentInstanceManager.trigger(BlockBreakTrigger.class,
@@ -72,7 +67,7 @@ public class CommonTriggerSubscriber {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
         momentInstanceManager.trigger(KillEntityTrigger.class,
-                        new AutomationContext.Builder(level)
+                new AutomationContext.Builder(level)
                         .addEntityType(victim.getType())
                         .addPlayer(serverPlayer)
                         .build()
@@ -80,5 +75,4 @@ public class CommonTriggerSubscriber {
 
         AutomationThreadManager.getInstance().executePendingTasks();
     }
-
 }
