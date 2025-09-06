@@ -21,11 +21,10 @@ public class CommonTriggerSubscriber {
     public static void onLevelTick(LevelTickEvent.Pre event) {
         Level level = event.getLevel();
         if (level.isClientSide) return;
-
         ServerLevel serverLevel = (ServerLevel) level;
-        for (ServerPlayer serverPlayer : serverLevel.players()) {
-            MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
+        MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
+        for (ServerPlayer serverPlayer : serverLevel.players()) {
             AutomationContext context = new AutomationContext.Builder(serverLevel)
                     .addPlayer(serverPlayer)
                     .addBlockPos(serverPlayer.blockPosition())
