@@ -30,7 +30,7 @@ public abstract class LevelRendererMixin {
 
     @ModifyConstant(method = "renderSky", constant = @Constant(floatValue = 20.0F))
     private float renderSky(float originalSize) {
-        MomentInstance instance = MomentInstanceManager.of(level).clientOnlyMomentInstance;
+        MomentInstance instance = MomentInstanceManager.of(level).getClientMomentInstance();
 
         if (instance != null) originalSize = instance.getMoment().clientSettings()
                 .flatMap(ClientSettings::clientMoonSettings)
@@ -42,7 +42,7 @@ public abstract class LevelRendererMixin {
 
     @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 1))
     private void renderSky(int shaderTexture, ResourceLocation textureId, Operation<Void> original) {
-        MomentInstance instance = MomentInstanceManager.of(level).clientOnlyMomentInstance;
+        MomentInstance instance = MomentInstanceManager.of(level).getClientMomentInstance();
 
         if (instance != null) textureId = instance.getMoment().clientSettings()
                 .flatMap(ClientSettings::clientMoonSettings)
@@ -54,7 +54,7 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getMoonPhase()I"))
     private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) {
-        MomentInstance instance = MomentInstanceManager.of(level).clientOnlyMomentInstance;
+        MomentInstance instance = MomentInstanceManager.of(level).getClientMomentInstance();
 
         if (instance != null) instance.getMoment().clientSettings()
                 .flatMap(ClientSettings::clientMoonSettings)

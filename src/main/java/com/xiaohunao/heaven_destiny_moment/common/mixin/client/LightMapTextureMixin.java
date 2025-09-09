@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LightMapTextureMixin {
     @Inject(method = "updateLightTexture", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LightTexture;blockLightRedFlicker:F"))
     private void updateLightTexture(float p_109882_, CallbackInfo ci, @Local ClientLevel clientlevel, @Local Vector3f vector3f) {
-        MomentInstance instance = MomentInstanceManager.of(clientlevel).clientOnlyMomentInstance;
+        MomentInstance instance = MomentInstanceManager.of(clientlevel).getClientMomentInstance();
 
         if (instance != null) instance.getMoment().clientSettings()
                 .flatMap(ClientSettings::environmentColor)

@@ -1,6 +1,7 @@
 package com.xiaohunao.heaven_destiny_moment.common.moment;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Pair;
 import com.xiaohunao.heaven_destiny_moment.api.MomentManager;
@@ -32,11 +33,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class MomentInstanceManager {
@@ -51,13 +55,13 @@ public class MomentInstanceManager {
     private final Multimap<MomentType<?>, MomentInstance> momentTypeMap = HashMultimap.create();
 
     //正在运行的时刻
-    private final ConcurrentHashMap<UUID, MomentInstance> runMoments = new ConcurrentHashMap<>();
+    private ImmutableMap<UUID, MomentInstance> runMoments = ImmutableMap.of();
 
     //玩家正在参与的时刻
     private final Multimap<UUID, MomentInstance> playerMoments = HashMultimap.create();
 
     //客户端唯一时刻实例 //在服务端中没有作用
-    public MomentInstance clientOnlyMomentInstance = null;
+    private @Nullable MomentInstance clientOnlyMomentInstance = null;
 
 
     public MomentInstanceManager(Level level) {
@@ -78,7 +82,6 @@ public class MomentInstanceManager {
             ListTag momentListTag = new ListTag();
             runMoments.values().forEach(momentInstance -> {
                 CompoundTag momentTag = momentInstance.serializeNBT();
-                ;
                 momentListTag.add(momentTag);
             });
             rootTag.put("runMoments", momentListTag);
@@ -129,7 +132,7 @@ public class MomentInstanceManager {
         return runMoments.values();
     }
 
-    public ConcurrentHashMap<UUID, MomentInstance> getRunMoments() {
+    public ImmutableMap<UUID, MomentInstance> getRunMoments() {
         return runMoments;
     }
 
@@ -148,7 +151,7 @@ public class MomentInstanceManager {
 
 
     public void addMomentInstance(MomentInstance instance) {
-        runMoments.put(instance.getID(), instance);
+        this.runMoments = ImmutableMap.<UUID, MomentInstance>builder().putAll(runMoments).put(instance.getID(), instance).build();
         momentMap.put(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.put(instance.moment, instance);
         momentTypeMap.put(instance.getType(), instance);
@@ -189,7 +192,12 @@ public class MomentInstanceManager {
     }
 
     public void removeMomentInstance(MomentInstance instance) {
-        runMoments.remove(instance.getID());
+        ImmutableMap.Builder<UUID, MomentInstance> builder = ImmutableMap.builder();
+        for (Map.Entry<UUID, MomentInstance> entry : runMoments.entrySet()) {
+            if (entry.getKey().equals(instance.getID())) continue;
+            builder.put(entry);
+        }
+        this.runMoments = builder.build();
         momentMap.remove(HDMRegistries.MOMENT.getResourceKey(instance.moment).orElseThrow(), instance);
         momentInstanceMap.remove(instance.moment, instance);
         momentTypeMap.remove(instance.getType(), instance);
@@ -367,18 +375,16 @@ public class MomentInstanceManager {
         }
     }
 
-    // 这边建议少在渲染里用这个
-    public Optional<MomentInstance> getClientMomentInstance() {
+    public @Nullable MomentInstance getClientMomentInstance() {
         if (!level.isClientSide) {
-            return Optional.empty();
+            return null;
         }
 
         if (clientOnlyMomentInstance != null && !runMoments.containsKey(clientOnlyMomentInstance.uuid)) {
             this.clientOnlyMomentInstance = null;
-            return Optional.empty();
         }
 
-        return Optional.ofNullable(this.clientOnlyMomentInstance);
+        return clientOnlyMomentInstance;
     }
 
     public void setClientMomentInstance(Player player, MomentInstance momentInstance) {
