@@ -32,47 +32,34 @@ public abstract class LevelRendererMixin {
     private ClientLevel level;
 
     @ModifyExpressionValue(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getSkyColor(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;"))
-    private Vec3 cacheInstance(Vec3 original, @Share("momentInstance") LocalRef<@Nullable MomentInstance> ref) {
-        ref.set(MomentInstanceManager.of(level).getClientMomentInstance());
+    private Vec3 cacheInstance(Vec3 original, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
+        MomentInstance instance = MomentInstanceManager.of(level).getClientMomentInstance();
+        ref.set(instance == null ? null : instance.getMoment().clientSettings().flatMap(ClientSettings::clientMoonSettings).orElse(null));
         return original;
     }
 
     @ModifyConstant(method = "renderSky", constant = @Constant(floatValue = 20.0F))
-    private float renderSky(float originalSize, @Share("momentInstance") LocalRef<@Nullable MomentInstance> ref) {
-        MomentInstance momentInstance = ref.get();
-
-        if (momentInstance != null) originalSize = momentInstance.getMoment().clientSettings()
-                .flatMap(ClientSettings::clientMoonSettings)
-                .flatMap(ClientMoonSettings::moonSize)
-                .orElse(originalSize);
-
+    private float renderSky(float originalSize, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
+        ClientMoonSettings settings = ref.get();
+        if (settings != null) originalSize = settings.moonSize().orElse(originalSize);
         return originalSize;
     }
 
     @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 1))
-    private void renderSky(int shaderTexture, ResourceLocation textureId, Operation<Void> original, @Share("momentInstance") LocalRef<@Nullable MomentInstance> ref) {
-        MomentInstance instance = ref.get();
-
-        if (instance != null) textureId = instance.getMoment().clientSettings()
-                .flatMap(ClientSettings::clientMoonSettings)
-                .flatMap(ClientMoonSettings::moonTexture)
-                .orElse(textureId);
-
+    private void renderSky(int shaderTexture, ResourceLocation textureId, Operation<Void> original, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
+        ClientMoonSettings settings = ref.get();
+        if (settings != null) textureId = settings.moonTexture().orElse(textureId);
         original.call(shaderTexture, textureId);
     }
 
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getMoonPhase()I"))
-    private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci, @Share("momentInstance") LocalRef<@Nullable MomentInstance> ref) {
-        MomentInstance instance = ref.get();
-
-        if (instance != null) instance.getMoment().clientSettings()
-                .flatMap(ClientSettings::clientMoonSettings)
-                .flatMap(ClientMoonSettings::moonColor)
-                .ifPresent(color -> {
-                    float r = (color >> 16 & 255) / 255.0F;
-                    float g = (color >> 8 & 255) / 255.0F;
-                    float b = (color & 255) / 255.0F;
-                    RenderSystem.setShaderColor(r, g, b, 1.0F - level.getRainLevel(partialTick));
-                });
+    private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
+        ClientMoonSettings settings = ref.get();
+        if (settings != null) settings.moonColor().ifPresent(color -> {
+            float r = (color >> 16 & 255) / 255.0F;
+            float g = (color >> 8 & 255) / 255.0F;
+            float b = (color & 255) / 255.0F;
+            RenderSystem.setShaderColor(r, g, b, 1.0F - level.getRainLevel(partialTick));
+        });
     }
 }
