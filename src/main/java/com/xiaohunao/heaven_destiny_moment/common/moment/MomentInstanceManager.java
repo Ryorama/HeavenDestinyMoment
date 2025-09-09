@@ -367,7 +367,7 @@ public class MomentInstanceManager {
         }
     }
 
-
+    // 这边建议少在渲染里用这个
     public Optional<MomentInstance> getClientMomentInstance() {
         if (!level.isClientSide) {
             return Optional.empty();
