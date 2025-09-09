@@ -29,8 +29,8 @@ public record PhaseJourneyCondition(Type type, ResourceLocation phase) implement
     @Override
     public boolean matches(AutomationContext context) {
         return switch (type) {
-            case MOMENT -> context.getMomentInstance().isPresent() && context.getMomentInstance().get().getData(PJAttachments.PHASE).getPhases().contains(phase);
-            case PLAYER -> context.getPlayer().isPresent() && PhaseUtils.hadPlayerReachedPhase(phase, context.getPlayer().get());
+            case MOMENT -> context.momentInstance().isPresent() && context.momentInstance().get().getData(PJAttachments.PHASE).getPhases().contains(phase);
+            case PLAYER -> context.player().isPresent() && PhaseUtils.hadPlayerReachedPhase(phase, context.player().get());
             case LEVEL -> context.getLevel() != null && PhaseUtils.hadLevelFinishedPhase(phase, context.getLevel());
             case null -> false;
         };

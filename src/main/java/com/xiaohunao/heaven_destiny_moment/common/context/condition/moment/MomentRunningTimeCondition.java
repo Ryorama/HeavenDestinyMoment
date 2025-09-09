@@ -24,11 +24,11 @@ public record MomentRunningTimeCondition(Optional<Long> min, Optional<Long> max)
 
     @Override
     public boolean matches(AutomationContext context) {
-        if(context.getMomentInstance().isEmpty()){
+        if(context.momentInstance().isEmpty()){
             return false;
         }
         Level level = context.getLevel();
-        MomentInstance instance = context.getMomentInstance().get();
+        MomentInstance instance = context.momentInstance().get();
 
         MomentRunningRecord activeRecords = MomentHistoryManager.of(level).getActiveRecords(instance.getType(), instance.getID());
         if (activeRecords != null){

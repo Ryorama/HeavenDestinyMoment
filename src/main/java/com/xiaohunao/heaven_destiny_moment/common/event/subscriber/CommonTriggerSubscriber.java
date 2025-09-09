@@ -25,12 +25,11 @@ public class CommonTriggerSubscriber {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
         for (ServerPlayer serverPlayer : serverLevel.players()) {
-            AutomationContext context = new AutomationContext.Builder(serverLevel)
-                    .addPlayer(serverPlayer)
-                    .addBlockPos(serverPlayer.blockPosition())
-                    .addCurrentDayTime(level.getDayTime())
-                    .addCurrentGameTime(level.getGameTime())
-                    .build();
+            AutomationContext context = AutomationContext.of(serverLevel)
+                    .player(serverPlayer)
+                    .blockPos(serverPlayer.blockPosition())
+                    .currentDayTime(level.getDayTime())
+                    .currentGameTime(level.getGameTime());
 
             momentInstanceManager.trigger(RandomLevelTickTrigger.class, context);
             momentInstanceManager.trigger(LevelTickTrigger.class, context);
@@ -48,9 +47,8 @@ public class CommonTriggerSubscriber {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of((Level) level);
 
         momentInstanceManager.trigger(BlockBreakTrigger.class,
-                new AutomationContext.Builder((ServerLevel) level)
-                        .addBlock(level.getBlockState(event.getPos()).getBlock())
-                        .build()
+                AutomationContext.of((ServerLevel) level)
+                        .block(level.getBlockState(event.getPos()).getBlock())
         );
 
         AutomationThreadManager.getInstance().executePendingTasks();
@@ -66,10 +64,10 @@ public class CommonTriggerSubscriber {
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
 
         momentInstanceManager.trigger(KillEntityTrigger.class,
-                new AutomationContext.Builder(level)
-                        .addEntityType(victim.getType())
-                        .addPlayer(serverPlayer)
-                        .build()
+                AutomationContext.of(level)
+                        .entityType(victim.getType())
+                        .player(serverPlayer)
+
         );
 
         AutomationThreadManager.getInstance().executePendingTasks();

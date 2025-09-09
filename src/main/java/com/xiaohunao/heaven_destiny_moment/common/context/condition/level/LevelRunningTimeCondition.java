@@ -21,10 +21,10 @@ public record LevelRunningTimeCondition(Optional<Long> min, Optional<Long> max) 
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (context.getCurrentGameTime().isEmpty()){
+        if (context.currentGameTime().isEmpty()){
             return false;
         }
-        return this.matches(context.getCurrentGameTime().get());
+        return this.matches(context.currentGameTime().get());
     }
 
     @Override

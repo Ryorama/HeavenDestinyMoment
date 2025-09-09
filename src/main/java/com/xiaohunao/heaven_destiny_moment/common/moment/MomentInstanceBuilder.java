@@ -13,10 +13,10 @@ import java.util.function.Consumer;
 public class MomentInstanceBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(MomentInstanceBuilder.class);
     private final IMoment moment;
-    private final AutomationContext context;
+    private AutomationContext context;
     private Consumer<MomentInstance> modifier;
     private boolean checkConditions = true;
-    private final List<ICondition> specialConditions = new ArrayList<>();
+    private List<ICondition> specialConditions = new ArrayList<>();
     
     MomentInstanceBuilder(IMoment moment, AutomationContext context) {
         this.moment = Objects.requireNonNull(moment, "Moment cannot be null");
@@ -47,6 +47,11 @@ public class MomentInstanceBuilder {
             }
         }
         return this;
+    }
+
+    //MomentInstance
+    public void setMomentInstance(AutomationContext context) {
+        this.context = context;
     }
 
     public MomentInstanceBuilder modify(Consumer<MomentInstance> modifier) {

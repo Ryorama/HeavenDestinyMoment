@@ -22,7 +22,7 @@ public record BlockBreakTrigger(Block block) implements ITrigger {
 
     @Override
     public boolean canTrigger(AutomationContext context) {
-        return context.getBlock().map(block -> block.equals(this.block)).orElse(false);
+        return context.block().map(block -> block.equals(this.block)).orElse(false);
     }
 
     @Override

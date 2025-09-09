@@ -253,6 +253,7 @@ public class MomentInstanceManager {
 
     public MomentInstance createMomentInstanceRun(MomentInstanceBuilder builder) {
         MomentInstance instance = createMomentInstance(builder);
+        builder.getContext().momentInstance(instance);
         if (instance != null && validateConditions(instance, builder)) {
             addMomentInstance(instance);
         }
@@ -420,14 +421,13 @@ public class MomentInstanceManager {
 
                     MomentInstanceBuilder builder = new MomentInstanceBuilder(moment, context);
                     MomentInstance momentInstance = builder.build();
-                    AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
-
-                    if (rule.trigger().map(trigger -> trigger.canTrigger(context1)).orElse(true)) {
+                    context.momentInstance(momentInstance);
+                    if (rule.trigger().map(trigger -> trigger.canTrigger(context)).orElse(true)) {
                         IActuator actuator = rule.actuator();
                         if (actuator instanceof CreateMomentInstanceActuator) {
                             // 需要在主线程执行的操作
                             AutomationThreadManager.getInstance().addPendingTask(() -> {
-                                if (validateConditions(momentInstance, new MomentInstanceBuilder(moment, context1))) {
+                                if (validateConditions(momentInstance, new MomentInstanceBuilder(moment, context))) {
                                     addMomentInstance(momentInstance);
                                 }
                             });
@@ -441,8 +441,8 @@ public class MomentInstanceManager {
 
         // 处理运行中的时刻
         runMoments.values().forEach(momentInstance -> {
-            AutomationContext context1 = context.toBuilder().addMomentInstance(momentInstance).build();
-            momentInstance.triggerManager.trigger(triggerClass, context1);
+            context.momentInstance(momentInstance);
+            momentInstance.triggerManager.trigger(triggerClass, context);
         });
     }
 

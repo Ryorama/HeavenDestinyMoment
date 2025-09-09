@@ -32,8 +32,8 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
     @Override
     public boolean matches(AutomationContext context) {
         int amount = time.getAmount();
-        if (context.getCurrentGameTime().isEmpty()){
-            return  false;
+        if (context.currentGameTime().isEmpty()){
+            return false;
         }
 
         MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(context.getLevel());
@@ -41,7 +41,7 @@ public record MomentHistoryCondition(IAmount time, MomentType<?> momentType) imp
         List<MomentRunningRecord> history = momentHistoryManager.getHistory(momentType);
 
         return history.stream().allMatch(momentRunningRecord
-                -> context.getCurrentGameTime().get() - momentRunningRecord.getEndTime() > amount
+                -> context.currentGameTime().get() - momentRunningRecord.getEndTime() > amount
         );
     }
 

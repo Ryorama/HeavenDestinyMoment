@@ -18,10 +18,10 @@ public class WorldUniqueMomentCondition implements ICondition {
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (context.getMomentInstance().isPresent()) {
+        if (context.momentInstance().isPresent()) {
             Level level = context.getLevel();
             MomentInstanceManager momentInstanceManager = MomentInstanceManager.of(level);
-            Collection<MomentInstance> momentInstances = momentInstanceManager.getMomentInstances(context.getMomentInstance().get().getType());
+            Collection<MomentInstance> momentInstances = momentInstanceManager.getMomentInstances(context.momentInstance().get().getType());
             return momentInstances.isEmpty();
         }
         return  false;

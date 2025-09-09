@@ -34,10 +34,10 @@ public record TimeProbabilityTrigger(TimeCondition timeCondition, Optional<Doubl
 
     @Override
     public boolean canTrigger(AutomationContext context) {
-        if (context.getCurrentDayTime().isEmpty()) {
+        if (context.currentDayTime().isEmpty()) {
             return false;
         }
-        boolean timeMatches = timeCondition.matches(context.getCurrentDayTime().get() % 24000);
+        boolean timeMatches = timeCondition.matches(context.currentDayTime().get() % 24000);
 
         if (!timeMatches) {
             return false;

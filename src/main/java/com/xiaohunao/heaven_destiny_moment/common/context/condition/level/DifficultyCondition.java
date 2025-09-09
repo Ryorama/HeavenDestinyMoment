@@ -27,7 +27,7 @@ public record DifficultyCondition(Difficulty difficulty) implements ICondition {
 
     @Override
     public boolean matches(AutomationContext context) {
-        return context.getDifficulty().isPresent() && context.getDifficulty().get() == difficulty;
+        return context.difficulty().isPresent() && context.difficulty().get() == difficulty;
     }
 
     @Override

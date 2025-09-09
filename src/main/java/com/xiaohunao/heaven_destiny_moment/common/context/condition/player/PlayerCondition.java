@@ -75,7 +75,7 @@ public record PlayerCondition(Type type,
         SINGLE {
             @Override
             public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
-                if (context.getPlayer().isEmpty() || !(context.getPlayer().get() instanceof ServerPlayer serverPlayer)){
+                if (context.player().isEmpty() || !(context.player().get() instanceof ServerPlayer serverPlayer)){
                     return false;
                 }
                 return function.apply(serverPlayer);
@@ -84,10 +84,10 @@ public record PlayerCondition(Type type,
         ALL {
             @Override
             public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
-                if (context.getMomentInstance().isEmpty()) {
+                if (context.momentInstance().isEmpty()) {
                     return false;
                 }
-                MomentInstance instance = context.getMomentInstance().get();
+                MomentInstance instance = context.momentInstance().get();
 
                 return !instance.getLevel().isClientSide
                         && instance.getPlayers().stream()
@@ -99,10 +99,10 @@ public record PlayerCondition(Type type,
         ANY {
             @Override
             public boolean matches(AutomationContext context, Function<ServerPlayer,Boolean> function) {
-                if (context.getMomentInstance().isEmpty()) {
+                if (context.momentInstance().isEmpty()) {
                     return false;
                 }
-                MomentInstance momentInstance = context.getMomentInstance().get();
+                MomentInstance momentInstance = context.momentInstance().get();
                 return !momentInstance.getLevel().isClientSide
                         && momentInstance.getPlayers().stream()
                         .filter(player -> player instanceof ServerPlayer)

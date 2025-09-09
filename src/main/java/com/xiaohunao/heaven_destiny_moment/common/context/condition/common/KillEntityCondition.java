@@ -41,8 +41,8 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (context.getMomentInstance().isPresent()) {
-            MomentInstance instance = context.getMomentInstance().get();
+        if (context.momentInstance().isPresent()) {
+            MomentInstance instance = context.momentInstance().get();
             PlayerListManager playerListManager = instance.getPlayerListManager();
             RequiredKill requiredKill = getKillRecord(instance);
 
@@ -70,8 +70,8 @@ public record KillEntityCondition(KillEntityRecorderAttachment.KillType killType
                     }
                 }
                 case MOMENT_PLAYER -> {
-                    if (context.getPlayer().isPresent()) {
-                        Player player = context.getPlayer().get();
+                    if (context.player().isPresent()) {
+                        Player player = context.player().get();
                         if (player instanceof ServerPlayer serverPlayer && playerListManager.containsPlayer(serverPlayer)) {
                             return matchesKillEntityRecorder(playerListManager.getKillRecorder(serverPlayer.getUUID()), requiredKill);
                         }

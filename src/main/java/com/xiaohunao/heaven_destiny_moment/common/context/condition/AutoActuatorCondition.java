@@ -14,7 +14,7 @@ public record AutoActuatorCondition(ResourceLocation autoActuatorName) implement
 
     @Override
     public boolean matches(AutomationContext context) {
-       return context.getMomentInstance().map(momentInstance -> {
+       return context.momentInstance().map(momentInstance -> {
             Pair<AutomationRule, Integer> runtimeAutoActuator = momentInstance.getTriggerManager().getRuntimeAutoActuator(autoActuatorName);
             return runtimeAutoActuator != null && runtimeAutoActuator.getSecond() != 0;
         }).orElse(false);

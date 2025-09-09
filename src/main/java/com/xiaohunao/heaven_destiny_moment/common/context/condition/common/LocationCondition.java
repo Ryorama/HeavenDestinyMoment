@@ -7,19 +7,16 @@ import com.xiaohunao.heaven_destiny_moment.HeavenDestinyMoment;
 import com.xiaohunao.heaven_destiny_moment.common.automation.AutomationContext;
 import com.xiaohunao.heaven_destiny_moment.common.context.IBuilderConverter;
 import com.xiaohunao.heaven_destiny_moment.common.context.condition.ICondition;
-import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +45,9 @@ public record LocationCondition(Optional<LocationPredicate.PositionPredicate> po
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (context.getBlockPos().isPresent()) {
+        if (context.blockPos().isPresent()) {
             Level level = context.getLevel();
-            BlockPos blockPos = context.getBlockPos().get();
+            BlockPos blockPos = context.blockPos().get();
 
             if (level instanceof ServerLevel serverLevel) {
                 return matches(serverLevel, blockPos);

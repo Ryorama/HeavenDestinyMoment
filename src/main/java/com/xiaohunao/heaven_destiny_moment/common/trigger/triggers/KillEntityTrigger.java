@@ -28,10 +28,10 @@ public record KillEntityTrigger(Optional<EntityType<?>> entityType) implements I
         if (entityType.isEmpty()){
             return true;
         }
-        if (context.getEntityType().isEmpty()) {
+        if (context.entityType().isEmpty()) {
             return false;
         }
-        return context.getEntityType().get().equals(entityType.get());
+        return context.entityType().get().equals(entityType.get());
     }
 
     @Override

@@ -63,11 +63,11 @@ public record TimeCondition(Optional<Long> min, Optional<Long> max) implements I
 
     @Override
     public boolean matches(AutomationContext context) {
-        if (context.getCurrentDayTime().isEmpty()){
+        if (context.currentDayTime().isEmpty()){
             return  false;
         }
 
-        return this.matches(context.getCurrentDayTime().get() % 24000);
+        return this.matches(context.currentDayTime().get() % 24000);
     }
 
     @Override
