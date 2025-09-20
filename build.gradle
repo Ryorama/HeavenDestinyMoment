@@ -94,6 +94,7 @@ repositories {
     flatDir {
         dir 'libs'
     }
+    mavenCentral()
     mavenLocal()
 
     maven {
@@ -117,6 +118,8 @@ repositories {
     }
 
     maven { url "https://maven.architectury.dev/" }
+
+    maven { url "https://maven.bawnorton.com/releases" }
 }
 
 boolean shouldJarJar = false
@@ -133,8 +136,11 @@ dependencies {
 
     api("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
     interfaceInjectionData("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
+    compileOnly("curse.maven:enhanced-celestials-438447:6849257")
 
-
+    compileOnly(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.3"))
+    implementation(jarJar("com.github.bawnorton.mixinsquared:mixinsquared-neoforge:0.3.3"))
+    implementation(jarJar("com.moulberry:mixinconstraints:1.0.9"))
 
 //    runtimeOnly "curse.maven:champions-unofficial-1074990:6086086"
 

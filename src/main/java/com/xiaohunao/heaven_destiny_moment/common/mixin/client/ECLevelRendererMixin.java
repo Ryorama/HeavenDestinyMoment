@@ -6,11 +6,12 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.moulberry.mixinconstraints.annotations.IfModAbsent;
+import com.moulberry.mixinconstraints.annotations.IfModLoaded;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientMoonSettings;
 import com.xiaohunao.heaven_destiny_moment.common.context.ClientSettings;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstance;
 import com.xiaohunao.heaven_destiny_moment.common.moment.MomentInstanceManager;
+import dev.corgitaco.enhancedcelestials.client.ECWorldRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -18,17 +19,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@IfModAbsent("enhancedcelestials")
+@IfModLoaded("enhancedcelestials")
 @Mixin(LevelRenderer.class)
-public abstract class LevelRendererMixin {
+public abstract class ECLevelRendererMixin {
     @Shadow
     @Nullable
     private ClientLevel level;
@@ -44,7 +43,7 @@ public abstract class LevelRendererMixin {
     private float renderSky(float originalSize, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
         ClientMoonSettings settings = ref.get();
         if (settings != null) originalSize = settings.moonSize().orElse(originalSize);
-        return originalSize;
+        return ECWorldRenderer.getMoonSize(originalSize);
     }
 
     @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 1))
@@ -56,6 +55,7 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getMoonPhase()I"))
     private void renderSky(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci, @Share("ClientMoonSettings") LocalRef<@Nullable ClientMoonSettings> ref) {
+        ECWorldRenderer.changeMoonColor(partialTick);
         ClientMoonSettings settings = ref.get();
         if (settings != null) settings.moonColor().ifPresent(color -> {
             float r = (color >> 16 & 255) / 255.0F;

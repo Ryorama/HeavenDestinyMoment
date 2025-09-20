@@ -2,6 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.xiaohunao.heaven_destiny_moment.common.mixin",
+  "plugin": "com.moulberry.mixinconstraints.ConstraintsMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "refmap": "heaven_destiny_moment.refmap.json",
   "mixins": [
@@ -18,6 +19,7 @@
     "SpawnerDataMixin"
   ],
   "client": [
+    "client.ECLevelRendererMixin",
     "client.LevelRendererMixin",
     "client.LightMapTextureMixin"
   ],
